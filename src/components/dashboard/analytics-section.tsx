@@ -2,9 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AlertTriangle, TrendingDown } from "lucide-react"
 import {
   ChartContainer,
   ChartTooltip,
@@ -22,49 +19,6 @@ const attendanceBySubject = [
   { subject: "Base de Datos", attendance: 85, fill: "#4CAF50" },
 ]
 
-const studentsAtRisk = [
-  {
-    id: 1,
-    name: "Roberto Méndez",
-    initials: "RM",
-    subject: "Química Orgánica",
-    attendance: 68,
-    remaining: 3,
-  },
-  {
-    id: 2,
-    name: "Laura Jiménez",
-    initials: "LJ",
-    subject: "Cálculo III",
-    attendance: 72,
-    remaining: 5,
-  },
-  {
-    id: 3,
-    name: "Pedro Ramírez",
-    initials: "PR",
-    subject: "Física II",
-    attendance: 70,
-    remaining: 4,
-  },
-  {
-    id: 4,
-    name: "Carmen Flores",
-    initials: "CF",
-    subject: "Matemáticas I",
-    attendance: 73,
-    remaining: 6,
-  },
-  {
-    id: 5,
-    name: "Juan Torres",
-    initials: "JT",
-    subject: "Estadística",
-    attendance: 69,
-    remaining: 2,
-  },
-]
-
 const chartConfig = {
   attendance: {
     label: "Asistencia %",
@@ -74,9 +28,8 @@ const chartConfig = {
 
 export function AnalyticsSection() {
   return (
-    <div className="grid gap-6 lg:grid-cols-5">
-      {/* Attendance Chart - Takes 3 columns */}
-      <Card className="shadow-md lg:col-span-3">
+    <div className="grid gap-6">
+      <Card className="shadow-md">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-foreground">
@@ -102,7 +55,7 @@ export function AnalyticsSection() {
               <YAxis 
                 type="category" 
                 dataKey="subject" 
-                width={100}
+                width={120}
                 tick={{ fontSize: 12 }}
               />
               <ChartTooltip
@@ -117,59 +70,6 @@ export function AnalyticsSection() {
               />
             </BarChart>
           </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {/* Students at Risk - Takes 2 columns */}
-      <Card className="shadow-md lg:col-span-2">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-[#EF5350]" />
-            <CardTitle className="text-xl font-semibold text-foreground">
-              Estudiantes en Riesgo
-            </CardTitle>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Próximos a caer debajo del 75%
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {studentsAtRisk.map((student) => (
-              <div
-                key={student.id}
-                className="flex items-center gap-4 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/30"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-[#EF5350]/10 text-[#EF5350] text-sm font-medium">
-                    {student.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-foreground truncate">{student.name}</p>
-                    <Badge 
-                      variant="outline" 
-                      className="shrink-0 text-[#EF5350] border-[#EF5350]/30"
-                    >
-                      <TrendingDown className="mr-1 h-3 w-3" />
-                      {student.attendance}%
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground truncate">{student.subject}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Progress 
-                      value={student.attendance} 
-                      className="h-2 flex-1"
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                      {student.remaining} faltas restantes
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>

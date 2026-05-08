@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { DashboardSidebar } from "./sidebar"
+import { Sidebar } from "./sidebar"
 
 export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const [notifications] = useState([
@@ -34,7 +34,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-64 border-none">
-              <DashboardSidebar onNavigate={() => {}} currentView="" />
+              <Sidebar onNavigate={() => {}} currentView="" />
             </SheetContent>
           </Sheet>
         </div>
