@@ -6,11 +6,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 
-interface LoginViewProps {
+interface LoginPageProps {
   onLogin: () => void
 }
 
-export function LoginView({ onLogin }: LoginViewProps) {
+export function LoginPage({ onLogin }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [passwordPlaceholder, setPasswordPlaceholder] = useState("")
