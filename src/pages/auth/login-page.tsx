@@ -1,43 +1,29 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { GraduationCap, Lock, Fingerprint, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/contexts/AuthContext"
 
-interface LoginViewProps {
-  onLogin: () => void
-}
-
-export function LoginView({ onLogin }: LoginViewProps) {
+export function LoginPage() {
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [passwordPlaceholder, setPasswordPlaceholder] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const [ci, setCi] = useState("")
+  const [password, setPassword] = useState("")
 
-  useEffect(() => {
-    const fullPlaceholder = "••••••••"
-    let currentIndex = 0
-    
-    const interval = setInterval(() => {
-      if (currentIndex <= fullPlaceholder.length) {
-        setPasswordPlaceholder(fullPlaceholder.slice(0, currentIndex))
-        currentIndex++
-      } else {
-        clearInterval(interval)
-      }
-    }, 150)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      onLogin()
-    }, 1000)
+
+    const errorMsg = await login(ci.trim(), password)
+    if (errorMsg) {
+      setError(errorMsg)
+    }
+    setIsLoading(false)
   }
 
   return (
@@ -56,43 +42,40 @@ export function LoginView({ onLogin }: LoginViewProps) {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold text-foreground">Bienvenido</CardTitle>
           <CardDescription>
-            Ingresa tus credenciales para acceder al sistema
+            Ingrese sus credenciales para acceder al sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="idNumber">Documento de Identidad</Label>
+              <Label htmlFor="ci">Cédula de Identidad</Label>
               <div className="relative">
                 <Fingerprint className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="idNumber" 
-                  type="text" 
-                  inputMode="numeric"
-                  placeholder="Ej: 12345678" 
+                <Input
+                  id="ci"
+                  type="text"
+                  placeholder="Ej: V-12345678"
                   className="pl-10 bg-secondary"
-                  onChange={(e) => {
-                    e.target.value = e.target.value.replace(/\D/g, "");
-                  }}
-                  required 
+                  value={ci}
+                  onChange={(e) => setCi(e.target.value)}
+                  required
                 />
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
-                <a href="#" className="text-xs text-primary hover:underline font-medium">
-                  ¿Olvidaste tu contraseña?
-                </a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  id="password" 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder={passwordPlaceholder}
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
                   className="pl-10 pr-10 bg-secondary"
-                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <button
                   type="button"
@@ -103,17 +86,15 @@ export function LoginView({ onLogin }: LoginViewProps) {
                 </button>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="remember" />
-              <label
-                htmlFor="remember"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-muted-foreground"
-              >
-                Recordar sesión
-              </label>
-            </div>
-            <Button 
-              type="submit" 
+
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 text-base font-semibold transition-all active:scale-[0.98]"
               disabled={isLoading}
             >
@@ -121,9 +102,6 @@ export function LoginView({ onLogin }: LoginViewProps) {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="border-t p-6 bg-muted/10">
-          {/* Espacio reservado o vacío para mantener consistencia visual */}
-        </CardFooter>
       </Card>
 
       <p className="mt-8 text-sm text-muted-foreground">
