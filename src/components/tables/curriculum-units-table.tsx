@@ -6,7 +6,8 @@ import {
   BookOpen, 
   Layers, 
   Download,
-  Plus
+  Plus,
+  Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,12 +27,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 
 interface CurriculumUnit {
-  id: number
+  id: string | number
   code: string
   name: string
   credits: number
@@ -42,10 +42,14 @@ interface CurriculumUnit {
 
 interface CurriculumUnitsTableProps {
   data: CurriculumUnit[]
-  onImport?: (newData: any[]) => void
+  onCreate?: () => void
+  onEdit?: (item: CurriculumUnit) => void
+  onDelete?: (item: CurriculumUnit) => void
+  canEdit?: boolean
+  canDelete?: boolean
 }
 
-export function CurriculumUnitsTable({ data, onImport }: CurriculumUnitsTableProps) {
+export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -77,10 +81,12 @@ export function CurriculumUnitsTable({ data, onImport }: CurriculumUnitsTablePro
               <Download className="mr-2 h-4 w-4" />
               Exportar Pensum
             </Button>
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
-              Nueva U.C
-            </Button>
+            {canEdit && (
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nueva U.C
+              </Button>
+            )}
           </div>
         </div>
 
@@ -141,22 +147,29 @@ export function CurriculumUnitsTable({ data, onImport }: CurriculumUnitsTablePro
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar U.C
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
-                            Desactivar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {canEdit ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onEdit?.(item)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar U.C
+                            </DropdownMenuItem>
+                            {canDelete && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => onDelete?.(item)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Solo lectura</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
