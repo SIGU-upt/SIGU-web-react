@@ -3,9 +3,9 @@ import {
   Search, 
   MoreHorizontal, 
   Edit, 
-  Mail, 
   Users, 
-  Fingerprint
+  Fingerprint,
+  Trash2,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,12 +26,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ImportStudentsModal } from "@/components/dashboard/import-students-modal"
+import { ImportModal } from "@/components/dashboard/import-modal"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 
 interface Student {
-  id: number
+  id: string | number
   name: string
   initials: string
   idNumber: string
@@ -43,10 +43,14 @@ interface Student {
 
 interface StudentsTableProps {
   data: Student[]
-  onImport: (newData: any[]) => void
+  onImport: (file: File) => Promise<any>
+  onCreate: () => void
+  onEdit: (item: Student) => void
+  onDelete: (item: Student) => void
+  canEdit: boolean
 }
 
-export function StudentsTable({ data, onImport }: StudentsTableProps) {
+export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canEdit }: StudentsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [idFilter, setIdFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -78,11 +82,13 @@ export function StudentsTable({ data, onImport }: StudentsTableProps) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <ImportStudentsModal onImport={onImport} />
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              <Users className="mr-2 h-4 w-4" />
-              Nuevo Estudiante
-            </Button>
+            <ImportModal onImport={onImport} title="Importar Estudiantes" description="Seleccione un archivo .xlsx con la lista de estudiantes" buttonLabel="Cargar Estudiantes" />
+            {canEdit && (
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
+                <Users className="mr-2 h-4 w-4" />
+                Nuevo Estudiante
+              </Button>
+            )}
           </div>
         </div>
 
@@ -156,23 +162,27 @@ export function StudentsTable({ data, onImport }: StudentsTableProps) {
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Enviar Correo
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar Perfil
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {canEdit ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => onEdit(item)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar Perfil
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Solo lectura</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

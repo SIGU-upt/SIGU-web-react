@@ -1,137 +1,101 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { ProfessorsTable } from "@/components/tables/professors-table"
-
-const initialData = [
-  {
-    id: 1,
-    name: "Dr. Ricardo Méndez",
-    initials: "RM",
-    idNumber: "V-10.234.567",
-    email: "r.mendez@universidad.edu",
-    subjects: ["Cálculo III", "Álgebra Lineal", "Matemática Discreta"],
-    status: "Activo",
-  },
-  {
-    id: 2,
-    name: "MSc. Laura Martínez",
-    initials: "LM",
-    idNumber: "V-12.876.543",
-    email: "l.martinez@universidad.edu",
-    subjects: ["Física Cuántica", "Termodinámica"],
-    status: "Activo",
-  },
-  {
-    id: 3,
-    name: "Ing. Carlos Torres",
-    initials: "CT",
-    idNumber: "V-15.432.109",
-    email: "c.torres@universidad.edu",
-    subjects: ["Estructura de Datos", "Algoritmos II"],
-    status: "Permiso",
-  },
-  {
-    id: 4,
-    name: "Dra. Elena Rivas",
-    initials: "ER",
-    idNumber: "V-9.543.210",
-    email: "e.rivas@universidad.edu",
-    subjects: ["Química Orgánica II"],
-    status: "Activo",
-  },
-  {
-    id: 5,
-    name: "Prof. Juan Pérez",
-    initials: "JP",
-    idNumber: "V-11.222.333",
-    email: "j.perez@universidad.edu",
-    subjects: ["Historia Universitaria", "Ética"],
-    status: "Activo",
-  },
-  {
-    id: 6,
-    name: "Dra. María Soto",
-    initials: "MS",
-    idNumber: "V-14.555.666",
-    email: "m.soto@universidad.edu",
-    subjects: ["Programación I", "Bases de Datos"],
-    status: "Activo",
-  },
-  {
-    id: 7,
-    name: "MSc. Roberto Díaz",
-    initials: "RD",
-    idNumber: "V-8.444.222",
-    email: "r.diaz@universidad.edu",
-    subjects: ["Sistemas Operativos"],
-    status: "Activo",
-  },
-  {
-    id: 8,
-    name: "Ing. Patricia Luna",
-    initials: "PL",
-    idNumber: "V-16.777.888",
-    email: "p.luna@universidad.edu",
-    subjects: ["Redes de Computadoras", "Seguridad Informática"],
-    status: "Activo",
-  },
-  {
-    id: 9,
-    name: "Dr. Fernando Gómez",
-    initials: "FG",
-    idNumber: "V-7.111.000",
-    email: "f.gomez@universidad.edu",
-    subjects: ["Investigación de Operaciones"],
-    status: "Jubilado",
-  },
-  {
-    id: 10,
-    name: "MSc. Sofía Castro",
-    initials: "SC",
-    idNumber: "V-18.999.000",
-    email: "s.castro@universidad.edu",
-    subjects: ["Inteligencia Artificial", "Machine Learning"],
-    status: "Activo",
-  },
-  {
-    id: 11,
-    name: "Ing. Luis Blanco",
-    initials: "LB",
-    idNumber: "V-13.333.111",
-    email: "l.blanco@universidad.edu",
-    subjects: ["Arquitectura del Computador"],
-    status: "Activo",
-  },
-  {
-    id: 12,
-    name: "Dra. Ana Beltrán",
-    initials: "AB",
-    idNumber: "V-17.222.555",
-    email: "a.beltran@universidad.edu",
-    subjects: ["Metodología de la Investigación"],
-    status: "Activo",
-  },
-]
+import { UserFormModal } from "@/components/forms/user-form-modal"
+import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import api from "@/config/api"
+import { useAuth } from "@/contexts/AuthContext"
+import { Role, type User } from "@/types"
 
 export function ProfessorsPage() {
-  const [data, setData] = useState(initialData)
+  const { user } = useAuth()
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
 
-  const handleImport = (newData: any[]) => {
-    const formattedData = newData.map((row, index) => ({
-      id: data.length + index + 1,
-      name: row.Nombre || row.name || "Sin Nombre",
-      initials: (row.Nombre || "SN").split(" ").map((n: string) => n[0]).join("").toUpperCase(),
-      idNumber: String(row.Identificacion || row.documento || row.Documento || "N/A"),
-      email: row.Email || row.email || "N/A",
-      subjects: typeof row.Materias === "string" ? row.Materias.split(",").map((s: string) => s.trim()) : [row.Materias],
-      status: row.Estatus || "Activo"
-    }))
+  const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
-    setData([...data, ...formattedData])
+  const fetchData = useCallback(async () => {
+    try {
+      const params: Record<string, string> = { role: 'DOCENTE' }
+      if (user?.sedeActualId) params.sedeId = user.sedeActualId
+      const res = await api.get('/users', { params })
+      const list = res.data.data ?? res.data
+      setUsers((Array.isArray(list) ? list : []).map((u: User) => ({
+        id: u.id,
+        name: u.nombreCompleto,
+        initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
+        idNumber: u.ci,
+        email: u.email,
+        subjects: [],
+        status: 'Activo',
+      })))
+    } catch { setUsers([]) }
+    finally { setLoading(false) }
+  }, [user?.sedeActualId])
+
+  const handleCreate = async (data: any) => {
+    await api.post('/users', { ...data, role: 'DOCENTE' })
+    await fetchData()
+  }
+
+  const handleEdit = async (data: any) => {
+    const payload: any = {}
+    if (data.nombres) payload.nombres = data.nombres
+    if (data.apellidos) payload.apellidos = data.apellidos
+    if (data.email) payload.email = data.email
+    await api.patch(`/users/${editingUser.id}`, payload)
+    await fetchData()
+  }
+
+  const handleDelete = async () => {
+    if (!deletingUser) return
+    await api.delete(`/users/${deletingUser.id}`)
+    await fetchData()
+  }
+
+  const handleImport = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await api.post('/import/inscripciones', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    await fetchData()
+    return res.data
   }
 
   return (
     <div className="space-y-6">
-      <ProfessorsTable data={data} onImport={handleImport} />
+      {loading ? (
+        <div className="text-center text-muted-foreground py-10">Cargando docentes...</div>
+      ) : (
+        <ProfessorsTable
+          data={users}
+          onImport={handleImport}
+          onCreate={() => { setEditingUser(null); setModalOpen(true) }}
+          onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
+          onDelete={(item) => setDeletingUser(item)}
+          canEdit={canEdit}
+        />
+      )}
+
+      <UserFormModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSubmit={editingUser ? handleEdit : handleCreate}
+        defaultRole={Role.DOCENTE}
+        initialData={editingUser ? { nombres: editingUser.name?.split(' ')[0], apellidos: editingUser.name?.split(' ').slice(1).join(' '), ci: editingUser.idNumber, email: editingUser.email } : undefined}
+        isEditing={!!editingUser}
+      />
+
+      <ConfirmDeleteModal
+        open={!!deletingUser}
+        onOpenChange={(v) => { if (!v) setDeletingUser(null) }}
+        onConfirm={handleDelete}
+        title="Eliminar Docente"
+        description={`¿Está seguro de eliminar a ${deletingUser?.name}?`}
+      />
     </div>
   )
 }

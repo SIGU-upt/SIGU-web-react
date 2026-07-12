@@ -1,70 +1,103 @@
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { StudentsTable } from "@/components/tables/students-table"
-
-const initialData = [
-  {
-    id: 1,
-    name: "Ana García",
-    initials: "AG",
-    idNumber: "V-28.123.456",
-    email: "a.garcia@est.universidad.edu",
-    career: "Ingeniería en Informática",
-    semester: 5,
-    status: "Regular",
-  },
-  {
-    id: 2,
-    name: "Luis Rodríguez",
-    initials: "LR",
-    idNumber: "V-29.876.543",
-    email: "l.rodriguez@est.universidad.edu",
-    career: "Ingeniería en Informática",
-    semester: 3,
-    status: "Regular",
-  },
-  {
-    id: 3,
-    name: "Carla Pérez",
-    initials: "CP",
-    idNumber: "V-27.432.109",
-    email: "c.perez@est.universidad.edu",
-    career: "Administración",
-    semester: 8,
-    status: "Regular",
-  },
-  {
-    id: 4,
-    name: "Diego Martínez",
-    initials: "DM",
-    idNumber: "V-30.543.210",
-    email: "d.martinez@est.universidad.edu",
-    career: "Ingeniería Industrial",
-    semester: 2,
-    status: "Irregular",
-  },
-]
+import { UserFormModal } from "@/components/forms/user-form-modal"
+import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import api from "@/config/api"
+import { useAuth } from "@/contexts/AuthContext"
+import { Role, type User } from "@/types"
 
 export function StudentsPage() {
-  const [data, setData] = useState(initialData)
+  const { user } = useAuth()
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
 
-  const handleImport = (newData: any[]) => {
-    const formattedData = newData.map((row, index) => ({
-      id: data.length + index + 1,
-      name: row.Nombre || row.name || "Sin Nombre",
-      initials: (row.Nombre || "SN").split(" ").map((n: string) => n[0]).join("").toUpperCase(),
-      idNumber: String(row.Identificacion || row.documento || row.Documento || "N/A"),
-      email: row.Email || row.email || "N/A",
-      career: row.Carrera || row.career || "N/A",
-      semester: parseInt(row.Semestre || row.semester || "1"),
-      status: row.Estatus || "Regular"
-    }))
+  const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
-    setData([...data, ...formattedData])
+  const fetchData = useCallback(async () => {
+    try {
+      const params: Record<string, string> = { role: 'ALUMNO' }
+      if (user?.sedeActualId) params.sedeId = user.sedeActualId
+      if (user?.sedePnfId) params.sedePnfId = user.sedePnfId
+      const res = await api.get('/users', { params })
+      const list = res.data.data ?? res.data
+      setUsers((Array.isArray(list) ? list : []).map((u: User & { cohorteActiva?: any }) => ({
+        id: u.id,
+        name: u.nombreCompleto,
+        initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
+        idNumber: u.ci,
+        email: u.email,
+        career: 'PNF Informática',
+        semester: u.cohorteActiva?.trayecto?.numero ?? 0,
+        status: 'Regular',
+      })))
+    } catch { setUsers([]) }
+    finally { setLoading(false) }
+  }, [user?.sedeActualId, user?.sedePnfId])
+
+  const handleCreate = async (data: any) => {
+    await api.post('/users', { ...data, role: 'ALUMNO' })
+    await fetchData()
+  }
+
+  const handleEdit = async (data: any) => {
+    const payload: any = {}
+    if (data.nombres) payload.nombres = data.nombres
+    if (data.apellidos) payload.apellidos = data.apellidos
+    if (data.email) payload.email = data.email
+    await api.patch(`/users/${editingUser.id}`, payload)
+    await fetchData()
+  }
+
+  const handleDelete = async () => {
+    if (!deletingUser) return
+    await api.delete(`/users/${deletingUser.id}`)
+    await fetchData()
+  }
+
+  const handleImport = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await api.post('/import/inscripciones', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    await fetchData()
+    return res.data
   }
 
   return (
     <div className="space-y-6">
-      <StudentsTable data={data} onImport={handleImport} />
+      {loading ? (
+        <div className="text-center text-muted-foreground py-10">Cargando estudiantes...</div>
+      ) : (
+        <StudentsTable
+          data={users}
+          onImport={handleImport}
+          onCreate={() => { setEditingUser(null); setModalOpen(true) }}
+          onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
+          onDelete={(item) => setDeletingUser(item)}
+          canEdit={canEdit}
+        />
+      )}
+
+      <UserFormModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onSubmit={editingUser ? handleEdit : handleCreate}
+        defaultRole={Role.ALUMNO}
+        initialData={editingUser ? { nombres: editingUser.name?.split(' ')[0], apellidos: editingUser.name?.split(' ').slice(1).join(' '), ci: editingUser.idNumber, email: editingUser.email } : undefined}
+        isEditing={!!editingUser}
+      />
+
+      <ConfirmDeleteModal
+        open={!!deletingUser}
+        onOpenChange={(v) => { if (!v) setDeletingUser(null) }}
+        onConfirm={handleDelete}
+        title="Eliminar Estudiante"
+        description={`¿Está seguro de eliminar a ${deletingUser?.name}?`}
+      />
     </div>
   )
 }
