@@ -1,71 +1,133 @@
-import { useState, useEffect } from "react"
-import { Routes, Route, Navigate, useLocation } from "react-router-dom"
-import { Toaster } from "@/components/ui/toaster"
-import { DashboardLayout } from "@/layouts/dashboard-layout"
-import routesPages from "@/config/routes"
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { PrivateRoute } from '@/components/auth/PrivateRoute'
+import { LoginPage } from '@/pages/auth/login-page'
+import { DashboardPage } from '@/pages/dashboard'
+import { ProfessorsPage } from '@/pages/professors'
+import { StudentsPage } from '@/pages/students'
+import { CurriculumUnitsPage } from '@/pages/curriculum-units'
+import { SeccionesPage } from '@/pages/secciones'
+import { ReportesPage } from '@/pages/reportes'
+import { ConfiguracionPage } from '@/pages/configuracion'
+import { Role } from '@/types'
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("sigu_auth") === "true"
-  })
-  
-  const location = useLocation()
+function AppRoutes() {
+  const { isAuthenticated, isLoading } = useAuth()
 
-  const handleLogin = () => {
-    localStorage.setItem("sigu_auth", "true")
-    setIsAuthenticated(true)
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground text-lg">Cargando...</div>
+      </div>
+    )
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("sigu_auth")
-    setIsAuthenticated(false)
-  }
-
-  // Redirección si no está autenticado
-  if (!isAuthenticated && location.pathname !== '/login') {
-    return <Navigate to="/login" replace />
-  }
-
-  // Redirección si ya está autenticado e intenta ir al login
-  if (isAuthenticated && location.pathname === '/login') {
-    return <Navigate to="/dashboard" replace />
-  }
+  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]
 
   return (
     <>
       <Routes>
-        {routesPages.map((route) => {
-          const Component = route.component
-
-          if (route.isPublic) {
-            return (
-              <Route 
-                key={route.path} 
-                path={route.path} 
-                element={<Component onLogin={handleLogin} />} 
-              />
-            )
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
           }
-
-          return (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={
-                <DashboardLayout 
-                  onLogout={handleLogout}
-                >
-                  <Component />
-                </DashboardLayout>
-              }
-            />
-          )
-        })}
-        {/* Fallback para rutas no encontradas */}
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+        />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/docentes"
+          element={
+            <PrivateRoute allowedRoles={adminRoles}>
+              <ProfessorsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/estudiantes"
+          element={
+            <PrivateRoute allowedRoles={adminRoles}>
+              <StudentsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/unidades"
+          element={
+            <PrivateRoute allowedRoles={adminRoles}>
+              <CurriculumUnitsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/secciones"
+          element={
+            <PrivateRoute allowedRoles={adminRoles}>
+              <SeccionesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/reportes"
+          element={
+            <PrivateRoute
+              allowedRoles={[
+                Role.SUPERADMIN,
+                Role.RECTOR,
+                Role.COORDINADOR,
+                Role.ANALISTA,
+                Role.DOCENTE,
+              ]}
+            >
+              <ReportesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/configuracion"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]}
+            >
+              <ConfiguracionPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/security-logs"
+          element={
+            <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
+              <div className="p-6">
+                <h1 className="text-2xl font-bold">Logs de Seguridad</h1>
+              </div>
+            </PrivateRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
-      <Toaster />
     </>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }
 
