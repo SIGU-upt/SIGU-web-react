@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .trim()
         .toUpperCase()
         .replace(/^(\d)/, 'V-$1')
-      const res = await api.post('/auth/login', { ci: normalizedCi, password })
+      const res = await api.post('/auth/login', { ci: normalizedCi, password, clientType: 'WEB' })
       const { accessToken } = res.data
 
       localStorage.setItem('sigu_token', accessToken)

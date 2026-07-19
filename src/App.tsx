@@ -1,7 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { PrivateRoute } from '@/components/auth/PrivateRoute'
+import { LandingPage } from '@/pages/landing'
 import { LoginPage } from '@/pages/auth/login-page'
+import { ForgotPasswordPage } from '@/pages/auth/forgot-password-page'
+import { ResetPasswordPage } from '@/pages/auth/reset-password-page'
 import { DashboardPage } from '@/pages/dashboard'
 import { ProfessorsPage } from '@/pages/professors'
 import { StudentsPage } from '@/pages/students'
@@ -33,12 +36,12 @@ function AppRoutes() {
             isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
           }
         />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/"
           element={
-            <PrivateRoute>
-              <DashboardPage />
-            </PrivateRoute>
+            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />
           }
         />
         <Route

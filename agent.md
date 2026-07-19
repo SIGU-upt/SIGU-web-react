@@ -6,21 +6,20 @@
 Eres un agente ejecutor del **Panel Administrativo Web**. Esta aplicación es un **consumidor** de la API. **No define la estructura de datos**: si necesitas un dato o un formato distinto, se solicita al Backend mediante un ADR; no se inventan campos ni se fuerza al Backend a adaptarse a la UI.
 
 ## 2. Stack actual
-React 19 + TypeScript + Vite 6 · React Router 7 · React Hook Form + Zod · Radix UI + Tailwind 4 · Recharts · XLSX (importación Excel) · estado local (`useState`), sin Redux/Zustand/React Query.
+React 19 + TypeScript + Vite 6 · React Router 7 · React Hook Form + Zod · Radix UI + Tailwind 4 · Recharts · XLSX (importación/exportación Excel) · Axios (`src/config/api.ts`, interceptor JWT + manejo de 401) · `@tanstack/react-query` (provider montado en `main.tsx`; la mayoría de páginas aún consume datos vía `useState`/llamadas directas a `api`, no `useQuery`).
 
 ## 3. Objetivo funcional
 Gestión administrativa masiva por autoridades y personal de oficina: creación de sedes, PNFs, trayectos; gestión de docentes y estudiantes; unidades curriculares; secciones; y reportes de auditoría de asistencia.
 
-## 4. Estado actual (a 2026-06-27)
-Maqueta de UI (~30 %). Login simulado (`localStorage.sigu_auth` booleano), datos mockeados, **sin cliente HTTP**. Pantallas `secciones`, `reportes` y `configuracion` declaradas pero sin implementar.
+## 4. Estado actual
+Login real contra `POST /api/v1/auth/login` vía `AuthContext` (`src/contexts/AuthContext.tsx`): decodifica el JWT, persiste `sigu_token`/`sigu_user` en `localStorage`, hidrata `GET /users/me`. `PrivateRoute` (`src/components/auth/PrivateRoute.tsx`) ya soporta gating por rol (`allowedRoles`). Páginas implementadas: login, dashboard, docentes, estudiantes, unidades curriculares, secciones, reportes, configuración. Antes de asumir que una pantalla sigue usando datos mock, revisar el archivo directamente — el frontend avanza más rápido de lo que este documento se actualiza.
 
 ## 5. Contrato con la API (reglas para integrar)
-- **Base URL** y token deben configurarse vía `.env` (Vite) — nunca hardcodear.
-- **Autenticación:** el login real es `POST /api/v1/auth/login` con `{ ci, password }`. La cédula se normaliza a formato `V-XXXXXXXX`/`E-XXXXXXXX`. La respuesta entrega un JWT que debe guardarse (reemplazar el booleano `sigu_auth`) y enviarse en `Authorization: Bearer <token>`.
+- **Base URL**: `VITE_API_URL` en `.env` (Vite) — nunca hardcodear.
+- **Autenticación:** `POST /api/v1/auth/login` con `{ ci, password }`. La cédula se normaliza a formato `V-XXXXXXXX`/`E-XXXXXXXX`. El JWT se guarda en `localStorage` (`sigu_token`) y se envía en `Authorization: Bearer <token>` vía interceptor de Axios.
 - **Convención de campos (ver ADR-004):** el contrato canónico de la API es **`camelCase`**. Alinéate a las claves que defina el Backend; no asumas `snake_case`.
-- ⛔ **Pendientes de ratificación que te afectan:**
-  - **ADR-001:** si se adopta `uuid` para las claves primarias, los tipos `id: number` deberán cambiar a `id: string`.
-  - **ADR-003:** el estado de asistencia `"Justificado"` que hoy renderiza la UI **podría no existir** en la API (la norma maestra solo contempla `PRESENTE`/`RETARDO`, con `AUSENTE` inferido). No dependas de `Justificado` hasta que el ADR se resuelva.
+- **Claves primarias:** `uuid` (string) — ADR-001 ya está `ACEPTADA`, no `PROPUESTA`.
+- **Estados de asistencia:** `PRESENTE`, `RETARDO`, `JUSTIFICADO` (persistidos) y `AUSENTE` (inferido, no persistido) — ADR-003 ya está `ACEPTADA`. `Justificado` es válido en la UI.
 
 ## 6. Convenciones
 - Idioma: código en inglés; textos de interfaz en **español formal** ("usted"/infinitivo, sin tuteo).
