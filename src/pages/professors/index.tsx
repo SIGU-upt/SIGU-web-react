@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { ProfessorsTable } from "@/components/tables/professors-table"
 import { UserFormModal } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -34,6 +34,10 @@ export function ProfessorsPage() {
     } catch { setUsers([]) }
     finally { setLoading(false) }
   }, [user?.sedeActualId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleCreate = async (data: any) => {
     await api.post('/users', { ...data, role: 'DOCENTE' })
