@@ -1,5 +1,7 @@
 # 🌐 PLAN_REACT.md — SIGU Panel Web (React)
 
+> **⚠️ DISEÑO ORIGINAL — no refleja la implementación actual.** Este documento es el plan de arranque escrito antes de que existiera el código del panel. La estructura real ya divergió en varios puntos (páginas en `src/pages/professors/`, `students/`, `curriculum-units/`, etc., no `src/pages/users/` como aquí; tabla propia en vez de `@tanstack/react-table`). Se conserva como referencia histórica de la intención original. Para el estado real, revise `src/` directamente, `./agent.md` y `./INTEGRACION.md`.
+
 > **Objetivo:** Panel administrativo para SUPERADMIN, RECTOR, COORDINADOR, ANALISTA.
 > **Prioridad:** Funcionalidad > Diseño. Que se vea decente, no perfecto.
 > **API base:** `http://localhost:3000/api/v1`
