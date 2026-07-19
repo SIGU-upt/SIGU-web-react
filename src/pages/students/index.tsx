@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -36,6 +36,10 @@ export function StudentsPage() {
     } catch { setUsers([]) }
     finally { setLoading(false) }
   }, [user?.sedeActualId, user?.sedePnfId])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleCreate = async (data: any) => {
     await api.post('/users', { ...data, role: 'ALUMNO' })

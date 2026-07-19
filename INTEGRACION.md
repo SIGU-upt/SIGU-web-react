@@ -1,23 +1,23 @@
 # 📋 INTEGRACION.md — SIGU Web React (Panel Administrativo)
 
-> **Propósito:** Guía de integración para convertir el prototipo de UI (~30%) en un panel administrativo funcional conectado a la API SIGU.
+> **⚠️ AUDITORÍA DESACTUALIZADA (2026-07-04).** El resto de este documento — el checklist detallado de la sección 2 — no se ha reverificado contra el código actual y puede describir como pendiente algo que ya está implementado. La tabla de la sección 1 se corrigió el 2026-07-18 contra el código real; para el resto, revisar `src/` directamente antes de asumir que una tarea sigue abierta.
+
+> **Propósito:** Guía de integración para convertir el prototipo de UI en un panel administrativo funcional conectado a la API SIGU.
 
 ---
 
-## 1. ESTADO ACTUAL (auditoría 2026-07-04)
+## 1. ESTADO ACTUAL (corregido 2026-07-18 contra el código real)
 
 | Capa | Estado |
 |---|---|
 | UI / Layout | ✅ Pulida — sidebar, topbar, responsive, dark mode, 60+ shadcn/ui primitives |
-| Páginas implementadas | ✅ 5 rutas: Login, Dashboard, Docentes, Estudiantes, Unidades Curriculares |
-| Páginas fantasma | ❌ 3 enlaces en sidebar sin ruta ni página: `/secciones`, `/reportes`, `/configuracion` |
-| Cliente HTTP | ❌ No existe (sin axios ni fetch) |
-| Autenticación | ❌ `localStorage.sigu_auth` booleano (login simulado) |
-| Datos | ❌ 100% mockeados (arrays hardcodeados en cada página) |
-| Servicios | ❌ No existe capa `services/` ni `api/` |
-| State management | ❌ Solo `useState` local en páginas |
-| Roles / RBAC | ❌ No implementado |
-| Formularios | ⚠️ `react-hook-form` + `zod` instalados pero apenas usados |
+| Páginas implementadas | ✅ Login, Dashboard, Docentes, Estudiantes, Unidades Curriculares, Secciones, Reportes, Configuración (`src/pages/*`) |
+| Cliente HTTP | ✅ Axios con interceptor JWT y manejo de `401` (`src/config/api.ts`) |
+| Autenticación | ✅ JWT real vía `AuthContext` (`src/contexts/AuthContext.tsx`): login, decodificación, `GET /users/me`, persistencia en `localStorage` |
+| Roles / RBAC | ✅ `PrivateRoute` soporta `allowedRoles` (`src/components/auth/PrivateRoute.tsx`) — verificar por página si ya se usa de forma consistente |
+| Datos | ⚠️ Sin reverificar por página — algunas pueden seguir con datos mockeados; confirmar caso por caso |
+| State management | ⚠️ `@tanstack/react-query` tiene el `QueryClientProvider` montado en `main.tsx`, pero no se confirmó su uso en páginas individuales (parecen seguir con `useState` + llamadas directas a `api`) |
+| Formularios | ⚠️ Sin reverificar — `react-hook-form` + `zod` instalados |
 
 ---
 
