@@ -77,6 +77,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<any>(null)
   const [deleting, setDeleting] = useState<any>(null)
@@ -84,16 +85,21 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
   const canEdit = user ? (config.editRoles ?? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]).includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      if (search) params.q = search
+      if (debouncedSearch) params.q = debouncedSearch
       const res = await api.get(config.endpoint, { params })
       setData(res.data.data ?? res.data)
     } catch { setData([]) }
     finally { setLoading(false) }
-  }, [config.endpoint, search])
+  }, [config.endpoint, debouncedSearch])
 
   useEffect(() => { fetchData() }, [fetchData])
 

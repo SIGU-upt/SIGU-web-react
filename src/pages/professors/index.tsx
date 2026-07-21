@@ -18,6 +18,7 @@ export function ProfessorsPage() {
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canResetDevice = canEdit
+  const canDelete = user?.role === Role.SUPERADMIN
 
   const fetchData = useCallback(async () => {
     try {
@@ -105,6 +106,7 @@ export function ProfessorsPage() {
           onResetDevice={(item) => setResettingDeviceUser(item)}
           canEdit={canEdit}
           canResetDevice={canResetDevice}
+          canDelete={canDelete}
         />
       )}
 
