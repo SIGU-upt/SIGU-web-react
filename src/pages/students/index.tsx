@@ -20,6 +20,7 @@ export function StudentsPage() {
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canResetDevice = canEdit
+  const canDelete = user?.role === Role.SUPERADMIN
 
   useEffect(() => {
     api.get('/trayectos').then((res) => {
@@ -126,6 +127,7 @@ export function StudentsPage() {
           onResetDevice={(item) => setResettingDeviceUser(item)}
           canEdit={canEdit}
           canResetDevice={canResetDevice}
+          canDelete={canDelete}
           trayectoOptions={trayectoOptions}
           trayectoFilter={trayectoFilter}
           onTrayectoFilterChange={setTrayectoFilter}

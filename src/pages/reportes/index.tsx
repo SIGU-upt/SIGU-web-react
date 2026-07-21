@@ -271,7 +271,7 @@ export function ReportesPage() {
                           <TableCell>{c.nombreUc}</TableCell>
                           <TableCell>{c.nombreGrupo}</TableCell>
                           <TableCell>{c.asistencias}/{c.totalClases}</TableCell>
-                          <TableCell className={c.porCentaje >= (alumnoReport.umbral ?? 75) ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                          <TableCell className={c.porcentaje >= (alumnoReport.umbral ?? 75) ? 'text-success font-bold' : 'text-destructive font-bold'}>
                             {c.porcentaje}%
                           </TableCell>
                         </TableRow>
