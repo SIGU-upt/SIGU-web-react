@@ -36,7 +36,7 @@ export function AnalyticsSection() {
               Asistencia por Unidad Curricular
             </CardTitle>
             <Badge variant="outline" className="text-muted-foreground">
-              Semestre actual
+              Trayecto actual
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">

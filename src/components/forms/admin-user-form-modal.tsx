@@ -1,0 +1,240 @@
+import { useState, useEffect } from "react"
+import { useForm, Controller } from "react-hook-form"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Role, type Sede, type SedePnf } from "@/types"
+import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
+import { useAuth } from "@/contexts/AuthContext"
+import api from "@/config/api"
+
+const ROLE_LABELS: Record<string, string> = {
+  [Role.RECTOR]: 'Rector',
+  [Role.COORDINADOR]: 'Coordinador',
+  [Role.ANALISTA]: 'Analista',
+}
+
+interface AdminUserFormData {
+  nombres: string
+  apellidos: string
+  ci: string
+  email: string
+  password: string
+  role: Role
+  sedeActualId?: string
+  sedePnfId?: string
+}
+
+interface AdminUserFormModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSubmit: (data: AdminUserFormData) => Promise<void>
+  allowedRoles: Role[]
+  initialData?: Partial<AdminUserFormData>
+  isEditing?: boolean
+}
+
+export function AdminUserFormModal({
+  open,
+  onOpenChange,
+  onSubmit,
+  allowedRoles,
+  initialData,
+  isEditing,
+}: AdminUserFormModalProps) {
+  const { user: currentUser } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sedeOptions, setSedeOptions] = useState<Sede[]>([])
+  const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+
+  const defaultValues: AdminUserFormData = {
+    nombres: '', apellidos: '', ci: '', email: '', password: '', role: allowedRoles[0],
+  }
+
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<AdminUserFormData>({
+    defaultValues: { ...defaultValues, ...initialData },
+  })
+  const role = watch('role')
+  const passwordValue = watch('password') || ''
+
+  const showSedeField = role === Role.RECTOR && currentUser?.role === Role.SUPERADMIN
+  const showSedePnfField = role === Role.COORDINADOR
+
+  useEffect(() => {
+    if (open) {
+      reset({ ...defaultValues, role: allowedRoles[0], ...initialData })
+      setError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData, reset])
+
+  useEffect(() => {
+    if (!open) return
+    if (showSedeField) {
+      api.get('/sedes').then((res) => {
+        const list = res.data.data ?? res.data
+        setSedeOptions(Array.isArray(list) ? list : [])
+      }).catch(() => setSedeOptions([]))
+    }
+    if (showSedePnfField) {
+      api.get('/sede-pnf').then((res) => {
+        const list = res.data.data ?? res.data
+        setSedePnfOptions(Array.isArray(list) ? list : [])
+      }).catch(() => setSedePnfOptions([]))
+    }
+  }, [open, showSedeField, showSedePnfField])
+
+  const submitHandler = async (data: AdminUserFormData) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await onSubmit(data)
+      onOpenChange(false)
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? 'Editar Personal Administrativo' : 'Nuevo Personal Administrativo'}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="role">Rol</Label>
+            <Controller
+              control={control}
+              name="role"
+              rules={{ required: 'Requerido' }}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v)
+                    setValue('sedeActualId', '')
+                    setValue('sedePnfId', '')
+                  }}
+                  disabled={isEditing}
+                >
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Seleccione un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedRoles.map((r) => (
+                      <SelectItem key={r} value={r}>{ROLE_LABELS[r] ?? r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nombres">Nombres</Label>
+              <Input id="nombres" {...register('nombres', { required: 'Requerido' })} />
+              {errors.nombres && <p className="text-xs text-destructive">{errors.nombres.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apellidos">Apellidos</Label>
+              <Input id="apellidos" {...register('apellidos', { required: 'Requerido' })} />
+              {errors.apellidos && <p className="text-xs text-destructive">{errors.apellidos.message}</p>}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ci">Cédula</Label>
+            <Input id="ci" placeholder="V-12345678" {...register('ci', { required: 'Requerido' })} disabled={isEditing} />
+            {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', { required: 'Requerido' })} />
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+          </div>
+          {showSedeField && (
+            <div className="space-y-2">
+              <Label htmlFor="sedeActualId">Sede</Label>
+              <Controller
+                control={control}
+                name="sedeActualId"
+                rules={{ required: 'Requerido' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="sedeActualId" className="w-full">
+                      <SelectValue placeholder="Seleccione una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedeOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.sedeActualId && <p className="text-xs text-destructive">{errors.sedeActualId.message}</p>}
+            </div>
+          )}
+          {showSedePnfField && (
+            <div className="space-y-2">
+              <Label htmlFor="sedePnfId">Sede-PNF</Label>
+              <Controller
+                control={control}
+                name="sedePnfId"
+                rules={{ required: 'Requerido' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="sedePnfId" className="w-full">
+                      <SelectValue placeholder="Seleccione una sede-PNF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedePnfOptions.map((sp) => (
+                        <SelectItem key={sp.id} value={sp.id}>
+                          {sp.pnf?.nombre} — {sp.sede?.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
+            </div>
+          )}
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                {...register('password', {
+                  required: !isEditing ? 'Requerido' : false,
+                  validate: (value) => passwordMeetsRequirements(value) || 'La contraseña no cumple los requisitos',
+                })}
+              />
+              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              <PasswordRequirements password={passwordValue} />
+            </div>
+          )}
+
+          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
