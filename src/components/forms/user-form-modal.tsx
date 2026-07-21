@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Role } from "@/types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Role, type SedePnf, type Trayecto } from "@/types"
+import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
+import { useAuth } from "@/contexts/AuthContext"
+import api from "@/config/api"
 
 interface UserFormData {
   nombres: string
@@ -13,6 +17,8 @@ interface UserFormData {
   email: string
   password: string
   role: Role.DOCENTE | Role.ALUMNO
+  sedePnfId?: string
+  trayectoId?: string
 }
 
 interface UserFormModalProps {
@@ -32,12 +38,21 @@ export function UserFormModal({
   initialData,
   isEditing,
 }: UserFormModalProps) {
+  const { user: currentUser } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+  const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<UserFormData>({
+  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<UserFormData>({
     defaultValues: { role: defaultRole, ...initialData },
   })
+  const passwordValue = watch('password') || ''
+  const sedePnfIdValue = watch('sedePnfId')
+
+  const showPnfField = currentUser?.role === Role.SUPERADMIN || currentUser?.role === Role.RECTOR
+  const showTrayectoField = defaultRole === Role.ALUMNO && !isEditing
+  const effectiveSedePnfId = showPnfField ? sedePnfIdValue : currentUser?.sedePnfId
 
   useEffect(() => {
     if (open) {
@@ -45,6 +60,28 @@ export function UserFormModal({
       setError(null)
     }
   }, [open, initialData, defaultRole, reset])
+
+  useEffect(() => {
+    if (open && (showPnfField || showTrayectoField)) {
+      api.get('/sede-pnf').then((res) => {
+        const list = res.data.data ?? res.data
+        setSedePnfOptions(Array.isArray(list) ? list : [])
+      }).catch(() => setSedePnfOptions([]))
+    }
+  }, [open, showPnfField, showTrayectoField])
+
+  useEffect(() => {
+    if (!open || !showTrayectoField) return
+    const pnfId = sedePnfOptions.find((sp) => sp.id === effectiveSedePnfId)?.pnfId
+    if (!pnfId) {
+      setTrayectoOptions([])
+      return
+    }
+    api.get('/trayectos', { params: { pnfId } }).then((res) => {
+      const list = res.data.data ?? res.data
+      setTrayectoOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setTrayectoOptions([]))
+  }, [open, showTrayectoField, effectiveSedePnfId, sedePnfOptions])
 
   const submitHandler = async (data: UserFormData) => {
     setLoading(true)
@@ -90,11 +127,70 @@ export function UserFormModal({
             <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', { required: 'Requerido' })} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
+          {showPnfField && (
+            <div className="space-y-2">
+              <Label htmlFor="sedePnfId">PNF</Label>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground">Reasignar el PNF trasladará al usuario a otra sede-PNF.</p>
+              )}
+              <Controller
+                control={control}
+                name="sedePnfId"
+                rules={{ required: 'Requerido' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="sedePnfId" className="w-full">
+                      <SelectValue placeholder="Seleccione un PNF" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedePnfOptions.map((sp) => (
+                        <SelectItem key={sp.id} value={sp.id}>
+                          {sp.pnf?.nombre} — {sp.sede?.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
+            </div>
+          )}
+          {showTrayectoField && (
+            <div className="space-y-2">
+              <Label htmlFor="trayectoId">Trayecto actual</Label>
+              <p className="text-xs text-muted-foreground">Opcional: si el alumno ya viene cursando un trayecto (ej. ingresa a 4to año), selecciónelo aquí para registrar su cohorte oficial.</p>
+              <Controller
+                control={control}
+                name="trayectoId"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange} disabled={!effectiveSedePnfId}>
+                    <SelectTrigger id="trayectoId" className="w-full">
+                      <SelectValue placeholder={effectiveSedePnfId ? "Sin asignar aún" : "Seleccione un PNF primero"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {trayectoOptions.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
           {!isEditing && (
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" placeholder="Mínimo 8 caracteres" {...register('password', { required: !isEditing ? 'Requerido' : false })} />
+              <Input
+                id="password"
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                {...register('password', {
+                  required: !isEditing ? 'Requerido' : false,
+                  validate: (value) => passwordMeetsRequirements(value) || 'La contraseña no cumple los requisitos',
+                })}
+              />
               {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+              <PasswordRequirements password={passwordValue} />
             </div>
           )}
 
