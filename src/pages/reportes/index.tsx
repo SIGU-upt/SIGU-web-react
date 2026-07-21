@@ -1,23 +1,82 @@
-import { useState } from "react"
-import { FileBarChart, Search, UserSearch } from "lucide-react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
+import { FileBarChart, Search, UserSearch, Download, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
+import { type Trayecto, type Clase, type User } from "@/types"
 import api from "@/config/api"
+import { downloadCsv } from "@/lib/export-csv"
 
 export function ReportesPage() {
-  const [tab, setTab] = useState("clase")
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState(searchParams.get('tab') || "clase")
+  const [claseTrayectoId, setClaseTrayectoId] = useState("")
+  const [claseOptions, setClaseOptions] = useState<Clase[]>([])
   const [classId, setClassId] = useState("")
-  const [alumnoId, setAlumnoId] = useState("")
+  const [alumnoOptions, setAlumnoOptions] = useState<User[]>([])
+  const [alumnoId, setAlumnoId] = useState(searchParams.get('alumnoId') || "")
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [classReport, setClassReport] = useState<any>(null)
   const [alumnoReport, setAlumnoReport] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
+  const [trayectoId, setTrayectoId] = useState("")
+  const [trayectoReport, setTrayectoReport] = useState<any[] | null>(null)
+
+  useEffect(() => {
+    api.get('/trayectos').then((res) => {
+      const list = res.data.data ?? res.data
+      setTrayectoOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setTrayectoOptions([]))
+    api.get('/users', { params: { role: 'ALUMNO', limit: 1000 } }).then((res) => {
+      const list = res.data.data ?? res.data
+      setAlumnoOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setAlumnoOptions([]))
+  }, [])
+
+  useEffect(() => {
+    setClassId("")
+    setClaseOptions([])
+    if (!claseTrayectoId) return
+    api.get('/clases', { params: { trayectoId: claseTrayectoId } }).then((res) => {
+      const list = res.data.data ?? res.data
+      setClaseOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setClaseOptions([]))
+  }, [claseTrayectoId])
+
+  const fetchTrayectoReport = async () => {
+    if (!trayectoId) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await api.get(`/reports/trayecto/${trayectoId}`)
+      setTrayectoReport(res.data)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const exportTrayectoReport = () => {
+    if (!trayectoReport?.length) return
+    downloadCsv(
+      `asistencia-trayecto.csv`,
+      trayectoReport.map((a: any) => ({
+        Alumno: a.nombreCompleto,
+        CI: a.ci,
+        '%': a.porcentajeGlobal,
+        'Por encima del umbral': a.porEncimaUmbral ? 'Sí' : 'No',
+      })),
+    )
+  }
 
   const fetchClassReport = async () => {
     if (!classId) return
@@ -47,6 +106,38 @@ export function ReportesPage() {
     }
   }
 
+  useEffect(() => {
+    if (searchParams.get('alumnoId')) {
+      fetchAlumnoReport()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const exportClassReport = () => {
+    if (!classReport?.alumnos?.length) return
+    downloadCsv(
+      `asistencia-clase-${classReport.fecha}.csv`,
+      classReport.alumnos.map((a: any) => ({
+        Alumno: a.nombreCompleto,
+        CI: a.ci,
+        Estado: a.estado,
+      })),
+    )
+  }
+
+  const exportAlumnoReport = () => {
+    if (!alumnoReport?.clases?.length) return
+    downloadCsv(
+      `asistencia-alumno-${alumnoReport.ci}.csv`,
+      alumnoReport.clases.map((c: any) => ({
+        UC: c.nombreUc,
+        Grupo: c.nombreGrupo,
+        Asistencias: `${c.asistencias}/${c.totalClases}`,
+        '%': c.porcentaje,
+      })),
+    )
+  }
+
   const estadoColor = (e: string) => {
     if (e === 'PRESENTE' || e === 'JUSTIFICADO') return 'bg-success'
     if (e === 'AUSENTE') return 'bg-destructive'
@@ -60,17 +151,38 @@ export function ReportesPage() {
         <TabsList>
           <TabsTrigger value="clase">Por Clase</TabsTrigger>
           <TabsTrigger value="alumno">Por Alumno</TabsTrigger>
+          <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>
         </TabsList>
         <TabsContent value="clase" className="space-y-4 mt-4">
           <Card>
             <CardHeader><CardTitle>Reporte de Asistencia por Clase</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Input placeholder="ID de la clase" value={classId} onChange={(e) => setClassId(e.target.value)} className="max-w-xs" />
+                <Select value={claseTrayectoId} onValueChange={setClaseTrayectoId}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un trayecto" /></SelectTrigger>
+                  <SelectContent>
+                    {trayectoOptions.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={classId} onValueChange={setClassId} disabled={!claseTrayectoId}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione una clase" /></SelectTrigger>
+                  <SelectContent>
+                    {claseOptions.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.unidadCurricular?.nombre ?? 'Materia'} ({c.nombreGrupo})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="max-w-[180px]" />
-                <Button onClick={fetchClassReport} disabled={loading}>
+                <Button onClick={fetchClassReport} disabled={loading || !classId}>
                   <Search className="mr-2 h-4 w-4" />Consultar
                 </Button>
+                {classReport?.alumnos?.length > 0 && (
+                  <Button variant="outline" onClick={exportClassReport}>
+                    <Download className="mr-2 h-4 w-4" />Descargar CSV
+                  </Button>
+                )}
               </div>
               {error && <div className="text-sm text-destructive">{error}</div>}
               {classReport && (
@@ -113,10 +225,22 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Reporte de Asistencia por Alumno</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Input placeholder="ID del alumno" value={alumnoId} onChange={(e) => setAlumnoId(e.target.value)} className="max-w-xs" />
-                <Button onClick={fetchAlumnoReport} disabled={loading}>
+                <Select value={alumnoId} onValueChange={setAlumnoId}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un alumno" /></SelectTrigger>
+                  <SelectContent>
+                    {alumnoOptions.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.nombreCompleto} ({a.ci})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={fetchAlumnoReport} disabled={loading || !alumnoId}>
                   <UserSearch className="mr-2 h-4 w-4" />Consultar
                 </Button>
+                {alumnoReport?.clases?.length > 0 && (
+                  <Button variant="outline" onClick={exportAlumnoReport}>
+                    <Download className="mr-2 h-4 w-4" />Descargar CSV
+                  </Button>
+                )}
               </div>
               {error && <div className="text-sm text-destructive">{error}</div>}
               {alumnoReport && (
@@ -155,6 +279,58 @@ export function ReportesPage() {
                     </TableBody>
                   </Table>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="trayecto" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader><CardTitle>Reporte de Asistencia por Trayecto</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <Select value={trayectoId} onValueChange={setTrayectoId}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un trayecto" /></SelectTrigger>
+                  <SelectContent>
+                    {trayectoOptions.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={fetchTrayectoReport} disabled={loading || !trayectoId}>
+                  <Users className="mr-2 h-4 w-4" />Consultar
+                </Button>
+                {trayectoReport && trayectoReport.length > 0 && (
+                  <Button variant="outline" onClick={exportTrayectoReport}>
+                    <Download className="mr-2 h-4 w-4" />Descargar CSV
+                  </Button>
+                )}
+              </div>
+              {error && <div className="text-sm text-destructive">{error}</div>}
+              {trayectoReport && (
+                trayectoReport.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No hay alumnos con cohorte activa en este trayecto.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Alumno</TableHead>
+                        <TableHead>CI</TableHead>
+                        <TableHead>%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trayectoReport.map((a: any) => (
+                        <TableRow key={a.alumnoId}>
+                          <TableCell>{a.nombreCompleto}</TableCell>
+                          <TableCell className="text-muted-foreground">{a.ci}</TableCell>
+                          <TableCell className={a.porEncimaUmbral ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                            {a.porcentajeGlobal}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )
               )}
             </CardContent>
           </Card>

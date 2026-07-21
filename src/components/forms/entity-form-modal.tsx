@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import api from "@/config/api"
 
 export interface EntityField {
   name: string
   label: string
-  type?: 'text' | 'number' | 'checkbox'
+  type?: 'text' | 'number' | 'checkbox' | 'select' | 'date'
   required?: boolean
+  optionsEndpoint?: string
+  optionLabel?: (item: any) => string
+  optionValue?: (item: any) => string
 }
 
 interface EntityFormModalProps {
@@ -29,13 +34,14 @@ export function EntityFormModal({
 }: EntityFormModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [optionsByField, setOptionsByField] = useState<Record<string, any[]>>({})
 
   const defaultValues = fields.reduce((acc, f) => {
     acc[f.name] = initialData?.[f.name] ?? (f.type === 'checkbox' ? false : '')
     return acc
   }, {} as Record<string, any>)
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
     defaultValues,
   })
 
@@ -46,12 +52,24 @@ export function EntityFormModal({
     }
   }, [open, initialData])
 
+  useEffect(() => {
+    if (!open) return
+    const selectFields = fields.filter((f) => f.type === 'select' && f.optionsEndpoint)
+    selectFields.forEach((f) => {
+      api.get(f.optionsEndpoint!).then((res) => {
+        const list = res.data.data ?? res.data
+        setOptionsByField((prev) => ({ ...prev, [f.name]: Array.isArray(list) ? list : [] }))
+      }).catch(() => setOptionsByField((prev) => ({ ...prev, [f.name]: [] })))
+    })
+  }, [open, fields])
+
   const submitHandler = async (data: Record<string, any>) => {
     setLoading(true)
     setError(null)
     try {
       for (const f of fields) {
         if (f.type === 'number') data[f.name] = Number(data[f.name])
+        if (f.type === 'date' && !data[f.name]) data[f.name] = undefined
       }
       await onSubmit(data)
       onOpenChange(false)
@@ -77,10 +95,30 @@ export function EntityFormModal({
                   <Checkbox id={f.name} {...register(f.name)} />
                   <label htmlFor={f.name} className="text-sm text-muted-foreground">{f.label}</label>
                 </div>
+              ) : f.type === 'select' ? (
+                <Controller
+                  control={control}
+                  name={f.name}
+                  rules={{ required: f.required !== false ? 'Requerido' : false }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger id={f.name} className="w-full">
+                        <SelectValue placeholder={`Seleccione ${f.label.toLowerCase()}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(optionsByField[f.name] ?? []).map((opt) => {
+                          const value = f.optionValue ? f.optionValue(opt) : opt.id
+                          const label = f.optionLabel ? f.optionLabel(opt) : opt.nombre
+                          return <SelectItem key={value} value={value}>{label}</SelectItem>
+                        })}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               ) : (
                 <Input
                   id={f.name}
-                  type={f.type === 'number' ? 'number' : 'text'}
+                  type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
                   {...register(f.name, { required: f.required !== false ? 'Requerido' : false })}
                 />
               )}

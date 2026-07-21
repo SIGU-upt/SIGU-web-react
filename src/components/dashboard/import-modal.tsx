@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { FileSpreadsheet, Upload, CheckCircle2, AlertCircle } from "lucide-react"
+import { FileSpreadsheet, Upload, CheckCircle2, AlertCircle, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { downloadCsv } from "@/lib/export-csv"
 
 interface ImportResult {
   creados: number
@@ -13,14 +14,25 @@ interface ImportResult {
   errores: { fila: number; ci: string; motivo: string }[]
 }
 
+const TEMPLATE_EXAMPLES: Record<string, string> = {
+  ci: 'V12345678',
+  nombres: 'Juan',
+  apellidos: 'Pérez',
+  email: 'juan.perez@uptjfr.edu.ve',
+  trayecto: '1',
+  clasesIds: '',
+}
+
 interface ImportModalProps {
   onImport: (file: File) => Promise<ImportResult>
   title: string
   description: string
   buttonLabel: string
+  templateHeaders: string[]
+  templateFilename: string
 }
 
-export function ImportModal({ onImport, title, description, buttonLabel }: ImportModalProps) {
+export function ImportModal({ onImport, title, description, buttonLabel, templateHeaders, templateFilename }: ImportModalProps) {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle")
   const [result, setResult] = useState<ImportResult | null>(null)
@@ -32,6 +44,12 @@ export function ImportModal({ onImport, title, description, buttonLabel }: Impor
       setStatus("idle")
       setResult(null)
     }
+  }
+
+  const handleDownloadTemplate = () => {
+    const exampleRow: Record<string, string> = {}
+    templateHeaders.forEach((h) => { exampleRow[h] = TEMPLATE_EXAMPLES[h] ?? '' })
+    downloadCsv(templateFilename, [exampleRow])
   }
 
   const handleUpload = async () => {
@@ -66,6 +84,10 @@ export function ImportModal({ onImport, title, description, buttonLabel }: Impor
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
+          <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="w-full">
+            <Download className="mr-2 h-4 w-4" />
+            Descargar plantilla
+          </Button>
           <div className="space-y-2">
             <Label htmlFor="excel-file">Seleccionar Archivo</Label>
             <Input id="excel-file" type="file" accept=".xlsx, .xls" onChange={handleFileChange}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import { Layers, Search, Plus } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Layers, Search, Plus, MoreVertical } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -8,20 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { PageHeader } from "@/components/ui/page-header"
-import { EntityFormModal, type EntityField } from "@/components/forms/entity-form-modal"
+import { SeccionFormModal } from "@/components/forms/seccion-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Seccion } from "@/types"
 import api from "@/config/api"
 
-const seccionFields: EntityField[] = [
-  { name: 'codigo', label: 'Código', required: true },
-  { name: 'sedePnfId', label: 'Sede-PNF ID', required: true },
-  { name: 'trayectoId', label: 'Trayecto ID', required: true },
-]
-
 export function SeccionesPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [data, setData] = useState<Seccion[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -105,16 +101,17 @@ export function SeccionesPage() {
                 </TableHeader>
                 <TableBody>
                   {paginated.map((s) => (
-                    <TableRow key={s.id}>
+                    <TableRow key={s.id} className="cursor-pointer" onClick={() => navigate(`/secciones/${s.id}`)}>
                       <TableCell><Badge variant="secondary" className="font-mono">{s.codigo}</Badge></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.trayecto?.nombre ?? s.trayectoId}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         {canEdit ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8"><Plus className="h-4 w-4 rotate-45" /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => navigate(`/secciones/${s.id}`)}>Ver Clases</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setEditing(s); setModalOpen(true) }}>Editar</DropdownMenuItem>
                               {canDelete && (
                                 <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(s)}>Eliminar</DropdownMenuItem>
@@ -135,12 +132,10 @@ export function SeccionesPage() {
         </CardContent>
       </Card>
 
-      <EntityFormModal
+      <SeccionFormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={editing ? handleEdit : handleCreate}
-        title={editing ? 'Editar Sección' : 'Nueva Sección'}
-        fields={seccionFields}
         initialData={editing ? { codigo: editing.codigo, sedePnfId: editing.sedePnfId, trayectoId: editing.trayectoId } : undefined}
         isEditing={!!editing}
       />

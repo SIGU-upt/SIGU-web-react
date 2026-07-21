@@ -18,6 +18,7 @@ export interface User {
   role: Role
   sedeActualId: string | null
   sedePnfId: string | null
+  sedePnf?: SedePnf | null
   fechaNacimiento: string | null
   createdAt: string
   updatedAt: string
@@ -61,13 +62,17 @@ export interface Tramo {
   trayectoId: string
   numero: number
   isPer: boolean
+  fechaInicio: string | null
+  fechaFin: string | null
 }
 
 export interface UnidadCurricular {
   id: string
   trayectoId: string
   nombre: string
-  creditos: number
+  tramoId: string | null
+  trayecto?: Trayecto
+  tramo?: Tramo | null
 }
 
 export interface PeriodoAcademico {
@@ -122,6 +127,7 @@ export interface AlumnoCohorte {
   trayectoId: string
   periodoId: string
   activa: boolean
+  alumno?: User
 }
 
 export interface Asistencia {
@@ -147,6 +153,7 @@ export interface SecurityLog {
   detalle: string | null
   ipAddress: string | null
   createdAt: string
+  user?: User | null
 }
 
 export interface PaginatedResponse<T> {

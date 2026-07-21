@@ -29,7 +29,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="flex items-center gap-3 mb-8">
+      <Link to="/" className="flex items-center gap-3 mb-8">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
           <GraduationCap className="h-8 w-8" />
         </div>
@@ -37,7 +37,7 @@ export function LoginPage() {
           <h1 className="text-3xl font-bold text-primary tracking-tight">SIGU</h1>
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Control de Estudios</p>
         </div>
-      </div>
+      </Link>
 
       <Card className="w-full max-w-md shadow-xl border-border/50">
         <CardHeader className="space-y-1 text-center">

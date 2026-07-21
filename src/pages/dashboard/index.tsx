@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react"
 import { Users, BookOpen, LayoutDashboard, GraduationCap } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { AttendanceTable } from "@/components/dashboard/attendance-table"
+import { UserFormModal } from "@/components/forms/user-form-modal"
+import { Role } from "@/types"
 
 interface DashboardData {
   totalUsuarios: number
@@ -17,6 +21,7 @@ export function DashboardPage() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [newUserRole, setNewUserRole] = useState<Role.ALUMNO | Role.DOCENTE | null>(null)
 
   useEffect(() => {
     api.get('/dashboard')
@@ -24,6 +29,12 @@ export function DashboardPage() {
       .catch(() => setStats(null))
       .finally(() => setLoading(false))
   }, [])
+
+  const canCreateUsers = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
+
+  const handleCreateUser = async (data: any) => {
+    await api.post('/users', { ...data, role: newUserRole })
+  }
 
   const roleLabels: Record<string, string> = {
     SUPERADMIN: 'Super Administrador',
@@ -42,6 +53,18 @@ export function DashboardPage() {
         title="Panel de Control"
         subtitle={user ? `Bienvenido, ${user.nombres} ${user.apellidos} (${roleName})` : 'Cargando...'}
         icon={<LayoutDashboard className="h-6 w-6" />}
+        actions={canCreateUsers && (
+          <>
+            <Button variant="outline" onClick={() => setNewUserRole(Role.ALUMNO)}>
+              <Users className="mr-2 h-4 w-4" />
+              Nuevo Estudiante
+            </Button>
+            <Button variant="outline" onClick={() => setNewUserRole(Role.DOCENTE)}>
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Nuevo Docente
+            </Button>
+          </>
+        )}
       />
 
       {loading ? (
@@ -109,6 +132,8 @@ export function DashboardPage() {
         </div>
       )}
 
+      <AttendanceTable />
+
       <Card className="shadow-md">
         <CardContent className="p-8 text-center">
           <GraduationCap className="h-12 w-12 text-primary mx-auto mb-3" />
@@ -118,6 +143,15 @@ export function DashboardPage() {
           </p>
         </CardContent>
       </Card>
+
+      {newUserRole && (
+        <UserFormModal
+          open={!!newUserRole}
+          onOpenChange={(open) => { if (!open) setNewUserRole(null) }}
+          onSubmit={handleCreateUser}
+          defaultRole={newUserRole}
+        />
+      )}
     </div>
   )
 }
