@@ -50,9 +50,10 @@ interface ProfessorsTableProps {
   onResetDevice: (item: Professor) => void
   canEdit: boolean
   canResetDevice: boolean
+  canDelete: boolean
 }
 
-export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice }: ProfessorsTableProps) {
+export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete }: ProfessorsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [idFilter, setIdFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -84,14 +85,16 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, on
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <ImportModal
-              onImport={onImport}
-              title="Importar Docentes"
-              description="Seleccione un archivo .xlsx con la lista de docentes"
-              buttonLabel="Cargar Docentes"
-              templateHeaders={["ci", "nombres", "apellidos", "email"]}
-              templateFilename="plantilla-docentes.csv"
-            />
+            {canEdit && (
+              <ImportModal
+                onImport={onImport}
+                title="Importar Docentes"
+                description="Seleccione un archivo .xlsx con la lista de docentes"
+                buttonLabel="Cargar Docentes"
+                templateHeaders={["ci", "nombres", "apellidos", "email"]}
+                templateFilename="plantilla-docentes.csv"
+              />
+            )}
             {canEdit && (
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
                 <GraduationCap className="mr-2 h-4 w-4" />
@@ -176,7 +179,7 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, on
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {canEdit || canResetDevice ? (
+                      {canEdit || canResetDevice || canDelete ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -196,7 +199,7 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, on
                                 Reiniciar Dispositivo
                               </DropdownMenuItem>
                             )}
-                            {canEdit && (
+                            {canDelete && (
                               <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Eliminar

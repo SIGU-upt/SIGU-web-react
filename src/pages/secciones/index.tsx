@@ -21,6 +21,7 @@ export function SeccionesPage() {
   const [data, setData] = useState<Seccion[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Seccion | null>(null)
@@ -29,17 +30,22 @@ export function SeccionesPage() {
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      if (search) params.q = search
+      if (debouncedSearch) params.q = debouncedSearch
       if (user?.sedePnfId) params.sedePnfId = user.sedePnfId
       const res = await api.get('/secciones', { params })
       setData(res.data.data ?? res.data)
     } catch { setData([]) }
     finally { setLoading(false) }
-  }, [search, user?.sedePnfId])
+  }, [debouncedSearch, user?.sedePnfId])
 
   useEffect(() => { fetchData() }, [fetchData])
 
