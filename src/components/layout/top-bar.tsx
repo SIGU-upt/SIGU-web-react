@@ -40,7 +40,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
         <div className="lg:hidden flex items-center mr-2">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" aria-label="Abrir menú de navegación">
                 <Menu className="h-6 w-6 text-muted-foreground" />
               </Button>
             </SheetTrigger>
@@ -56,7 +56,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
                 <Bell className="h-5 w-5 text-muted-foreground" />
                 <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-bold">
                   0

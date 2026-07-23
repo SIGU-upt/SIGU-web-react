@@ -10,8 +10,11 @@ import { ProfessorsPage } from '@/pages/professors'
 import { StudentsPage } from '@/pages/students'
 import { CurriculumUnitsPage } from '@/pages/curriculum-units'
 import { SeccionesPage } from '@/pages/secciones'
+import { SeccionDetallePage } from '@/pages/secciones/detalle'
 import { ReportesPage } from '@/pages/reportes'
 import { ConfiguracionPage } from '@/pages/configuracion'
+import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
+import { SecurityLogsPage } from '@/pages/security-logs'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -25,7 +28,7 @@ function AppRoutes() {
     )
   }
 
-  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]
+  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]
 
   return (
     <>
@@ -85,6 +88,22 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/secciones/:id"
+          element={
+            <PrivateRoute allowedRoles={adminRoles}>
+              <SeccionDetallePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/personal-administrativo"
+          element={
+            <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
+              <PersonalAdministrativoPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/reportes"
           element={
             <PrivateRoute
@@ -104,7 +123,7 @@ function AppRoutes() {
           path="/configuracion"
           element={
             <PrivateRoute
-              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]}
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]}
             >
               <ConfiguracionPage />
             </PrivateRoute>
@@ -114,9 +133,7 @@ function AppRoutes() {
           path="/security-logs"
           element={
             <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
-              <div className="p-6">
-                <h1 className="text-2xl font-bold">Logs de Seguridad</h1>
-              </div>
+              <SecurityLogsPage />
             </PrivateRoute>
           }
         />
