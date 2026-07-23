@@ -115,6 +115,19 @@ export function SeccionDetallePage() {
     [gruposPorMateria],
   )
 
+  // Cuenta en cuántas clases de la sección está inscrito cada alumno, para mostrar
+  // el estado de inscripción en la tabla de la cohorte (antes no había forma de saber
+  // si un alumno estaba o no inscrito con solo mirar la tabla).
+  const clasesInscritasPorAlumno = useMemo(() => {
+    const map = new Map<string, number>()
+    Object.values(inscripcionesPorClase).forEach((list) => {
+      list.forEach((ins) => {
+        map.set(ins.alumnoId, (map.get(ins.alumnoId) ?? 0) + 1)
+      })
+    })
+    return map
+  }, [inscripcionesPorClase])
+
   const handleCreate = async (form: Record<string, any>) => {
     await api.post('/clases', { ...form, seccionId: id })
     await fetchData()
@@ -261,7 +274,7 @@ export function SeccionDetallePage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <h2 className="text-lg font-semibold">Alumnos de esta cohorte ({cohorte.length})</h2>
-          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección.</p>
+          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección. La columna Estado indica si ya están inscritos en las clases (pertenecer a la cohorte no es lo mismo que estar inscrito).</p>
         </CardHeader>
         <CardContent>
           {cohorte.length === 0 ? (
@@ -272,15 +285,28 @@ export function SeccionDetallePage() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Nombre</TableHead>
                   <TableHead className="font-semibold">Cédula</TableHead>
+                  <TableHead className="font-semibold">Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cohorte.map((ac) => (
-                  <TableRow key={ac.id}>
-                    <TableCell>{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
-                  </TableRow>
-                ))}
+                {cohorte.map((ac) => {
+                  const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
+                  return (
+                    <TableRow key={ac.id}>
+                      <TableCell>{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
+                      <TableCell>
+                        {inscritas > 0 ? (
+                          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
+                            Inscrito{clases.length > 0 ? ` (${inscritas}/${clases.length})` : ''}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Sin inscribir</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
