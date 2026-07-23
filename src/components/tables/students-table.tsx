@@ -57,9 +57,17 @@ interface StudentsTableProps {
   trayectoOptions: Trayecto[]
   trayectoFilter: string
   onTrayectoFilterChange: (value: string) => void
+  // Filtros opcionales de ámbito. Cada select se muestra solo si se le pasan sus
+  // opciones: superadmin recibe sede + PNF; rector solo PNF; coordinador ninguno.
+  sedeOptions?: { id: string; label: string }[]
+  sedeFilter?: string
+  onSedeFilterChange?: (value: string) => void
+  pnfOptions?: { id: string; label: string }[]
+  pnfFilter?: string
+  onPnfFilterChange?: (value: string) => void
 }
 
-export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange }: StudentsTableProps) {
+export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange }: StudentsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [idFilter, setIdFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -135,6 +143,32 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onRe
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
+          {sedeOptions && onSedeFilterChange && (
+            <Select value={sedeFilter || "__all__"} onValueChange={(v) => { onSedeFilterChange(v === "__all__" ? "" : v); setCurrentPage(1) }}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="Sede" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las sedes</SelectItem>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {pnfOptions && onPnfFilterChange && (
+            <Select value={pnfFilter || "__all__"} onValueChange={(v) => { onPnfFilterChange(v === "__all__" ? "" : v); setCurrentPage(1) }}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="PNF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos los PNF</SelectItem>
+                {pnfOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={trayectoFilter || "__all__"} onValueChange={(v) => { onTrayectoFilterChange(v === "__all__" ? "" : v); setCurrentPage(1) }}>
             <SelectTrigger className="w-56 bg-background border-border shadow-sm">
               <SelectValue placeholder="Trayecto" />

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type Trayecto, type Tramo } from "@/types"
 import api from "@/config/api"
+import { requiredTextRule } from "@/lib/validators"
 
 interface UCFormData {
   nombre: string
@@ -83,7 +84,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
-            <Input id="nombre" {...register('nombre', { required: 'Requerido' })} />
+            <Input id="nombre" {...register('nombre', requiredTextRule)} />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
           </div>
           <div className="space-y-2">

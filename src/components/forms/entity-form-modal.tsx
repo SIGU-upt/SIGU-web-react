@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import api from "@/config/api"
+import { requiredTextRule, nonNegativeNumberRule } from "@/lib/validators"
 
 export interface EntityField {
   name: string
@@ -16,6 +17,11 @@ export interface EntityField {
   optionsEndpoint?: string
   optionLabel?: (item: any) => string
   optionValue?: (item: any) => string
+  // Solo se muestra al CREAR (se oculta al editar). Útil para inputs que disparan
+  // generación (ej. cantidad de trayectos al crear un PNF), que no aplican al editar.
+  createOnly?: boolean
+  // Valor inicial del campo al crear (ej. requierePiu por defecto en true).
+  defaultValue?: unknown
 }
 
 interface EntityFormModalProps {
@@ -36,8 +42,15 @@ export function EntityFormModal({
   const [error, setError] = useState<string | null>(null)
   const [optionsByField, setOptionsByField] = useState<Record<string, any[]>>({})
 
-  const defaultValues = fields.reduce((acc, f) => {
-    acc[f.name] = initialData?.[f.name] ?? (f.type === 'checkbox' ? false : '')
+  // Al editar se ocultan los campos marcados como createOnly.
+  const visibleFields = useMemo(
+    () => (isEditing ? fields.filter((f) => !f.createOnly) : fields),
+    [fields, isEditing],
+  )
+
+  const defaultValues = visibleFields.reduce((acc, f) => {
+    acc[f.name] =
+      initialData?.[f.name] ?? f.defaultValue ?? (f.type === 'checkbox' ? false : '')
     return acc
   }, {} as Record<string, any>)
 
@@ -54,20 +67,20 @@ export function EntityFormModal({
 
   useEffect(() => {
     if (!open) return
-    const selectFields = fields.filter((f) => f.type === 'select' && f.optionsEndpoint)
+    const selectFields = visibleFields.filter((f) => f.type === 'select' && f.optionsEndpoint)
     selectFields.forEach((f) => {
       api.get(f.optionsEndpoint!).then((res) => {
         const list = res.data.data ?? res.data
         setOptionsByField((prev) => ({ ...prev, [f.name]: Array.isArray(list) ? list : [] }))
       }).catch(() => setOptionsByField((prev) => ({ ...prev, [f.name]: [] })))
     })
-  }, [open, fields])
+  }, [open, visibleFields])
 
   const submitHandler = async (data: Record<string, any>) => {
     setLoading(true)
     setError(null)
     try {
-      for (const f of fields) {
+      for (const f of visibleFields) {
         if (f.type === 'number') data[f.name] = Number(data[f.name])
         if (f.type === 'date' && !data[f.name]) data[f.name] = undefined
       }
@@ -87,7 +100,7 @@ export function EntityFormModal({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-          {fields.map((f) => (
+          {visibleFields.map((f) => (
             <div key={f.name} className="space-y-2">
               <Label htmlFor={f.name}>{f.label}</Label>
               {f.type === 'checkbox' ? (
@@ -119,7 +132,14 @@ export function EntityFormModal({
                 <Input
                   id={f.name}
                   type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                  {...register(f.name, { required: f.required !== false ? 'Requerido' : false })}
+                  {...register(
+                    f.name,
+                    f.type === 'number'
+                      ? { ...nonNegativeNumberRule, required: f.required !== false ? 'Requerido' : false }
+                      : f.type === 'text' && f.required !== false
+                        ? requiredTextRule
+                        : { required: f.required !== false ? 'Requerido' : false },
+                  )}
                 />
               )}
               {errors[f.name] && <p className="text-xs text-destructive">{errors[f.name]?.message as string}</p>}
