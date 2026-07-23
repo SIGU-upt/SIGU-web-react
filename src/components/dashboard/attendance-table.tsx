@@ -37,7 +37,7 @@ interface AttendanceRow {
 const getStatusBadge = (estado: string) => {
   switch (estado) {
     case "PRESENTE":
-      return <Badge className="bg-[#4CAF50] text-white hover:bg-[#43A047]">Presente</Badge>
+      return <Badge className="bg-success text-success-foreground hover:bg-success/90">Presente</Badge>
     case "RETARDO":
       return <Badge className="bg-accent text-accent-foreground hover:bg-accent/90">Retardo</Badge>
     case "JUSTIFICADO":

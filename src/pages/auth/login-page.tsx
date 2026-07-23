@@ -67,7 +67,7 @@ export function LoginPage() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Contraseña</Label>
                 <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                  ¿Olvidaste tu contraseña?
+                  ¿Olvidó su contraseña?
                 </Link>
               </div>
               <div className="relative">

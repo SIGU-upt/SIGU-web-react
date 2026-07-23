@@ -14,7 +14,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
 import api from "@/config/api"
 
-const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endpoint: string; fields: EntityField[]; columns: string[]; renderRow: (item: any) => React.ReactNode[]; editRoles?: Role[] }> = {
+const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endpoint: string; fields: EntityField[]; columns: string[]; renderRow: (item: any) => React.ReactNode[]; editRoles?: Role[]; searchable?: boolean }> = {
   sedes: {
     title: 'Sedes', icon: <Building className="h-5 w-5" />, endpoint: '/sedes',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
@@ -47,6 +47,9 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
   },
   tramos: {
     title: 'Tramos', icon: <Clock className="h-5 w-5" />, endpoint: '/tramos',
+    // El backend (TramosService.findAll) no admite un filtro de texto 'q';
+    // enviarlo produce un 400 "Filtro 'q' no permitido". Se filtra en el cliente.
+    searchable: false,
     fields: [
       { name: 'numero', label: 'Número (1-3)', required: true, type: 'number' as const },
       { name: 'trayectoId', label: 'Trayecto', required: true, type: 'select' as const, optionsEndpoint: '/trayectos', optionLabel: (t: any) => t.nombre, optionValue: (t: any) => t.id },
@@ -63,6 +66,9 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
   sedePnf: {
     title: 'Sede-PNF', icon: <Building className="h-5 w-5" />, endpoint: '/sede-pnf',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
+    // El backend (SedePnfService.findAll) no admite un filtro de texto 'q';
+    // enviarlo produce un 400 "Filtro 'q' no permitido". Se filtra en el cliente.
+    searchable: false,
     fields: [
       { name: 'sedeId', label: 'Sede', required: true, type: 'select' as const, optionsEndpoint: '/sedes', optionLabel: (s: any) => s.nombre, optionValue: (s: any) => s.id },
       { name: 'pnfId', label: 'PNF', required: true, type: 'select' as const, optionsEndpoint: '/pnfs', optionLabel: (p: any) => p.nombre, optionValue: (p: any) => p.id },
@@ -94,14 +100,30 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      if (debouncedSearch) params.q = debouncedSearch
+      if (debouncedSearch && config.searchable !== false) params.q = debouncedSearch
       const res = await api.get(config.endpoint, { params })
       setData(res.data.data ?? res.data)
     } catch { setData([]) }
     finally { setLoading(false) }
-  }, [config.endpoint, debouncedSearch])
+  }, [config.endpoint, config.searchable, debouncedSearch])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Para entidades sin filtro de texto en el backend (ver `searchable: false`
+  // arriba), se filtra localmente sobre los datos ya cargados.
+  const displayData = config.searchable === false && debouncedSearch
+    ? (Array.isArray(data) ? data : []).filter((item) => {
+        const term = debouncedSearch.toLowerCase()
+        return Object.values(item).some((value) => {
+          if (typeof value === 'string') return value.toLowerCase().includes(term)
+          if (typeof value === 'number') return String(value).includes(term)
+          if (value && typeof value === 'object' && 'nombre' in value) {
+            return String((value as { nombre?: string }).nombre ?? '').toLowerCase().includes(term)
+          }
+          return false
+        })
+      })
+    : data
 
   const handleCreate = async (form: Record<string, any>) => {
     await api.post(config.endpoint, form)
@@ -150,7 +172,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.isArray(data) && data.map((item) => (
+              {Array.isArray(displayData) && displayData.map((item) => (
                 <TableRow key={item.id}>
                   {config.renderRow(item).map((cell, i) => <TableCell key={i}>{cell}</TableCell>)}
                   <TableCell className="text-right">

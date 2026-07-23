@@ -99,11 +99,11 @@ export function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 py-20 text-center">
             <Smartphone className="mx-auto mb-4 h-10 w-10 text-primary" />
             <h2 className="text-2xl font-bold text-foreground">
-              ¿Eres estudiante o docente?
+              ¿Es estudiante o docente?
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-              Descarga la aplicación móvil de SIGU para registrar y controlar la asistencia de
-              tus clases desde tu teléfono.
+              Descargue la aplicación móvil de SIGU para registrar y controlar la asistencia de
+              sus clases desde su teléfono.
             </p>
             <div className="mt-6">
               <a href={APP_REPO_URL} target="_blank" rel="noopener noreferrer">

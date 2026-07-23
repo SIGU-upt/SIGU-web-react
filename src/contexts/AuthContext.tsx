@@ -6,7 +6,7 @@ import { Role } from '@/types'
 interface JwtPayload {
   sub: string
   ci: string
-  role: Role
+  roles: Role[]
   sedeId: string | null
   sedePnfId: string | null
   iat: number
