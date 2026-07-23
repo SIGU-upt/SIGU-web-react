@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  GraduationCap, 
+import {
+  Search,
+  MoreVertical,
+  Edit,
+  GraduationCap,
   Fingerprint,
   Trash2,
+  SmartphoneNfc,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,10 +47,13 @@ interface ProfessorsTableProps {
   onCreate: () => void
   onEdit: (item: Professor) => void
   onDelete: (item: Professor) => void
+  onResetDevice: (item: Professor) => void
   canEdit: boolean
+  canResetDevice: boolean
+  canDelete: boolean
 }
 
-export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, canEdit }: ProfessorsTableProps) {
+export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete }: ProfessorsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [idFilter, setIdFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -81,7 +85,16 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <ImportModal onImport={onImport} title="Importar Docentes" description="Seleccione un archivo .xlsx con la lista de docentes" buttonLabel="Cargar Docentes" />
+            {canEdit && (
+              <ImportModal
+                onImport={onImport}
+                title="Importar Docentes"
+                description="Seleccione un archivo .xlsx con la lista de docentes"
+                buttonLabel="Cargar Docentes"
+                templateHeaders={["ci", "nombres", "apellidos", "email"]}
+                templateFilename="plantilla-docentes.csv"
+              />
+            )}
             {canEdit && (
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
                 <GraduationCap className="mr-2 h-4 w-4" />
@@ -166,22 +179,32 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {canEdit ? (
+                      {canEdit || canResetDevice || canDelete ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(item)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar Datos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => onEdit(item)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar Datos
+                              </DropdownMenuItem>
+                            )}
+                            {canResetDevice && (
+                              <DropdownMenuItem onClick={() => onResetDevice(item)}>
+                                <SmartphoneNfc className="mr-2 h-4 w-4" />
+                                Reiniciar Dispositivo
+                              </DropdownMenuItem>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (

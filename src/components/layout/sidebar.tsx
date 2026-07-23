@@ -20,7 +20,7 @@ interface NavItem {
   name: string
   icon: React.ComponentType<{ className?: string }>
   path?: string
-  children?: { id: string; name: string; path: string }[]
+  children?: { id: string; name: string; path: string; roles?: Role[] }[]
   roles?: Role[]
 }
 
@@ -34,12 +34,13 @@ const navigation: NavItem[] = [
     children: [
       { id: "docentes", name: "Docentes", path: "/docentes" },
       { id: "estudiantes", name: "Estudiantes", path: "/estudiantes" },
+      { id: "personal-administrativo", name: "Personal Administrativo", path: "/personal-administrativo", roles: [Role.SUPERADMIN, Role.RECTOR] },
     ],
   },
   { id: "unidades", name: "Unidades Curriculares", icon: BookOpen, path: "/unidades", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
   { id: "secciones", name: "Secciones", icon: Layers, path: "/secciones", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
   { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA, Role.DOCENTE] },
-  { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR] },
+  { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
   { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR] },
 ]
 
@@ -53,10 +54,15 @@ export function Sidebar({ className }: SidebarProps) {
   const { user } = useAuth()
   const [openMenus, setOpenMenus] = useState<string[]>(["usuarios"])
 
-  const filteredNav = navigation.filter((item) => {
-    if (!item.roles) return true
-    return user ? item.roles.includes(user.role) : false
-  })
+  const filteredNav = navigation
+    .filter((item) => {
+      if (!item.roles) return true
+      return user ? item.roles.includes(user.role) : false
+    })
+    .map((item) => ({
+      ...item,
+      children: item.children?.filter((child) => !child.roles || (user && child.roles.includes(user.role))),
+    }))
 
   const toggleMenu = (id: string) => {
     setOpenMenus((prev) =>

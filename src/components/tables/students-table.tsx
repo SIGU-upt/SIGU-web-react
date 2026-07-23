@@ -1,11 +1,12 @@
 import { useState } from "react"
-import { 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  Users, 
+import {
+  Search,
+  MoreVertical,
+  Edit,
+  Users,
   Fingerprint,
   Trash2,
+  SmartphoneNfc,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,6 +30,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { type Trayecto } from "@/types"
 
 interface Student {
   id: string | number
@@ -47,10 +50,16 @@ interface StudentsTableProps {
   onCreate: () => void
   onEdit: (item: Student) => void
   onDelete: (item: Student) => void
+  onResetDevice: (item: Student) => void
   canEdit: boolean
+  canResetDevice: boolean
+  canDelete: boolean
+  trayectoOptions: Trayecto[]
+  trayectoFilter: string
+  onTrayectoFilterChange: (value: string) => void
 }
 
-export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canEdit }: StudentsTableProps) {
+export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange }: StudentsTableProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [idFilter, setIdFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -82,7 +91,16 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canE
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <ImportModal onImport={onImport} title="Importar Estudiantes" description="Seleccione un archivo .xlsx con la lista de estudiantes" buttonLabel="Cargar Estudiantes" />
+            {canEdit && (
+              <ImportModal
+                onImport={onImport}
+                title="Importar Estudiantes"
+                description="Seleccione un archivo .xlsx con la lista de estudiantes"
+                buttonLabel="Cargar Estudiantes"
+                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "clasesIds"]}
+                templateFilename="plantilla-estudiantes.csv"
+              />
+            )}
             {canEdit && (
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
                 <Users className="mr-2 h-4 w-4" />
@@ -117,6 +135,17 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canE
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
+          <Select value={trayectoFilter || "__all__"} onValueChange={(v) => { onTrayectoFilterChange(v === "__all__" ? "" : v); setCurrentPage(1) }}>
+            <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+              <SelectValue placeholder="Trayecto" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos los trayectos</SelectItem>
+              {trayectoOptions.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -127,7 +156,7 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canE
                 <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
                 <TableHead className="font-semibold text-foreground">Documento</TableHead>
                 <TableHead className="font-semibold text-foreground">Carrera</TableHead>
-                <TableHead className="font-semibold text-foreground text-center">Semestre</TableHead>
+                <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
                 <TableHead className="font-semibold text-foreground">Estatus</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
@@ -162,22 +191,32 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, canE
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {canEdit ? (
+                      {canEdit || canResetDevice || canDelete ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(item)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar Perfil
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => onEdit(item)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar Perfil
+                              </DropdownMenuItem>
+                            )}
+                            {canResetDevice && (
+                              <DropdownMenuItem onClick={() => onResetDevice(item)}>
+                                <SmartphoneNfc className="mr-2 h-4 w-4" />
+                                Reiniciar Dispositivo
+                              </DropdownMenuItem>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (
