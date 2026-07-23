@@ -19,6 +19,8 @@ export interface User {
   sedeActualId: string | null
   sedePnfId: string | null
   sedePnf?: SedePnf | null
+  trayectoActualId?: string | null
+  trayectoActual?: { id: string; numero: number; nombre: string } | null
   fechaNacimiento: string | null
   createdAt: string
   updatedAt: string

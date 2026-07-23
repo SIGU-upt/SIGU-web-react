@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
-import { type Trayecto, type Clase, type User } from "@/types"
+import { type Trayecto, type Clase, type User, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { downloadCsv } from "@/lib/export-csv"
 
@@ -29,6 +29,9 @@ export function ReportesPage() {
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [trayectoId, setTrayectoId] = useState("")
   const [trayectoReport, setTrayectoReport] = useState<any[] | null>(null)
+  const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+  const [sedeReportFilter, setSedeReportFilter] = useState("")
+  const [sedePnfReportFilter, setSedePnfReportFilter] = useState("") // sedePnfId
 
   useEffect(() => {
     api.get('/trayectos').then((res) => {
@@ -39,7 +42,24 @@ export function ReportesPage() {
       const list = res.data.data ?? res.data
       setAlumnoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setAlumnoOptions([]))
+    api.get('/sede-pnf').then((res) => {
+      const list = res.data.data ?? res.data
+      setSedePnfOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setSedePnfOptions([]))
   }, [])
+
+  // Cascada sede → PNF → trayecto para el reporte por trayecto, de modo que el
+  // superadmin pueda acotar por sede/PNF (antes agregaba todas las sedes del PNF).
+  const reportSedeOptions = Array.from(
+    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const reportPnfOptions = sedePnfOptions
+    .filter((sp) => !sedeReportFilter || sp.sedeId === sedeReportFilter)
+    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+  const reportSelectedPnfId = sedePnfOptions.find((sp) => sp.id === sedePnfReportFilter)?.pnfId
+  const reportTrayectoOptions = reportSelectedPnfId
+    ? trayectoOptions.filter((t) => t.pnfId === reportSelectedPnfId)
+    : trayectoOptions
 
   useEffect(() => {
     setClassId("")
@@ -56,7 +76,9 @@ export function ReportesPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.get(`/reports/trayecto/${trayectoId}`)
+      const res = await api.get(`/reports/trayecto/${trayectoId}`, {
+        params: sedePnfReportFilter ? { sedePnfId: sedePnfReportFilter } : undefined,
+      })
       setTrayectoReport(res.data)
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al cargar el reporte')
@@ -288,10 +310,26 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Reporte de Asistencia por Trayecto</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Select value={trayectoId} onValueChange={setTrayectoId}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un trayecto" /></SelectTrigger>
+                <Select value={sedeReportFilter} onValueChange={(v) => { setSedeReportFilter(v); setSedePnfReportFilter(""); setTrayectoId("") }}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
                   <SelectContent>
-                    {trayectoOptions.map((t) => (
+                    {reportSedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={sedePnfReportFilter} onValueChange={(v) => { setSedePnfReportFilter(v); setTrayectoId("") }} disabled={!sedeReportFilter}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedeReportFilter ? "Seleccione un PNF" : "Elija primero una sede"} /></SelectTrigger>
+                  <SelectContent>
+                    {reportPnfOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={trayectoId} onValueChange={setTrayectoId} disabled={!sedePnfReportFilter}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedePnfReportFilter ? "Seleccione un trayecto" : "Elija primero un PNF"} /></SelectTrigger>
+                  <SelectContent>
+                    {reportTrayectoOptions.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
                     ))}
                   </SelectContent>

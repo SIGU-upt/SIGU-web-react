@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { Sidebar } from "./sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
@@ -54,6 +55,8 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
         <div className="flex-1"></div>
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
+          <ThemeToggle />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">

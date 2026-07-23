@@ -31,6 +31,8 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
     fields: [
       { name: 'nombre', label: 'Nombre', required: true },
       { name: 'codigo', label: 'Código', required: true },
+      { name: 'requierePiu', label: 'Requiere PIU (Trayecto 0)', type: 'checkbox' as const, createOnly: true, defaultValue: true },
+      { name: 'numeroTrayectos', label: 'Cantidad de trayectos a generar (1-6)', type: 'number' as const, required: false, createOnly: true, defaultValue: 4 },
     ],
     columns: ['Nombre', 'Código'],
     renderRow: (p) => [p.nombre, <Badge variant="secondary" className="font-mono">{p.codigo}</Badge>],

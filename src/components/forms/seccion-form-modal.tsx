@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type SedePnf, type Trayecto } from "@/types"
 import api from "@/config/api"
+import { requiredTextRule } from "@/lib/validators"
 
 interface SeccionFormData {
   sedePnfId: string
@@ -137,7 +138,7 @@ export function SeccionFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="codigo">Código</Label>
-            <Input id="codigo" placeholder="IN21" {...register('codigo', { required: 'Requerido', maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
+            <Input id="codigo" placeholder="IN21" {...register('codigo', { ...requiredTextRule, maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
             {errors.codigo && <p className="text-xs text-destructive">{errors.codigo.message}</p>}
           </div>
 

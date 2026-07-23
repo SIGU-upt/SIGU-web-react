@@ -10,6 +10,7 @@ import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
 
 interface UserFormData {
   nombres: string
@@ -89,7 +90,10 @@ export function UserFormModal({
     setLoading(true)
     setError(null)
     try {
-      await onSubmit(data)
+      // No enviar UUIDs vacíos al backend (fallan la validación @IsUUID).
+      const payload: UserFormData = { ...data }
+      if (!payload.sedePnfId) delete payload.sedePnfId
+      await onSubmit(payload)
       onOpenChange(false)
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al guardar')
@@ -110,23 +114,23 @@ export function UserFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nombres">Nombres</Label>
-              <Input id="nombres" {...register('nombres', { required: 'Requerido' })} />
+              <Input id="nombres" {...register('nombres', requiredTextRule)} />
               {errors.nombres && <p className="text-xs text-destructive">{errors.nombres.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="apellidos">Apellidos</Label>
-              <Input id="apellidos" {...register('apellidos', { required: 'Requerido' })} />
+              <Input id="apellidos" {...register('apellidos', requiredTextRule)} />
               {errors.apellidos && <p className="text-xs text-destructive">{errors.apellidos.message}</p>}
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="ci">Cédula</Label>
-            <Input id="ci" placeholder="V-12345678" {...register('ci', { required: 'Requerido' })} disabled={isEditing} />
+            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing} />
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', { required: 'Requerido' })} />
+            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           {showPnfField && (
