@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Role, type SedePnf, type Trayecto } from "@/types"
-import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
+import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword } from "@/components/forms/password-requirements"
+import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 
@@ -44,9 +45,10 @@ export function UserFormModal({
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<UserFormData>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UserFormData>({
     defaultValues: { role: defaultRole, ...initialData },
   })
+  const [showPassword, setShowPassword] = useState(false)
   const passwordValue = watch('password') || ''
   const sedePnfIdValue = watch('sedePnfId')
 
@@ -180,15 +182,39 @@ export function UserFormModal({
           {!isEditing && (
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 8 caracteres"
-                {...register('password', {
-                  required: !isEditing ? 'Requerido' : false,
-                  validate: (value) => passwordMeetsRequirements(value) || 'La contraseña no cumple los requisitos',
-                })}
-              />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Mínimo 8 caracteres"
+                    className="pr-10"
+                    {...register('password', {
+                      required: !isEditing ? 'Requerido' : false,
+                      validate: (value) => passwordMeetsRequirements(value) || 'La contraseña no cumple los requisitos',
+                    })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setValue('password', generateStrongPassword(), { shouldValidate: true })
+                    setShowPassword(true)
+                  }}
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Generar
+                </Button>
+              </div>
               {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
               <PasswordRequirements password={passwordValue} />
             </div>
