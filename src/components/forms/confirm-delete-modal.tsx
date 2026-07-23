@@ -7,9 +7,11 @@ interface ConfirmDeleteModalProps {
   onConfirm: () => Promise<void>
   title?: string
   description?: string
+  confirmLabel?: string
+  loadingLabel?: string
 }
 
-export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, description }: ConfirmDeleteModalProps) {
+export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, description, confirmLabel, loadingLabel }: ConfirmDeleteModalProps) {
   const [loading, setLoading] = useState(false)
 
   const handleConfirm = async () => {
@@ -34,7 +36,7 @@ export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, descr
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={loading} className="bg-destructive hover:bg-destructive/90">
-            {loading ? 'Eliminando...' : 'Eliminar'}
+            {loading ? (loadingLabel || 'Eliminando...') : (confirmLabel || 'Eliminar')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

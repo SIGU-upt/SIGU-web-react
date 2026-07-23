@@ -13,6 +13,7 @@ GEMINI.md
 node_modules
 dist
 dist-ssr
+.vite
 *.local
 
 # Editor directories and files
