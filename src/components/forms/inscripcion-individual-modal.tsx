@@ -34,6 +34,7 @@ export function InscripcionIndividualModal({
 }: InscripcionIndividualModalProps) {
   const [alumnos, setAlumnos] = useState<User[]>([])
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [selectedAlumnoIds, setSelectedAlumnoIds] = useState<string[]>([])
   const [selectedClaseIds, setSelectedClaseIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
@@ -43,21 +44,25 @@ export function InscripcionIndividualModal({
   useEffect(() => {
     if (!open) return
     setSearch("")
+    setDebouncedSearch("")
     setSelectedAlumnoIds([])
     setSelectedClaseIds([])
     setError(null)
     setResultado(null)
-    api.get('/users', { params: { role: 'ALUMNO', sedePnfId, limit: 1000 } }).then((res) => {
+  }, [open, sedePnfId])
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  useEffect(() => {
+    if (!open) return
+    api.get('/users', { params: { role: 'ALUMNO', sedePnfId, limit: 20, ...(debouncedSearch ? { q: debouncedSearch } : {}) } }).then((res) => {
       const list = res.data.data ?? res.data
       setAlumnos(Array.isArray(list) ? list : [])
     }).catch(() => setAlumnos([]))
-  }, [open, sedePnfId])
-
-  const alumnosFiltrados = useMemo(() => {
-    if (!search) return alumnos
-    const q = search.toLowerCase()
-    return alumnos.filter((a) => a.nombreCompleto.toLowerCase().includes(q) || a.ci.toLowerCase().includes(q))
-  }, [alumnos, search])
+  }, [open, sedePnfId, debouncedSearch])
 
   const gruposPorMateria = useMemo(() => {
     const map = new Map<string, Clase[]>()
@@ -71,8 +76,19 @@ export function InscripcionIndividualModal({
     setSelectedAlumnoIds((prev) => prev.includes(alumnoId) ? prev.filter((id) => id !== alumnoId) : [...prev, alumnoId])
   }
 
-  const toggleClase = (claseId: string) => {
-    setSelectedClaseIds((prev) => prev.includes(claseId) ? prev.filter((id) => id !== claseId) : [...prev, claseId])
+  // Un solo grupo por materia (regla R-1 del backend): al elegir un grupo se
+  // descarta cualquier otro grupo ya seleccionado de la misma unidad curricular,
+  // evitando el 409 antes de llamar al servidor. Se mantiene Checkbox (no Radio)
+  // porque no seleccionar ningún grupo de esa materia es un estado válido.
+  const toggleClase = (claseId: string, grupo: Clase[]) => {
+    setSelectedClaseIds((prev) => {
+      if (prev.includes(claseId)) return prev.filter((id) => id !== claseId)
+      if (grupo.length > 1) {
+        const siblingIds = grupo.map((c) => c.id)
+        return [...prev.filter((id) => !siblingIds.includes(id)), claseId]
+      }
+      return [...prev, claseId]
+    })
   }
 
   const handleSubmit = async () => {
@@ -113,10 +129,10 @@ export function InscripcionIndividualModal({
               <Input placeholder="Buscar por nombre o cédula..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             <div className="max-h-48 overflow-y-auto rounded-md border border-input">
-              {alumnosFiltrados.length === 0 && (
+              {alumnos.length === 0 && (
                 <p className="p-3 text-sm text-muted-foreground">No se encontraron alumnos.</p>
               )}
-              {alumnosFiltrados.map((a) => (
+              {alumnos.map((a) => (
                 <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent cursor-pointer">
                   <Checkbox checked={selectedAlumnoIds.includes(a.id)} onCheckedChange={() => toggleAlumno(a.id)} />
                   <span>{a.nombreCompleto} — {a.ci}</span>
@@ -136,7 +152,7 @@ export function InscripcionIndividualModal({
                   </p>
                   {grupo.map((c) => (
                     <label key={c.id} className={cn("flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer hover:bg-accent")}>
-                      <Checkbox checked={selectedClaseIds.includes(c.id)} onCheckedChange={() => toggleClase(c.id)} />
+                      <Checkbox checked={selectedClaseIds.includes(c.id)} onCheckedChange={() => toggleClase(c.id, grupo)} />
                       <span>{c.nombreGrupo} — {c.docente?.nombreCompleto ?? 'Sin docente'} {c.diaSemana ? `(${c.diaSemana} ${c.horaInicio ?? ''}-${c.horaFin ?? ''})` : ''}</span>
                     </label>
                   ))}
