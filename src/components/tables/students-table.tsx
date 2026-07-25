@@ -1,10 +1,8 @@
-import { useState } from "react"
 import {
   Search,
   MoreVertical,
   Edit,
   Users,
-  Fingerprint,
   Trash2,
   SmartphoneNfc,
 } from "lucide-react"
@@ -46,6 +44,7 @@ interface Student {
 
 interface StudentsTableProps {
   data: Student[]
+  loading: boolean
   onImport: (file: File) => Promise<any>
   onCreate: () => void
   onEdit: (item: Student) => void
@@ -57,26 +56,26 @@ interface StudentsTableProps {
   trayectoOptions: Trayecto[]
   trayectoFilter: string
   onTrayectoFilterChange: (value: string) => void
+  // Filtros opcionales de ámbito. Cada select se muestra solo si se le pasan sus
+  // opciones: superadmin recibe sede + PNF; rector solo PNF; coordinador ninguno.
+  sedeOptions?: { id: string; label: string }[]
+  sedeFilter?: string
+  onSedeFilterChange?: (value: string) => void
+  pnfOptions?: { id: string; label: string }[]
+  pnfFilter?: string
+  onPnfFilterChange?: (value: string) => void
+  // Búsqueda y paginación resueltas por el servidor (?q=, page, meta).
+  searchQuery: string
+  onSearchQueryChange: (value: string) => void
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  onPageChange: (page: number) => void
 }
 
-export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange }: StudentsTableProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [idFilter, setIdFilter] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  const filteredData = data.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.career.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesId = item.idNumber.toLowerCase().includes(idFilter.toLowerCase())
-
-    return matchesSearch && matchesId
-  })
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+export function StudentsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps) {
+  const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
 
   return (
     <Card className="shadow-md">
@@ -114,28 +113,39 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onRe
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
             <Input
-              placeholder="Buscar por nombre o carrera..."
+              placeholder="Buscar por nombre, cédula o correo..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1)
-              }}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
-          <div className="relative w-72">
-            <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
-            <Input
-              placeholder="Filtrar por documento..."
-              value={idFilter}
-              onChange={(e) => {
-                setIdFilter(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
-          <Select value={trayectoFilter || "__all__"} onValueChange={(v) => { onTrayectoFilterChange(v === "__all__" ? "" : v); setCurrentPage(1) }}>
+          {sedeOptions && onSedeFilterChange && (
+            <Select value={sedeFilter || "__all__"} onValueChange={(v) => onSedeFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="Sede" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las sedes</SelectItem>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {pnfOptions && onPnfFilterChange && (
+            <Select value={pnfFilter || "__all__"} onValueChange={(v) => onPnfFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="PNF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos los PNF</SelectItem>
+                {pnfOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={trayectoFilter || "__all__"} onValueChange={(v) => onTrayectoFilterChange(v === "__all__" ? "" : v)}>
             <SelectTrigger className="w-56 bg-background border-border shadow-sm">
               <SelectValue placeholder="Trayecto" />
             </SelectTrigger>
@@ -157,13 +167,19 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onRe
                 <TableHead className="font-semibold text-foreground">Documento</TableHead>
                 <TableHead className="font-semibold text-foreground">Carrera</TableHead>
                 <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
-                <TableHead className="font-semibold text-foreground">Estatus</TableHead>
+                <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    Cargando...
+                  </TableCell>
+                </TableRow>
+              ) : data.length > 0 ? (
+                data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -236,13 +252,13 @@ export function StudentsTable({ data, onImport, onCreate, onEdit, onDelete, onRe
           </Table>
         </div>
 
-        <PaginationControls 
+        <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={filteredData.length}
+          totalItems={totalItems}
           startIndex={startIndex}
           endIndex={startIndex + itemsPerPage}
-          onPageChange={setCurrentPage}
+          onPageChange={onPageChange}
           label="estudiantes"
         />
       </CardContent>

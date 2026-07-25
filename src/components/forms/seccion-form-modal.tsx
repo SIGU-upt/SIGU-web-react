@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type SedePnf, type Trayecto } from "@/types"
 import api from "@/config/api"
+import { requiredTextRule } from "@/lib/validators"
 
 interface SeccionFormData {
   sedePnfId: string
@@ -33,6 +34,7 @@ export function SeccionFormModal({
   const [error, setError] = useState<string | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
+  const [selectedSedeId, setSelectedSedeId] = useState("")
 
   const { register, handleSubmit, reset, watch, setValue, control, formState: { errors } } = useForm<SeccionFormData>({
     defaultValues: { sedePnfId: '', trayectoId: '', codigo: '', ...initialData },
@@ -42,6 +44,7 @@ export function SeccionFormModal({
   useEffect(() => {
     if (open) {
       reset({ sedePnfId: '', trayectoId: '', codigo: '', ...initialData })
+      setSelectedSedeId("")
       setError(null)
     }
   }, [open, initialData, reset])
@@ -54,6 +57,19 @@ export function SeccionFormModal({
       }).catch(() => setSedePnfOptions([]))
     }
   }, [open])
+
+  // Al editar, deriva la sede seleccionada a partir del sedePnfId guardado, una
+  // vez que las opciones ya cargaron (WEB #4/#5: sede y PNF son selects encadenados).
+  useEffect(() => {
+    if (!open || !initialData?.sedePnfId || sedePnfOptions.length === 0) return
+    const sp = sedePnfOptions.find((s) => s.id === initialData.sedePnfId)
+    if (sp) setSelectedSedeId(sp.sedeId)
+  }, [open, initialData?.sedePnfId, sedePnfOptions])
+
+  const sedeOptions = Array.from(
+    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const pnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedSedeId)
 
   useEffect(() => {
     if (!sedePnfId) {
@@ -92,21 +108,35 @@ export function SeccionFormModal({
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="sedePnfId">Sede-PNF</Label>
+            <Label htmlFor="sedeId">Sede</Label>
+            <Select
+              value={selectedSedeId}
+              onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', ''); setValue('trayectoId', '') }}
+            >
+              <SelectTrigger id="sedeId" className="w-full">
+                <SelectValue placeholder="Seleccione una sede" />
+              </SelectTrigger>
+              <SelectContent>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="sedePnfId">PNF</Label>
             <Controller
               control={control}
               name="sedePnfId"
               rules={{ required: 'Requerido' }}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('trayectoId', '') }}>
+                <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('trayectoId', '') }} disabled={!selectedSedeId}>
                   <SelectTrigger id="sedePnfId" className="w-full">
-                    <SelectValue placeholder="Seleccione una sede-PNF" />
+                    <SelectValue placeholder={selectedSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {sedePnfOptions.map((sp) => (
-                      <SelectItem key={sp.id} value={sp.id}>
-                        {sp.pnf?.nombre} — {sp.sede?.nombre}
-                      </SelectItem>
+                    {pnfOptionsForSede.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -137,7 +167,7 @@ export function SeccionFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="codigo">Código</Label>
-            <Input id="codigo" placeholder="IN21" {...register('codigo', { required: 'Requerido', maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
+            <Input id="codigo" placeholder="IN21" {...register('codigo', { ...requiredTextRule, maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
             {errors.codigo && <p className="text-xs text-destructive">{errors.codigo.message}</p>}
           </div>
 

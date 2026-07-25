@@ -28,6 +28,7 @@ export function PersonalAdministrativoPage() {
   const [sedePnfs, setSedePnfs] = useState<SedePnf[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<User | null>(null)
@@ -42,11 +43,21 @@ export function PersonalAdministrativoPage() {
   const canDelete = user?.role === Role.SUPERADMIN
   const canResetDevice = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
+      // El límite máximo del backend es 200; como se combinan varios roles a la vez
+      // (rector/coordinador/analista son listas acotadas), se pagina el resultado
+      // combinado en el cliente en vez de fusionar meta.total de cada rol por separado.
       const [usersResults, sedesRes, sedePnfRes] = await Promise.all([
-        Promise.all(allowedRoles.map((role) => api.get('/users', { params: { role, limit: 1000 } }))),
+        Promise.all(allowedRoles.map((role) => api.get('/users', {
+          params: { role, limit: 200, ...(debouncedSearch ? { q: debouncedSearch } : {}) },
+        }))),
         api.get('/sedes'),
         api.get('/sede-pnf'),
       ])
@@ -65,7 +76,7 @@ export function PersonalAdministrativoPage() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role])
+  }, [user?.role, debouncedSearch])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -104,17 +115,10 @@ export function PersonalAdministrativoPage() {
     return sp ? `${sp.pnf?.nombre ?? ''} — ${sp.sede?.nombre ?? ''}` : '—'
   }
 
-  const filtered = data.filter((u) =>
-    !search ||
-    u.nombreCompleto.toLowerCase().includes(search.toLowerCase()) ||
-    u.ci.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
-  )
-
   const perPage = 10
-  const totalPages = Math.ceil(filtered.length / perPage)
+  const totalPages = Math.ceil(data.length / perPage)
   const start = (page - 1) * perPage
-  const paginated = filtered.slice(start, start + perPage)
+  const paginated = data.slice(start, start + perPage)
 
   return (
     <div className="space-y-6">
@@ -124,7 +128,7 @@ export function PersonalAdministrativoPage() {
           <div className="flex flex-wrap items-center gap-4 justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} className="pl-10" />
+              <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             {canEdit && (
               <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
@@ -186,7 +190,7 @@ export function PersonalAdministrativoPage() {
                   ))}
                 </TableBody>
               </Table>
-              <PaginationControls currentPage={page} totalPages={totalPages} totalItems={filtered.length} startIndex={start} endIndex={start + perPage} onPageChange={setPage} label="registros" />
+              <PaginationControls currentPage={page} totalPages={totalPages} totalItems={data.length} startIndex={start} endIndex={start + perPage} onPageChange={setPage} label="registros" />
             </>
           )}
         </CardContent>

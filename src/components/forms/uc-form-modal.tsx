@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type Trayecto, type Tramo } from "@/types"
 import api from "@/config/api"
+import { requiredTextRule } from "@/lib/validators"
 
 interface UCFormData {
   nombre: string
@@ -20,15 +21,18 @@ interface UCFormModalProps {
   onSubmit: (data: UCFormData) => Promise<void>
   initialData?: Partial<UCFormData>
   isEditing?: boolean
+  // ADR-023: para avisar en cuántos trayectos se dicta la materia antes de renombrarla.
+  ucCatalogoId?: string
 }
 
 const SIN_TRAMO = "__anual__"
 
-export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditing }: UCFormModalProps) {
+export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditing, ucCatalogoId }: UCFormModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [tramoOptions, setTramoOptions] = useState<Tramo[]>([])
+  const [ofertasCount, setOfertasCount] = useState<number | null>(null)
 
   const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<UCFormData>({
     defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, ...initialData },
@@ -49,6 +53,17 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
       setTrayectoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTrayectoOptions([]))
   }, [open])
+
+  useEffect(() => {
+    if (!open || !isEditing || !ucCatalogoId) {
+      setOfertasCount(null)
+      return
+    }
+    api.get(`/uc-catalogo/${ucCatalogoId}/ofertas`).then((res) => {
+      const list = res.data.data ?? res.data
+      setOfertasCount(Array.isArray(list) ? list.length : null)
+    }).catch(() => setOfertasCount(null))
+  }, [open, isEditing, ucCatalogoId])
 
   useEffect(() => {
     if (!trayectoId) {
@@ -83,8 +98,11 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
-            <Input id="nombre" {...register('nombre', { required: 'Requerido' })} />
+            <Input id="nombre" {...register('nombre', requiredTextRule)} />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
+            {isEditing && ofertasCount != null && ofertasCount > 1 && (
+              <p className="text-xs text-muted-foreground">Esta materia se dicta en {ofertasCount} trayectos; el cambio de nombre aplicará a todos.</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="trayectoId">Trayecto</Label>

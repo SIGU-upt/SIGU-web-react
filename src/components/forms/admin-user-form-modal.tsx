@@ -10,6 +10,7 @@ import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -50,6 +51,7 @@ export function AdminUserFormModal({
   const [error, setError] = useState<string | null>(null)
   const [sedeOptions, setSedeOptions] = useState<Sede[]>([])
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+  const [selectedCoordSedeId, setSelectedCoordSedeId] = useState("")
 
   const defaultValues: AdminUserFormData = {
     nombres: '', apellidos: '', ci: '', email: '', password: '', role: allowedRoles[0],
@@ -64,10 +66,12 @@ export function AdminUserFormModal({
 
   const showSedeField = role === Role.RECTOR && currentUser?.role === Role.SUPERADMIN
   const showSedePnfField = role === Role.COORDINADOR
+  const ciEditable = currentUser?.role === Role.SUPERADMIN
 
   useEffect(() => {
     if (open) {
       reset({ ...defaultValues, role: allowedRoles[0], ...initialData })
+      setSelectedCoordSedeId("")
       setError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,11 +93,29 @@ export function AdminUserFormModal({
     }
   }, [open, showSedeField, showSedePnfField])
 
+  // Al editar, deriva la sede seleccionada a partir del sedePnfId guardado, una
+  // vez que las opciones ya cargaron (WEB #4/#5: sede y PNF son selects encadenados).
+  useEffect(() => {
+    if (!open || !showSedePnfField || !initialData?.sedePnfId || sedePnfOptions.length === 0) return
+    const sp = sedePnfOptions.find((s) => s.id === initialData.sedePnfId)
+    if (sp) setSelectedCoordSedeId(sp.sedeId)
+  }, [open, showSedePnfField, initialData?.sedePnfId, sedePnfOptions])
+
+  const coordSedeOptions = Array.from(
+    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const coordPnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedCoordSedeId)
+
   const submitHandler = async (data: AdminUserFormData) => {
     setLoading(true)
     setError(null)
     try {
-      await onSubmit(data)
+      // No enviar UUIDs vacíos: un ANALISTA (global) no tiene sede ni sede-PNF, y un
+      // string vacío falla la validación @IsUUID del backend ("debe ser un uuid").
+      const payload: AdminUserFormData = { ...data }
+      if (!payload.sedeActualId) delete payload.sedeActualId
+      if (!payload.sedePnfId) delete payload.sedePnfId
+      await onSubmit(payload)
       onOpenChange(false)
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al guardar')
@@ -141,23 +163,23 @@ export function AdminUserFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nombres">Nombres</Label>
-              <Input id="nombres" {...register('nombres', { required: 'Requerido' })} />
+              <Input id="nombres" {...register('nombres', requiredTextRule)} />
               {errors.nombres && <p className="text-xs text-destructive">{errors.nombres.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="apellidos">Apellidos</Label>
-              <Input id="apellidos" {...register('apellidos', { required: 'Requerido' })} />
+              <Input id="apellidos" {...register('apellidos', requiredTextRule)} />
               {errors.apellidos && <p className="text-xs text-destructive">{errors.apellidos.message}</p>}
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="ci">Cédula</Label>
-            <Input id="ci" placeholder="V-12345678" {...register('ci', { required: 'Requerido' })} disabled={isEditing} />
+            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing && !ciEditable} />
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', { required: 'Requerido' })} />
+            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           {showSedeField && (
@@ -184,29 +206,42 @@ export function AdminUserFormModal({
             </div>
           )}
           {showSedePnfField && (
-            <div className="space-y-2">
-              <Label htmlFor="sedePnfId">Sede-PNF</Label>
-              <Controller
-                control={control}
-                name="sedePnfId"
-                rules={{ required: 'Requerido' }}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="sedePnfId" className="w-full">
-                      <SelectValue placeholder="Seleccione una sede-PNF" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sedePnfOptions.map((sp) => (
-                        <SelectItem key={sp.id} value={sp.id}>
-                          {sp.pnf?.nombre} — {sp.sede?.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="coordSedeId">Sede</Label>
+                <Select value={selectedCoordSedeId} onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}>
+                  <SelectTrigger id="coordSedeId" className="w-full">
+                    <SelectValue placeholder="Seleccione una sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coordSedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sedePnfId">PNF</Label>
+                <Controller
+                  control={control}
+                  name="sedePnfId"
+                  rules={{ required: 'Requerido' }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange} disabled={!selectedCoordSedeId}>
+                      <SelectTrigger id="sedePnfId" className="w-full">
+                        <SelectValue placeholder={selectedCoordSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {coordPnfOptionsForSede.map((sp) => (
+                          <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
+              </div>
+            </>
           )}
           {!isEditing && (
             <div className="space-y-2">

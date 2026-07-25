@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type UnidadCurricular, type User } from "@/types"
 import api from "@/config/api"
+import { requiredTextRule } from "@/lib/validators"
 
 const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as const
 
@@ -66,7 +67,7 @@ export function ClaseFormModal({
       const list = res.data.data ?? res.data
       setUcOptions(Array.isArray(list) ? list : [])
     }).catch(() => setUcOptions([]))
-    api.get('/users', { params: { role: 'DOCENTE', sedePnfId, limit: 1000 } }).then((res) => {
+    api.get('/users', { params: { role: 'DOCENTE', sedePnfId, limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setDocenteOptions(Array.isArray(list) ? list : [])
     }).catch(() => setDocenteOptions([]))
@@ -136,7 +137,7 @@ export function ClaseFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="nombreGrupo">Nombre de grupo</Label>
-            <Input id="nombreGrupo" placeholder="Grupo A" {...register('nombreGrupo', { required: 'Requerido', maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
+            <Input id="nombreGrupo" placeholder="Grupo A" {...register('nombreGrupo', { ...requiredTextRule, maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
             {errors.nombreGrupo && <p className="text-xs text-destructive">{errors.nombreGrupo.message}</p>}
           </div>
           <div className="space-y-2">

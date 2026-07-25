@@ -15,14 +15,25 @@ export function ProfessorsPage() {
   const [editingUser, setEditingUser] = useState<any>(null)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [resettingDeviceUser, setResettingDeviceUser] = useState<any>(null)
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canResetDevice = canEdit
   const canDelete = user?.role === Role.SUPERADMIN
 
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
   const fetchData = useCallback(async () => {
+    setLoading(true)
     try {
-      const params: Record<string, string> = { role: 'DOCENTE', limit: '1000' }
+      const params: Record<string, string | number> = { role: 'DOCENTE', page, limit: 20 }
+      if (debouncedSearch) params.q = debouncedSearch
       if (user?.sedeActualId) params.sedeId = user.sedeActualId
       const res = await api.get('/users', { params })
       const list: User[] = res.data.data ?? res.data
@@ -46,9 +57,10 @@ export function ProfessorsPage() {
           status: 'Activo',
         }
       }))
+      if (res.data.meta) setMeta(res.data.meta)
     } catch { setUsers([]) }
     finally { setLoading(false) }
-  }, [user?.sedeActualId])
+  }, [user?.sedeActualId, page, debouncedSearch])
 
   useEffect(() => {
     fetchData()
@@ -94,21 +106,24 @@ export function ProfessorsPage() {
 
   return (
     <div className="space-y-6">
-      {loading ? (
-        <div className="text-center text-muted-foreground py-10">Cargando docentes...</div>
-      ) : (
-        <ProfessorsTable
-          data={users}
-          onImport={handleImport}
-          onCreate={() => { setEditingUser(null); setModalOpen(true) }}
-          onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
-          onDelete={(item) => setDeletingUser(item)}
-          onResetDevice={(item) => setResettingDeviceUser(item)}
-          canEdit={canEdit}
-          canResetDevice={canResetDevice}
-          canDelete={canDelete}
-        />
-      )}
+      <ProfessorsTable
+        data={users}
+        loading={loading}
+        onImport={handleImport}
+        onCreate={() => { setEditingUser(null); setModalOpen(true) }}
+        onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
+        onDelete={(item) => setDeletingUser(item)}
+        onResetDevice={(item) => setResettingDeviceUser(item)}
+        canEdit={canEdit}
+        canResetDevice={canResetDevice}
+        canDelete={canDelete}
+        searchQuery={search}
+        onSearchQueryChange={setSearch}
+        currentPage={page}
+        totalPages={meta.totalPages}
+        totalItems={meta.total}
+        onPageChange={setPage}
+      />
 
       <UserFormModal
         open={modalOpen}

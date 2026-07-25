@@ -20,8 +20,10 @@ import api from "@/config/api"
 
 interface InscripcionMasivaResponse {
   procesados: number
+  alumnosEncontrados: number
   inscritos: number
-  errores: { claseId: string; motivo: string }[]
+  yaInscritas: number
+  errores: { claseId: string; alumnoId: string; motivo: string }[]
 }
 
 const DIA_LABEL: Record<string, string> = {
@@ -67,15 +69,10 @@ export function SeccionDetallePage() {
       const clasesArr = Array.isArray(clasesList) ? clasesList : []
       setClases(clasesArr)
 
-      const [periodosRes, cohorteRes, inscripcionesRes] = await Promise.all([
-        api.get('/periodos/activo', { params: { sedePnfId: seccionData.sedePnfId } }),
+      const [cohorteRes, inscripcionesRes] = await Promise.all([
         api.get('/cohortes', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
         Promise.all(clasesArr.map((c) => api.get('/inscripciones', { params: { claseId: c.id } }))),
       ])
-
-      const periodosList = periodosRes.data.data ?? periodosRes.data
-      const periodos = Array.isArray(periodosList) ? periodosList : (periodosList ? [periodosList] : [])
-      setPeriodoActivo(periodos[0] ?? null)
 
       const cohorteList = cohorteRes.data.data ?? cohorteRes.data
       setCohorte(Array.isArray(cohorteList) ? cohorteList : [])
@@ -86,6 +83,20 @@ export function SeccionDetallePage() {
         inscripcionesMap[c.id] = Array.isArray(list) ? list : []
       })
       setInscripcionesPorClase(inscripcionesMap)
+
+      // Llamada aislada: un 404 de "sin período activo" es un caso válido (2 de 3
+      // sede-PNF no tienen ninguno) y no debe tumbar el resto de la sección.
+      try {
+        const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId: seccionData.sedePnfId } })
+        const periodo: PeriodoAcademico = periodoRes.data
+        setPeriodoActivo(periodo)
+        periodo.advertencias?.forEach((a) => toast.warning(a))
+      } catch (periodoErr: any) {
+        setPeriodoActivo(null)
+        if (periodoErr?.response?.status !== 404) {
+          toast.error('No se pudo cargar el período académico activo.')
+        }
+      }
     } catch {
       setSeccion(null)
       setClases([])
@@ -114,6 +125,19 @@ export function SeccionDetallePage() {
     () => gruposPorMateria.filter((g) => g.length > 1),
     [gruposPorMateria],
   )
+
+  // Cuenta en cuántas clases de la sección está inscrito cada alumno, para mostrar
+  // el estado de inscripción en la tabla de la cohorte (antes no había forma de saber
+  // si un alumno estaba o no inscrito con solo mirar la tabla).
+  const clasesInscritasPorAlumno = useMemo(() => {
+    const map = new Map<string, number>()
+    Object.values(inscripcionesPorClase).forEach((list) => {
+      list.forEach((ins) => {
+        map.set(ins.alumnoId, (map.get(ins.alumnoId) ?? 0) + 1)
+      })
+    })
+    return map
+  }, [inscripcionesPorClase])
 
   const handleCreate = async (form: Record<string, any>) => {
     await api.post('/clases', { ...form, seccionId: id })
@@ -145,6 +169,8 @@ export function SeccionDetallePage() {
       })
       setResultado(res.data)
       await fetchData()
+    } catch (err: any) {
+      toast.error(err.response?.data?.message ?? 'No se pudo inscribir la cohorte.')
     } finally {
       setInscribiendo(false)
     }
@@ -178,6 +204,11 @@ export function SeccionDetallePage() {
   const claseNombre = (claseId: string) => {
     const c = clases.find((cl) => cl.id === claseId)
     return c ? `${c.unidadCurricular?.nombre ?? 'Materia'} (${c.nombreGrupo})` : claseId
+  }
+
+  const alumnoNombre = (alumnoId: string) => {
+    const ac = cohorte.find((a) => a.alumnoId === alumnoId)
+    return ac?.alumno?.nombreCompleto ?? alumnoId
   }
 
   if (loading) {
@@ -245,12 +276,12 @@ export function SeccionDetallePage() {
         <Card className="border-primary/30">
           <CardContent className="pt-6 space-y-2">
             <p className="text-sm">
-              Procesados: <span className="font-semibold">{resultado.procesados}</span> — Inscritos: <span className="font-semibold">{resultado.inscritos}</span>
+              Alumnos encontrados: <span className="font-semibold">{resultado.alumnosEncontrados}</span> — Procesados: <span className="font-semibold">{resultado.procesados}</span> — Inscritos: <span className="font-semibold">{resultado.inscritos}</span> — Ya inscritos: <span className="font-semibold">{resultado.yaInscritas}</span>
             </p>
             {resultado.errores.length > 0 && (
               <ul className="text-sm text-muted-foreground list-disc pl-5">
                 {resultado.errores.map((e, i) => (
-                  <li key={i}>{claseNombre(e.claseId)}: {e.motivo}</li>
+                  <li key={i}>{alumnoNombre(e.alumnoId)} — {claseNombre(e.claseId)}: {e.motivo}</li>
                 ))}
               </ul>
             )}
@@ -261,7 +292,7 @@ export function SeccionDetallePage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <h2 className="text-lg font-semibold">Alumnos de esta cohorte ({cohorte.length})</h2>
-          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección.</p>
+          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección. La columna Estado indica si ya están inscritos en las clases (pertenecer a la cohorte no es lo mismo que estar inscrito).</p>
         </CardHeader>
         <CardContent>
           {cohorte.length === 0 ? (
@@ -272,15 +303,28 @@ export function SeccionDetallePage() {
                 <TableRow className="bg-muted/50">
                   <TableHead className="font-semibold">Nombre</TableHead>
                   <TableHead className="font-semibold">Cédula</TableHead>
+                  <TableHead className="font-semibold">Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cohorte.map((ac) => (
-                  <TableRow key={ac.id}>
-                    <TableCell>{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
-                  </TableRow>
-                ))}
+                {cohorte.map((ac) => {
+                  const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
+                  return (
+                    <TableRow key={ac.id}>
+                      <TableCell>{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
+                      <TableCell>
+                        {inscritas > 0 ? (
+                          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
+                            Inscrito{clases.length > 0 ? ` (${inscritas}/${clases.length})` : ''}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Sin inscribir</Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
