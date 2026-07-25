@@ -67,7 +67,7 @@ export function ClaseFormModal({
       const list = res.data.data ?? res.data
       setUcOptions(Array.isArray(list) ? list : [])
     }).catch(() => setUcOptions([]))
-    api.get('/users', { params: { role: 'DOCENTE', sedePnfId, limit: 1000 } }).then((res) => {
+    api.get('/users', { params: { role: 'DOCENTE', sedePnfId, limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setDocenteOptions(Array.isArray(list) ? list : [])
     }).catch(() => setDocenteOptions([]))

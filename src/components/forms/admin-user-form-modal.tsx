@@ -51,6 +51,7 @@ export function AdminUserFormModal({
   const [error, setError] = useState<string | null>(null)
   const [sedeOptions, setSedeOptions] = useState<Sede[]>([])
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+  const [selectedCoordSedeId, setSelectedCoordSedeId] = useState("")
 
   const defaultValues: AdminUserFormData = {
     nombres: '', apellidos: '', ci: '', email: '', password: '', role: allowedRoles[0],
@@ -65,10 +66,12 @@ export function AdminUserFormModal({
 
   const showSedeField = role === Role.RECTOR && currentUser?.role === Role.SUPERADMIN
   const showSedePnfField = role === Role.COORDINADOR
+  const ciEditable = currentUser?.role === Role.SUPERADMIN
 
   useEffect(() => {
     if (open) {
       reset({ ...defaultValues, role: allowedRoles[0], ...initialData })
+      setSelectedCoordSedeId("")
       setError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -89,6 +92,19 @@ export function AdminUserFormModal({
       }).catch(() => setSedePnfOptions([]))
     }
   }, [open, showSedeField, showSedePnfField])
+
+  // Al editar, deriva la sede seleccionada a partir del sedePnfId guardado, una
+  // vez que las opciones ya cargaron (WEB #4/#5: sede y PNF son selects encadenados).
+  useEffect(() => {
+    if (!open || !showSedePnfField || !initialData?.sedePnfId || sedePnfOptions.length === 0) return
+    const sp = sedePnfOptions.find((s) => s.id === initialData.sedePnfId)
+    if (sp) setSelectedCoordSedeId(sp.sedeId)
+  }, [open, showSedePnfField, initialData?.sedePnfId, sedePnfOptions])
+
+  const coordSedeOptions = Array.from(
+    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const coordPnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedCoordSedeId)
 
   const submitHandler = async (data: AdminUserFormData) => {
     setLoading(true)
@@ -158,7 +174,7 @@ export function AdminUserFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="ci">Cédula</Label>
-            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing} />
+            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing && !ciEditable} />
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
@@ -190,29 +206,42 @@ export function AdminUserFormModal({
             </div>
           )}
           {showSedePnfField && (
-            <div className="space-y-2">
-              <Label htmlFor="sedePnfId">Sede-PNF</Label>
-              <Controller
-                control={control}
-                name="sedePnfId"
-                rules={{ required: 'Requerido' }}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="sedePnfId" className="w-full">
-                      <SelectValue placeholder="Seleccione una sede-PNF" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sedePnfOptions.map((sp) => (
-                        <SelectItem key={sp.id} value={sp.id}>
-                          {sp.pnf?.nombre} — {sp.sede?.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="coordSedeId">Sede</Label>
+                <Select value={selectedCoordSedeId} onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}>
+                  <SelectTrigger id="coordSedeId" className="w-full">
+                    <SelectValue placeholder="Seleccione una sede" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {coordSedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sedePnfId">PNF</Label>
+                <Controller
+                  control={control}
+                  name="sedePnfId"
+                  rules={{ required: 'Requerido' }}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange} disabled={!selectedCoordSedeId}>
+                      <SelectTrigger id="sedePnfId" className="w-full">
+                        <SelectValue placeholder={selectedCoordSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {coordPnfOptionsForSede.map((sp) => (
+                          <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
+              </div>
+            </>
           )}
           {!isEditing && (
             <div className="space-y-2">

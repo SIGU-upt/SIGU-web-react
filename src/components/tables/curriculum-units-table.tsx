@@ -71,7 +71,7 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
         'Unidad Curricular': item.name,
         Trayecto: item.trayecto,
         Tipo: item.type,
-        Estatus: item.status,
+        Estado: item.status,
       })),
     )
   }
@@ -127,7 +127,7 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
                 <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
                 <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
                 <TableHead className="font-semibold text-foreground">Tipo</TableHead>
-                <TableHead className="font-semibold text-foreground">Estatus</TableHead>
+                <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>

@@ -57,6 +57,7 @@ export interface Trayecto {
   pnfId: string
   numero: number
   nombre: string
+  pnf?: Pnf
 }
 
 export interface Tramo {
@@ -75,6 +76,10 @@ export interface UnidadCurricular {
   tramoId: string | null
   trayecto?: Trayecto
   tramo?: Tramo | null
+  // ADR-023: la UC ahora referencia un catálogo compartido entre trayectos.
+  ucCatalogoId?: string
+  codigo?: string
+  catalogo?: { id: string; codigo: string; nombre: string }
 }
 
 export interface PeriodoAcademico {
@@ -84,6 +89,7 @@ export interface PeriodoAcademico {
   fechaFin: string
   sedePnfId: string
   activo: boolean
+  advertencias?: string[]
 }
 
 export interface Seccion {

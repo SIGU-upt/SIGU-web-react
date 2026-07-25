@@ -79,6 +79,7 @@ export function CurriculumUnitsPage() {
         onSubmit={editing ? handleEdit : handleCreate}
         initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoId: editing._raw.tramoId ?? undefined } : undefined}
         isEditing={!!editing}
+        ucCatalogoId={editing?._raw.ucCatalogoId}
       />
 
       <ConfirmDeleteModal
