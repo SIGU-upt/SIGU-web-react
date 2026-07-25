@@ -104,7 +104,7 @@ export function AttendanceTable() {
                   <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
                   <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
                   <TableHead className="font-semibold text-foreground">Fecha</TableHead>
-                  <TableHead className="font-semibold text-foreground">Estatus</TableHead>
+                  <TableHead className="font-semibold text-foreground">Estado</TableHead>
                   <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>

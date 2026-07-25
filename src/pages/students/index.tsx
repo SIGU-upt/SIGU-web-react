@@ -20,12 +20,21 @@ export function StudentsPage() {
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
+  const [search, setSearch] = useState("")
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
 
   const isSuperadmin = user?.role === Role.SUPERADMIN
   const isRector = user?.role === Role.RECTOR
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canResetDevice = canEdit
   const canDelete = user?.role === Role.SUPERADMIN
+
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   useEffect(() => {
     api.get('/trayectos').then((res) => {
@@ -44,15 +53,13 @@ export function StudentsPage() {
         .map(([id, label]) => ({ id, label }))
     : undefined
 
-  // Opciones de PNF: para superadmin se limitan a la sede elegida; para rector, a su
-  // propia sede; el valor de cada opción es el sedePnfId (lo que consume el backend).
+  // Opciones de PNF: para superadmin se limitan a la sede elegida; para rector, el
+  // servidor ya devuelve solo las sede-PNF de su propia sede (R-3). El valor de
+  // cada opción es el sedePnfId (lo que consume el backend).
   const pnfOptions =
     isSuperadmin || isRector
       ? sedePnfOptions
-          .filter((sp) => {
-            if (isSuperadmin) return !sedeFilter || sp.sedeId === sedeFilter
-            return sp.sedeId === user?.sedeActualId
-          })
+          .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
           .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
       : undefined
 
@@ -64,8 +71,10 @@ export function StudentsPage() {
     : trayectoOptions
 
   const fetchData = useCallback(async () => {
+    setLoading(true)
     try {
-      const params: Record<string, string> = { role: 'ALUMNO', limit: '1000' }
+      const params: Record<string, string | number> = { role: 'ALUMNO', page, limit: 20 }
+      if (debouncedSearch) params.q = debouncedSearch
       if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
       if (pnfFilter) params.sedePnfId = pnfFilter
       if (trayectoFilter) params.trayectoId = trayectoFilter
@@ -84,9 +93,10 @@ export function StudentsPage() {
         semester: u.trayectoActual?.numero ?? u.cohorteActiva?.trayecto?.numero ?? 0,
         status: 'Regular',
       })))
+      if (res.data.meta) setMeta(res.data.meta)
     } catch { setUsers([]) }
     finally { setLoading(false) }
-  }, [isSuperadmin, sedeFilter, pnfFilter, trayectoFilter])
+  }, [isSuperadmin, sedeFilter, pnfFilter, trayectoFilter, page, debouncedSearch])
 
   useEffect(() => {
     fetchData()
@@ -98,10 +108,16 @@ export function StudentsPage() {
     setSedeFilter(value)
     setPnfFilter("")
     setTrayectoFilter("")
+    setPage(1)
   }
   const handlePnfFilterChange = (value: string) => {
     setPnfFilter(value)
     setTrayectoFilter("")
+    setPage(1)
+  }
+  const handleTrayectoFilterChange = (value: string) => {
+    setTrayectoFilter(value)
+    setPage(1)
   }
 
   const handleCreate = async (data: any) => {
@@ -111,23 +127,22 @@ export function StudentsPage() {
     const sedePnfId = data.sedePnfId ?? user?.sedePnfId
     if (trayectoId && sedePnfId) {
       try {
-        const periodosRes = await api.get('/periodos/activo', { params: { sedePnfId } })
-        const periodosList = periodosRes.data.data ?? periodosRes.data
-        const periodos = Array.isArray(periodosList) ? periodosList : (periodosList ? [periodosList] : [])
-        if (periodos[0]) {
-          await api.post('/cohortes', {
-            alumnoId: res.data.id,
-            sedePnfId,
-            trayectoId,
-            periodoId: periodos[0].id,
-          })
-        } else {
+        const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
+        const periodo = periodoRes.data
+        await api.post('/cohortes', {
+          alumnoId: res.data.id,
+          sedePnfId,
+          trayectoId,
+          periodoId: periodo.id,
+        })
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
           // El trayecto ya quedó asignado al alumno (ADR-022); lo que falta es la
           // matrícula en un período (cohorte), que necesita un período activo.
           toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
+        } else {
+          toast.warning('El estudiante se creó con su trayecto asignado, pero no fue posible matricularlo en el período. Puede hacerlo luego.')
         }
-      } catch {
-        toast.warning('El estudiante se creó con su trayecto asignado, pero no fue posible matricularlo en el período. Puede hacerlo luego.')
       }
     }
     await fetchData()
@@ -170,30 +185,33 @@ export function StudentsPage() {
 
   return (
     <div className="space-y-6">
-      {loading ? (
-        <div className="text-center text-muted-foreground py-10">Cargando estudiantes...</div>
-      ) : (
-        <StudentsTable
-          data={users}
-          onImport={handleImport}
-          onCreate={() => { setEditingUser(null); setModalOpen(true) }}
-          onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
-          onDelete={(item) => setDeletingUser(item)}
-          onResetDevice={(item) => setResettingDeviceUser(item)}
-          canEdit={canEdit}
-          canResetDevice={canResetDevice}
-          canDelete={canDelete}
-          trayectoOptions={visibleTrayectoOptions}
-          trayectoFilter={trayectoFilter}
-          onTrayectoFilterChange={setTrayectoFilter}
-          sedeOptions={sedeOptions}
-          sedeFilter={sedeFilter}
-          onSedeFilterChange={isSuperadmin ? handleSedeFilterChange : undefined}
-          pnfOptions={pnfOptions}
-          pnfFilter={pnfFilter}
-          onPnfFilterChange={handlePnfFilterChange}
-        />
-      )}
+      <StudentsTable
+        data={users}
+        loading={loading}
+        onImport={handleImport}
+        onCreate={() => { setEditingUser(null); setModalOpen(true) }}
+        onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
+        onDelete={(item) => setDeletingUser(item)}
+        onResetDevice={(item) => setResettingDeviceUser(item)}
+        canEdit={canEdit}
+        canResetDevice={canResetDevice}
+        canDelete={canDelete}
+        trayectoOptions={visibleTrayectoOptions}
+        trayectoFilter={trayectoFilter}
+        onTrayectoFilterChange={handleTrayectoFilterChange}
+        sedeOptions={sedeOptions}
+        sedeFilter={sedeFilter}
+        onSedeFilterChange={isSuperadmin ? handleSedeFilterChange : undefined}
+        pnfOptions={pnfOptions}
+        pnfFilter={pnfFilter}
+        onPnfFilterChange={handlePnfFilterChange}
+        searchQuery={search}
+        onSearchQueryChange={setSearch}
+        currentPage={page}
+        totalPages={meta.totalPages}
+        totalItems={meta.total}
+        onPageChange={setPage}
+      />
 
       <UserFormModal
         open={modalOpen}
