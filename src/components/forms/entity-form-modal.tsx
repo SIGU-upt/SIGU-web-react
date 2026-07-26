@@ -105,7 +105,13 @@ export function EntityFormModal({
               <Label htmlFor={f.name}>{f.label}</Label>
               {f.type === 'checkbox' ? (
                 <div className="flex items-center gap-2">
-                  <Checkbox id={f.name} {...register(f.name)} />
+                  <Controller
+                    control={control}
+                    name={f.name}
+                    render={({ field }) => (
+                      <Checkbox id={f.name} checked={!!field.value} onCheckedChange={field.onChange} />
+                    )}
+                  />
                   <label htmlFor={f.name} className="text-sm text-muted-foreground">{f.label}</label>
                 </div>
               ) : f.type === 'select' ? (

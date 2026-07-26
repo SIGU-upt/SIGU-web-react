@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { PageHeader } from "@/components/ui/page-header"
 import { AdminUserFormModal } from "@/components/forms/admin-user-form-modal"
@@ -34,10 +35,18 @@ export function PersonalAdministrativoPage() {
   const [editing, setEditing] = useState<User | null>(null)
   const [deleting, setDeleting] = useState<User | null>(null)
   const [resettingDevice, setResettingDevice] = useState<User | null>(null)
+  const [sedeFilter, setSedeFilter] = useState("")
+  const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
 
   const allowedRoles: Role[] = user?.role === Role.SUPERADMIN
     ? [Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]
     : [Role.COORDINADOR, Role.ANALISTA]
+
+  // Igual que en Estudiantes/Docentes: superadmin tiene alcance global (necesita
+  // sede + PNF para acotar); rector ya viene escopado a su sede por el backend
+  // (GET /sede-pnf y GET /users ya se lo filtran), solo elige PNF dentro de ella.
+  const isSuperadmin = user?.role === Role.SUPERADMIN
+  const isRector = user?.role === Role.RECTOR
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR].includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
@@ -48,15 +57,44 @@ export function PersonalAdministrativoPage() {
     return () => clearTimeout(timer)
   }, [search])
 
+  // Opciones de sede (solo superadmin): la lista de sedes ya se carga para mostrar
+  // la columna Sede/PNF, se reutiliza para el filtro.
+  const sedeOptions = isSuperadmin
+    ? sedes.map((s) => ({ id: s.id, label: s.nombre }))
+    : undefined
+
+  // Opciones de PNF: para superadmin se limitan a la sede elegida; para rector, el
+  // servidor ya devuelve solo las sede-PNF de su propia sede.
+  const pnfOptions =
+    isSuperadmin || isRector
+      ? sedePnfs
+          .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
+          .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+      : undefined
+
+  const handleSedeFilterChange = (value: string) => {
+    setSedeFilter(value)
+    setPnfFilter("")
+    setPage(1)
+  }
+  const handlePnfFilterChange = (value: string) => {
+    setPnfFilter(value)
+    setPage(1)
+  }
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       // El límite máximo del backend es 200; como se combinan varios roles a la vez
       // (rector/coordinador/analista son listas acotadas), se pagina el resultado
       // combinado en el cliente en vez de fusionar meta.total de cada rol por separado.
+      const extraParams: Record<string, string> = {}
+      if (debouncedSearch) extraParams.q = debouncedSearch
+      if (isSuperadmin && sedeFilter) extraParams.sedeId = sedeFilter
+      if (pnfFilter) extraParams.sedePnfId = pnfFilter
       const [usersResults, sedesRes, sedePnfRes] = await Promise.all([
         Promise.all(allowedRoles.map((role) => api.get('/users', {
-          params: { role, limit: 200, ...(debouncedSearch ? { q: debouncedSearch } : {}) },
+          params: { role, limit: 200, ...extraParams },
         }))),
         api.get('/sedes'),
         api.get('/sede-pnf'),
@@ -76,7 +114,7 @@ export function PersonalAdministrativoPage() {
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role, debouncedSearch])
+  }, [user?.role, debouncedSearch, isSuperadmin, sedeFilter, pnfFilter])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -126,9 +164,33 @@ export function PersonalAdministrativoPage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              </div>
+              {sedeOptions && (
+                <Select value={sedeFilter || "__all__"} onValueChange={(v) => handleSedeFilterChange(v === "__all__" ? "" : v)}>
+                  <SelectTrigger className="w-56"><SelectValue placeholder="Sede" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas las sedes</SelectItem>
+                    {sedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {pnfOptions && (
+                <Select value={pnfFilter || "__all__"} onValueChange={(v) => handlePnfFilterChange(v === "__all__" ? "" : v)}>
+                  <SelectTrigger className="w-56"><SelectValue placeholder="PNF" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todos los PNF</SelectItem>
+                    {pnfOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             {canEdit && (
               <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>

@@ -67,11 +67,17 @@ export function AdminUserFormModal({
   const showSedeField = role === Role.RECTOR && currentUser?.role === Role.SUPERADMIN
   const showSedePnfField = role === Role.COORDINADOR
   const ciEditable = currentUser?.role === Role.SUPERADMIN
+  // Un rector administra una sola sede: al crear (o editar) un coordinador no
+  // tiene sentido que elija entre sedes que no maneja, así que se preasigna la
+  // suya y el selector queda bloqueado.
+  const sedeLockedForRector = showSedePnfField && currentUser?.role === Role.RECTOR
 
   useEffect(() => {
     if (open) {
       reset({ ...defaultValues, role: allowedRoles[0], ...initialData })
-      setSelectedCoordSedeId("")
+      setSelectedCoordSedeId(
+        currentUser?.role === Role.RECTOR && currentUser.sedeActualId ? currentUser.sedeActualId : "",
+      )
       setError(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,7 +215,14 @@ export function AdminUserFormModal({
             <>
               <div className="space-y-2">
                 <Label htmlFor="coordSedeId">Sede</Label>
-                <Select value={selectedCoordSedeId} onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}>
+                {sedeLockedForRector && (
+                  <p className="text-xs text-muted-foreground">Los coordinadores que cree pertenecen a su misma sede.</p>
+                )}
+                <Select
+                  value={selectedCoordSedeId}
+                  onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}
+                  disabled={sedeLockedForRector}
+                >
                   <SelectTrigger id="coordSedeId" className="w-full">
                     <SelectValue placeholder="Seleccione una sede" />
                   </SelectTrigger>
