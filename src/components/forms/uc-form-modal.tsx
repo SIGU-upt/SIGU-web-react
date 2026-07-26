@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type Trayecto, type Tramo } from "@/types"
+import { type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
 
@@ -33,8 +33,11 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [tramoOptions, setTramoOptions] = useState<Tramo[]>([])
   const [ofertasCount, setOfertasCount] = useState<number | null>(null)
+  const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
+  const [selectedSedeId, setSelectedSedeId] = useState("")
+  const [selectedPnfId, setSelectedPnfId] = useState("")
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<UCFormData>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UCFormData>({
     defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, ...initialData },
   })
   const trayectoId = watch('trayectoId')
@@ -42,6 +45,8 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   useEffect(() => {
     if (open) {
       reset({ nombre: '', trayectoId: '', tramoId: SIN_TRAMO, ...initialData })
+      setSelectedSedeId("")
+      setSelectedPnfId("")
       setError(null)
     }
   }, [open, initialData, reset])
@@ -52,7 +57,22 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
       const list = res.data.data ?? res.data
       setTrayectoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTrayectoOptions([]))
+    api.get('/sede-pnf').then((res) => {
+      const list = res.data.data ?? res.data
+      setSedePnfOptions(Array.isArray(list) ? list : [])
+    }).catch(() => setSedePnfOptions([]))
   }, [open])
+
+  // Al editar, deriva sede y PNF a partir del trayecto ya guardado, una vez que
+  // las opciones cargaron, para que el select de trayecto arranque filtrado.
+  useEffect(() => {
+    if (!open || !initialData?.trayectoId || trayectoOptions.length === 0) return
+    const t = trayectoOptions.find((tr) => tr.id === initialData.trayectoId)
+    if (!t) return
+    setSelectedPnfId(t.pnfId)
+    const sp = sedePnfOptions.find((s) => s.pnfId === t.pnfId)
+    if (sp) setSelectedSedeId(sp.sedeId)
+  }, [open, initialData?.trayectoId, trayectoOptions, sedePnfOptions])
 
   useEffect(() => {
     if (!open || !isEditing || !ucCatalogoId) {
@@ -75,6 +95,34 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
       setTramoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTramoOptions([]))
   }, [trayectoId])
+
+  // Sede → PNF → Trayecto: Trayecto.pnfId es la única relación real del modelo
+  // (un trayecto no pertenece a una sede), así que el trayecto siempre se filtra
+  // por PNF; la sede es solo un filtro opcional para acotar la lista de PNF.
+  // Evita la ambigüedad de "Trayecto 1" repetido entre PNF distintos.
+  const sedeOptions = Array.from(
+    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const pnfOptions = Array.from(
+    new Map(
+      sedePnfOptions
+        .filter((sp) => !selectedSedeId || sp.sedeId === selectedSedeId)
+        .map((sp) => [sp.pnfId, sp.pnf?.nombre ?? sp.pnfId]),
+    ).entries(),
+  ).map(([id, label]) => ({ id, label }))
+  const visibleTrayectoOptions = selectedPnfId
+    ? trayectoOptions.filter((t) => t.pnfId === selectedPnfId)
+    : []
+
+  const handleSedeChange = (value: string) => {
+    setSelectedSedeId(value)
+    setSelectedPnfId("")
+    setValue('trayectoId', '')
+  }
+  const handlePnfChange = (value: string) => {
+    setSelectedPnfId(value)
+    setValue('trayectoId', '')
+  }
 
   const submitHandler = async (data: UCFormData) => {
     setLoading(true)
@@ -105,18 +153,45 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
             )}
           </div>
           <div className="space-y-2">
+            <Label htmlFor="sedeId">Sede (opcional, para acotar el PNF)</Label>
+            <Select value={selectedSedeId || "__all__"} onValueChange={(v) => handleSedeChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger id="sedeId" className="w-full">
+                <SelectValue placeholder="Todas las sedes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las sedes</SelectItem>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pnfId">PNF</Label>
+            <Select value={selectedPnfId} onValueChange={handlePnfChange}>
+              <SelectTrigger id="pnfId" className="w-full">
+                <SelectValue placeholder="Seleccione un PNF" />
+              </SelectTrigger>
+              <SelectContent>
+                {pnfOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="trayectoId">Trayecto</Label>
             <Controller
               control={control}
               name="trayectoId"
               rules={{ required: 'Requerido' }}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
+                <Select value={field.value} onValueChange={field.onChange} disabled={!selectedPnfId}>
                   <SelectTrigger id="trayectoId" className="w-full">
-                    <SelectValue placeholder="Seleccione un trayecto" />
+                    <SelectValue placeholder={selectedPnfId ? "Seleccione un trayecto" : "Elija primero un PNF"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {trayectoOptions.map((t) => (
+                    {visibleTrayectoOptions.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
                     ))}
                   </SelectContent>

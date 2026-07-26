@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type SedePnf, type Trayecto } from "@/types"
+import { Role, type SedePnf, type Trayecto } from "@/types"
+import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
 
@@ -30,6 +31,14 @@ export function SeccionFormModal({
   initialData,
   isEditing,
 }: SeccionFormModalProps) {
+  const { user: currentUser } = useAuth()
+  // Un coordinador administra una sola sede-PNF: no elige nada, se le fija la
+  // suya. Un rector administra una sola sede: elige el PNF (entre los suyos)
+  // pero no la sede. Solo superadmin ve la cascada completa.
+  const isCoordinador = currentUser?.role === Role.COORDINADOR
+  const isRector = currentUser?.role === Role.RECTOR
+  const isSuperadmin = currentUser?.role === Role.SUPERADMIN
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
@@ -43,11 +52,14 @@ export function SeccionFormModal({
 
   useEffect(() => {
     if (open) {
-      reset({ sedePnfId: '', trayectoId: '', codigo: '', ...initialData })
-      setSelectedSedeId("")
+      reset({
+        sedePnfId: '', trayectoId: '', codigo: '', ...initialData,
+        ...(isCoordinador && currentUser?.sedePnfId ? { sedePnfId: currentUser.sedePnfId } : {}),
+      })
+      setSelectedSedeId(isRector && currentUser?.sedeActualId ? currentUser.sedeActualId : "")
       setError(null)
     }
-  }, [open, initialData, reset])
+  }, [open, initialData, reset, isCoordinador, isRector, currentUser])
 
   useEffect(() => {
     if (open) {
@@ -107,43 +119,47 @@ export function SeccionFormModal({
           <DialogTitle>{isEditing ? 'Editar Sección' : 'Nueva Sección'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="sedeId">Sede</Label>
-            <Select
-              value={selectedSedeId}
-              onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', ''); setValue('trayectoId', '') }}
-            >
-              <SelectTrigger id="sedeId" className="w-full">
-                <SelectValue placeholder="Seleccione una sede" />
-              </SelectTrigger>
-              <SelectContent>
-                {sedeOptions.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sedePnfId">PNF</Label>
-            <Controller
-              control={control}
-              name="sedePnfId"
-              rules={{ required: 'Requerido' }}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('trayectoId', '') }} disabled={!selectedSedeId}>
-                  <SelectTrigger id="sedePnfId" className="w-full">
-                    <SelectValue placeholder={selectedSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pnfOptionsForSede.map((sp) => (
-                      <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
-          </div>
+          {isSuperadmin && (
+            <div className="space-y-2">
+              <Label htmlFor="sedeId">Sede</Label>
+              <Select
+                value={selectedSedeId}
+                onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', ''); setValue('trayectoId', '') }}
+              >
+                <SelectTrigger id="sedeId" className="w-full">
+                  <SelectValue placeholder="Seleccione una sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sedeOptions.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          {(isSuperadmin || isRector) && (
+            <div className="space-y-2">
+              <Label htmlFor="sedePnfId">PNF</Label>
+              <Controller
+                control={control}
+                name="sedePnfId"
+                rules={{ required: 'Requerido' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); setValue('trayectoId', '') }} disabled={!selectedSedeId}>
+                    <SelectTrigger id="sedePnfId" className="w-full">
+                      <SelectValue placeholder={selectedSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pnfOptionsForSede.map((sp) => (
+                        <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="trayectoId">Trayecto</Label>
             <Controller

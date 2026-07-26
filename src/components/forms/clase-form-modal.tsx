@@ -9,7 +9,7 @@ import { type UnidadCurricular, type User } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
 
-const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'] as const
+const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const
 
 interface ClaseFormData {
   ucId: string
@@ -54,9 +54,20 @@ export function ClaseFormModal({
   })
   const horaInicio = watch('horaInicio')
 
+  // El backend devuelve las columnas TIME como "HH:mm:ss" (con segundos). El
+  // input type="time" no vuelve a normalizarlas si el usuario no lo toca, así
+  // que al editar sin modificar la hora se reenviaba "19:01:00" y el backend
+  // lo rechazaba (@Matches exige exactamente HH:mm).
+  const normalizeTime = (t?: string) => (t ? t.slice(0, 5) : '')
+
   useEffect(() => {
     if (open) {
-      reset({ ...defaultValues, ...initialData })
+      reset({
+        ...defaultValues,
+        ...initialData,
+        horaInicio: normalizeTime(initialData?.horaInicio),
+        horaFin: normalizeTime(initialData?.horaFin),
+      })
       setError(null)
     }
   }, [open, initialData, reset])
@@ -178,7 +189,8 @@ export function ClaseFormModal({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="aula">Aula</Label>
+            <Label htmlFor="aula">Aula (opcional)</Label>
+            <p className="text-xs text-muted-foreground">Solo es informativo para el alumno; no afecta la asistencia ni el horario.</p>
             <Input id="aula" placeholder="A-101" {...register('aula', { maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
             {errors.aula && <p className="text-xs text-destructive">{errors.aula.message}</p>}
           </div>
