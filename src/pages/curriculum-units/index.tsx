@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { CurriculumUnitsTable } from "@/components/tables/curriculum-units-table"
 import { UCFormModal } from "@/components/forms/uc-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -25,8 +25,7 @@ export function CurriculumUnitsPage() {
         id: uc.id,
         code: `UC-${uc.nombre.substring(0, 3).toUpperCase()}`,
         name: uc.nombre,
-        credits: uc.creditos,
-        semester: 1,
+        trayecto: uc.trayecto?.nombre ?? '—',
         type: 'Obligatoria' as const,
         status: 'Activa' as const,
         _raw: uc,
@@ -34,6 +33,10 @@ export function CurriculumUnitsPage() {
     } catch { setData([]) }
     finally { setLoading(false) }
   }, [])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleCreate = async (formData: any) => {
     await api.post('/unidades-curriculares', formData)
@@ -43,7 +46,8 @@ export function CurriculumUnitsPage() {
   const handleEdit = async (formData: any) => {
     await api.patch(`/unidades-curriculares/${editing._raw.id}`, {
       nombre: formData.nombre,
-      creditos: formData.creditos,
+      trayectoId: formData.trayectoId,
+      tramoId: formData.tramoId ?? null,
     })
     await fetchData()
   }
@@ -73,8 +77,9 @@ export function CurriculumUnitsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={editing ? handleEdit : handleCreate}
-        initialData={editing ? { nombre: editing.name, creditos: editing.credits } : undefined}
+        initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoId: editing._raw.tramoId ?? undefined } : undefined}
         isEditing={!!editing}
+        ucCatalogoId={editing?._raw.ucCatalogoId}
       />
 
       <ConfirmDeleteModal

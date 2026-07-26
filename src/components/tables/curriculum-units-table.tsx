@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  BookOpen, 
+  Search,
+  MoreVertical,
+  Edit,
+  BookOpen,
   Layers, 
   Download,
   Plus,
@@ -12,7 +12,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Table,
   TableBody,
@@ -29,13 +28,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { downloadCsv } from "@/lib/export-csv"
 
 interface CurriculumUnit {
   id: string | number
   code: string
   name: string
-  credits: number
-  semester: number
+  trayecto: string
   type: "Obligatoria" | "Electiva"
   status: "Activa" | "Inactiva"
 }
@@ -63,6 +62,20 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
   const startIndex = (currentPage - 1) * itemsPerPage
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
 
+  const exportPensum = () => {
+    if (filteredData.length === 0) return
+    downloadCsv(
+      'pensum.csv',
+      filteredData.map((item) => ({
+        Código: item.code,
+        'Unidad Curricular': item.name,
+        Trayecto: item.trayecto,
+        Tipo: item.type,
+        Estado: item.status,
+      })),
+    )
+  }
+
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-4 space-y-4">
@@ -73,11 +86,11 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
               Unidades Curriculares
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Catálogo de asignaturas y créditos académicos del programa
+              Catálogo de asignaturas por trayecto del programa
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm" onClick={exportPensum}>
               <Download className="mr-2 h-4 w-4" />
               Exportar Pensum
             </Button>
@@ -112,10 +125,9 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
               <TableRow className="bg-muted/50">
                 <TableHead className="font-semibold text-foreground w-[120px]">Código</TableHead>
                 <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
-                <TableHead className="font-semibold text-foreground text-center">Créditos</TableHead>
-                <TableHead className="font-semibold text-foreground text-center">Semestre</TableHead>
+                <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
                 <TableHead className="font-semibold text-foreground">Tipo</TableHead>
-                <TableHead className="font-semibold text-foreground">Estatus</TableHead>
+                <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -130,14 +142,9 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
                       <span className="font-medium text-foreground">{item.name}</span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="secondary" className="bg-secondary/50 text-secondary-foreground font-bold">
-                        {item.credits}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
                         <Layers className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm font-medium">{item.semester}°</span>
+                        <span className="text-sm font-medium">{item.trayecto}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -151,7 +158,7 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
@@ -175,7 +182,7 @@ export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
                     No se encontraron unidades curriculares.
                   </TableCell>
                 </TableRow>

@@ -1,11 +1,10 @@
-import { useState } from "react"
-import { 
-  Search, 
-  MoreHorizontal, 
-  Edit, 
-  GraduationCap, 
-  Fingerprint,
+import {
+  Search,
+  MoreVertical,
+  Edit,
+  GraduationCap,
   Trash2,
+  SmartphoneNfc,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,6 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Professor {
   id: string | number
@@ -42,31 +42,35 @@ interface Professor {
 
 interface ProfessorsTableProps {
   data: Professor[]
+  loading: boolean
   onImport: (file: File) => Promise<any>
   onCreate: () => void
   onEdit: (item: Professor) => void
   onDelete: (item: Professor) => void
+  onResetDevice: (item: Professor) => void
   canEdit: boolean
+  canResetDevice: boolean
+  canDelete: boolean
+  // Filtros opcionales de ámbito. Cada select se muestra solo si se le pasan sus
+  // opciones: superadmin/analista reciben sede + PNF; rector solo PNF; coordinador ninguno.
+  sedeOptions?: { id: string; label: string }[]
+  sedeFilter?: string
+  onSedeFilterChange?: (value: string) => void
+  pnfOptions?: { id: string; label: string }[]
+  pnfFilter?: string
+  onPnfFilterChange?: (value: string) => void
+  // Búsqueda y paginación resueltas por el servidor (?q=, page, meta).
+  searchQuery: string
+  onSearchQueryChange: (value: string) => void
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  onPageChange: (page: number) => void
 }
 
-export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, canEdit }: ProfessorsTableProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [idFilter, setIdFilter] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
-
-  const filteredData = data.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.subjects.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-    
-    const matchesId = item.idNumber.toLowerCase().includes(idFilter.toLowerCase())
-
-    return matchesSearch && matchesId
-  })
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
+  const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
 
   return (
     <Card className="shadow-md">
@@ -81,7 +85,16 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <ImportModal onImport={onImport} title="Importar Docentes" description="Seleccione un archivo .xlsx con la lista de docentes" buttonLabel="Cargar Docentes" />
+            {canEdit && (
+              <ImportModal
+                onImport={onImport}
+                title="Importar Docentes"
+                description="Seleccione un archivo .xlsx con la lista de docentes"
+                buttonLabel="Cargar Docentes"
+                templateHeaders={["ci", "nombres", "apellidos", "email"]}
+                templateFilename="plantilla-docentes.csv"
+              />
+            )}
             {canEdit && (
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>
                 <GraduationCap className="mr-2 h-4 w-4" />
@@ -95,27 +108,38 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
             <Input
-              placeholder="Buscar por nombre o materia..."
+              placeholder="Buscar por nombre, cédula o correo..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value)
-                setCurrentPage(1)
-              }}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
-          <div className="relative w-72">
-            <Fingerprint className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
-            <Input
-              placeholder="Filtrar por documento..."
-              value={idFilter}
-              onChange={(e) => {
-                setIdFilter(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
-            />
-          </div>
+          {sedeOptions && onSedeFilterChange && (
+            <Select value={sedeFilter || "__all__"} onValueChange={(v) => onSedeFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="Sede" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las sedes</SelectItem>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {pnfOptions && onPnfFilterChange && (
+            <Select value={pnfFilter || "__all__"} onValueChange={(v) => onPnfFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="PNF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos los PNF</SelectItem>
+                {pnfOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -126,13 +150,19 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
                 <TableHead className="font-semibold text-foreground">Docente</TableHead>
                 <TableHead className="font-semibold text-foreground">Documento</TableHead>
                 <TableHead className="font-semibold text-foreground">U.Cs Asignadas</TableHead>
-                <TableHead className="font-semibold text-foreground">Estatus</TableHead>
+                <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item) => (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                    Cargando...
+                  </TableCell>
+                </TableRow>
+              ) : data.length > 0 ? (
+                data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/30">
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -166,22 +196,32 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
                       <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {canEdit ? (
+                      {canEdit || canResetDevice || canDelete ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => onEdit(item)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Editar Datos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
-                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => onEdit(item)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar Datos
+                              </DropdownMenuItem>
+                            )}
+                            {canResetDevice && (
+                              <DropdownMenuItem onClick={() => onResetDevice(item)}>
+                                <SmartphoneNfc className="mr-2 h-4 w-4" />
+                                Reiniciar Dispositivo
+                              </DropdownMenuItem>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       ) : (
@@ -201,13 +241,13 @@ export function ProfessorsTable({ data, onImport, onCreate, onEdit, onDelete, ca
           </Table>
         </div>
 
-        <PaginationControls 
+        <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={filteredData.length}
+          totalItems={totalItems}
           startIndex={startIndex}
           endIndex={startIndex + itemsPerPage}
-          onPageChange={setCurrentPage}
+          onPageChange={onPageChange}
           label="docentes"
         />
       </CardContent>

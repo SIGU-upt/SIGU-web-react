@@ -6,7 +6,7 @@ import { Role } from '@/types'
 interface JwtPayload {
   sub: string
   ci: string
-  role: Role
+  roles: Role[]
   sedeId: string | null
   sedePnfId: string | null
   iat: number
@@ -76,10 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (ci: string, password: string): Promise<string | null> => {
     try {
-      const normalizedCi = ci
-        .trim()
-        .toUpperCase()
-        .replace(/^(\d)/, 'V-$1')
+      // El prefijo de nacionalidad (V-/E-) lo elige el usuario en el formulario de
+      // login; aquí solo se normaliza el formato.
+      const normalizedCi = ci.trim().toUpperCase()
       const res = await api.post('/auth/login', { ci: normalizedCi, password, clientType: 'WEB' })
       const { accessToken } = res.data
 

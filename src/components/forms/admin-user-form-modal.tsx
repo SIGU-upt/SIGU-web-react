@@ -5,109 +5,121 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Role, type SedePnf, type Trayecto } from "@/types"
+import { Role, type Sede, type SedePnf } from "@/types"
 import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword } from "@/components/forms/password-requirements"
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
 
-interface UserFormData {
+const ROLE_LABELS: Record<string, string> = {
+  [Role.RECTOR]: 'Rector',
+  [Role.COORDINADOR]: 'Coordinador',
+  [Role.ANALISTA]: 'Analista',
+}
+
+interface AdminUserFormData {
   nombres: string
   apellidos: string
   ci: string
   email: string
   password: string
-  role: Role.DOCENTE | Role.ALUMNO
+  role: Role
+  sedeActualId?: string
   sedePnfId?: string
-  trayectoId?: string
 }
 
-interface UserFormModalProps {
+interface AdminUserFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: UserFormData) => Promise<void>
-  defaultRole: Role.DOCENTE | Role.ALUMNO
-  initialData?: Partial<UserFormData>
+  onSubmit: (data: AdminUserFormData) => Promise<void>
+  allowedRoles: Role[]
+  initialData?: Partial<AdminUserFormData>
   isEditing?: boolean
 }
 
-export function UserFormModal({
+export function AdminUserFormModal({
   open,
   onOpenChange,
   onSubmit,
-  defaultRole,
+  allowedRoles,
   initialData,
   isEditing,
-}: UserFormModalProps) {
+}: AdminUserFormModalProps) {
   const { user: currentUser } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [sedeOptions, setSedeOptions] = useState<Sede[]>([])
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
-  const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
-  const [selectedSedeId, setSelectedSedeId] = useState("")
+  const [selectedCoordSedeId, setSelectedCoordSedeId] = useState("")
 
-  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UserFormData>({
-    defaultValues: { role: defaultRole, ...initialData },
+  const defaultValues: AdminUserFormData = {
+    nombres: '', apellidos: '', ci: '', email: '', password: '', role: allowedRoles[0],
+  }
+
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<AdminUserFormData>({
+    defaultValues: { ...defaultValues, ...initialData },
   })
+  const role = watch('role')
   const [showPassword, setShowPassword] = useState(false)
   const passwordValue = watch('password') || ''
-  const sedePnfIdValue = watch('sedePnfId')
 
-  const showPnfField = currentUser?.role === Role.SUPERADMIN || currentUser?.role === Role.RECTOR
-  const showTrayectoField = defaultRole === Role.ALUMNO
+  const showSedeField = role === Role.RECTOR && currentUser?.role === Role.SUPERADMIN
+  const showSedePnfField = role === Role.COORDINADOR
   const ciEditable = currentUser?.role === Role.SUPERADMIN
-  const effectiveSedePnfId = showPnfField ? sedePnfIdValue : currentUser?.sedePnfId
+  // Un rector administra una sola sede: al crear (o editar) un coordinador no
+  // tiene sentido que elija entre sedes que no maneja, así que se preasigna la
+  // suya y el selector queda bloqueado.
+  const sedeLockedForRector = showSedePnfField && currentUser?.role === Role.RECTOR
 
   useEffect(() => {
     if (open) {
-      reset({ role: defaultRole, ...initialData })
-      setSelectedSedeId("")
+      reset({ ...defaultValues, role: allowedRoles[0], ...initialData })
+      setSelectedCoordSedeId(
+        currentUser?.role === Role.RECTOR && currentUser.sedeActualId ? currentUser.sedeActualId : "",
+      )
       setError(null)
     }
-  }, [open, initialData, defaultRole, reset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialData, reset])
 
   useEffect(() => {
-    if (open && (showPnfField || showTrayectoField)) {
+    if (!open) return
+    if (showSedeField) {
+      api.get('/sedes').then((res) => {
+        const list = res.data.data ?? res.data
+        setSedeOptions(Array.isArray(list) ? list : [])
+      }).catch(() => setSedeOptions([]))
+    }
+    if (showSedePnfField) {
       api.get('/sede-pnf').then((res) => {
         const list = res.data.data ?? res.data
         setSedePnfOptions(Array.isArray(list) ? list : [])
       }).catch(() => setSedePnfOptions([]))
     }
-  }, [open, showPnfField, showTrayectoField])
+  }, [open, showSedeField, showSedePnfField])
 
   // Al editar, deriva la sede seleccionada a partir del sedePnfId guardado, una
   // vez que las opciones ya cargaron (WEB #4/#5: sede y PNF son selects encadenados).
   useEffect(() => {
-    if (!open || !initialData?.sedePnfId || sedePnfOptions.length === 0) return
+    if (!open || !showSedePnfField || !initialData?.sedePnfId || sedePnfOptions.length === 0) return
     const sp = sedePnfOptions.find((s) => s.id === initialData.sedePnfId)
-    if (sp) setSelectedSedeId(sp.sedeId)
-  }, [open, initialData?.sedePnfId, sedePnfOptions])
+    if (sp) setSelectedCoordSedeId(sp.sedeId)
+  }, [open, showSedePnfField, initialData?.sedePnfId, sedePnfOptions])
 
-  const sedeOptions = Array.from(
+  const coordSedeOptions = Array.from(
     new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
   ).map(([id, label]) => ({ id, label }))
-  const pnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedSedeId)
+  const coordPnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedCoordSedeId)
 
-  useEffect(() => {
-    if (!open || !showTrayectoField) return
-    const pnfId = sedePnfOptions.find((sp) => sp.id === effectiveSedePnfId)?.pnfId
-    if (!pnfId) {
-      setTrayectoOptions([])
-      return
-    }
-    api.get('/trayectos', { params: { pnfId } }).then((res) => {
-      const list = res.data.data ?? res.data
-      setTrayectoOptions(Array.isArray(list) ? list : [])
-    }).catch(() => setTrayectoOptions([]))
-  }, [open, showTrayectoField, effectiveSedePnfId, sedePnfOptions])
-
-  const submitHandler = async (data: UserFormData) => {
+  const submitHandler = async (data: AdminUserFormData) => {
     setLoading(true)
     setError(null)
     try {
-      // No enviar UUIDs vacíos al backend (fallan la validación @IsUUID).
-      const payload: UserFormData = { ...data }
+      // No enviar UUIDs vacíos: un ANALISTA (global) no tiene sede ni sede-PNF, y un
+      // string vacío falla la validación @IsUUID del backend ("debe ser un uuid").
+      const payload: AdminUserFormData = { ...data }
+      if (!payload.sedeActualId) delete payload.sedeActualId
       if (!payload.sedePnfId) delete payload.sedePnfId
       await onSubmit(payload)
       onOpenChange(false)
@@ -118,15 +130,42 @@ export function UserFormModal({
     }
   }
 
-  const roleLabel = defaultRole === Role.DOCENTE ? 'Docente' : 'Estudiante'
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{isEditing ? `Editar ${roleLabel}` : `Nuevo ${roleLabel}`}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Personal Administrativo' : 'Nuevo Personal Administrativo'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="role">Rol</Label>
+            <Controller
+              control={control}
+              name="role"
+              rules={{ required: 'Requerido' }}
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => {
+                    field.onChange(v)
+                    setValue('sedeActualId', '')
+                    setValue('sedePnfId', '')
+                  }}
+                  disabled={isEditing}
+                >
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Seleccione un rol" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allowedRoles.map((r) => (
+                      <SelectItem key={r} value={r}>{ROLE_LABELS[r] ?? r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nombres">Nombres</Label>
@@ -149,16 +188,46 @@ export function UserFormModal({
             <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
-          {showPnfField && (
+          {showSedeField && (
+            <div className="space-y-2">
+              <Label htmlFor="sedeActualId">Sede</Label>
+              <Controller
+                control={control}
+                name="sedeActualId"
+                rules={{ required: 'Requerido' }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger id="sedeActualId" className="w-full">
+                      <SelectValue placeholder="Seleccione una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedeOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.sedeActualId && <p className="text-xs text-destructive">{errors.sedeActualId.message}</p>}
+            </div>
+          )}
+          {showSedePnfField && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="sedeId">Sede</Label>
-                <Select value={selectedSedeId} onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', '') }}>
-                  <SelectTrigger id="sedeId" className="w-full">
+                <Label htmlFor="coordSedeId">Sede</Label>
+                {sedeLockedForRector && (
+                  <p className="text-xs text-muted-foreground">Los coordinadores que cree pertenecen a su misma sede.</p>
+                )}
+                <Select
+                  value={selectedCoordSedeId}
+                  onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}
+                  disabled={sedeLockedForRector}
+                >
+                  <SelectTrigger id="coordSedeId" className="w-full">
                     <SelectValue placeholder="Seleccione una sede" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sedeOptions.map((s) => (
+                    {coordSedeOptions.map((s) => (
                       <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
                     ))}
                   </SelectContent>
@@ -166,20 +235,17 @@ export function UserFormModal({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="sedePnfId">PNF</Label>
-                {isEditing && (
-                  <p className="text-xs text-muted-foreground">Reasignar el PNF trasladará al usuario a otra sede-PNF.</p>
-                )}
                 <Controller
                   control={control}
                   name="sedePnfId"
                   rules={{ required: 'Requerido' }}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange} disabled={!selectedSedeId}>
+                    <Select value={field.value} onValueChange={field.onChange} disabled={!selectedCoordSedeId}>
                       <SelectTrigger id="sedePnfId" className="w-full">
-                        <SelectValue placeholder={selectedSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
+                        <SelectValue placeholder={selectedCoordSedeId ? "Seleccione un PNF" : "Elija primero una sede"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {pnfOptionsForSede.map((sp) => (
+                        {coordPnfOptionsForSede.map((sp) => (
                           <SelectItem key={sp.id} value={sp.id}>{sp.pnf?.nombre}</SelectItem>
                         ))}
                       </SelectContent>
@@ -189,28 +255,6 @@ export function UserFormModal({
                 {errors.sedePnfId && <p className="text-xs text-destructive">{errors.sedePnfId.message}</p>}
               </div>
             </>
-          )}
-          {showTrayectoField && (
-            <div className="space-y-2">
-              <Label htmlFor="trayectoId">Trayecto actual</Label>
-              <p className="text-xs text-muted-foreground">Opcional: si el alumno ya viene cursando un trayecto (ej. ingresa a 4to año), selecciónelo aquí para registrar su cohorte oficial.</p>
-              <Controller
-                control={control}
-                name="trayectoId"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={!effectiveSedePnfId}>
-                    <SelectTrigger id="trayectoId" className="w-full">
-                      <SelectValue placeholder={effectiveSedePnfId ? "Sin asignar aún" : "Seleccione un PNF primero"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {trayectoOptions.map((t) => (
-                        <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
           )}
           {!isEditing && (
             <div className="space-y-2">
@@ -260,7 +304,7 @@ export function UserFormModal({
               Cancelar
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Guardando...' : isEditing ? 'Actualizar' : `Crear ${roleLabel}`}
+              {loading ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear'}
             </Button>
           </DialogFooter>
         </form>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import api from "@/config/api"
+import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -22,8 +23,8 @@ export function ResetPasswordPage() {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres")
+    if (!passwordMeetsRequirements(password)) {
+      setError("La contraseña no cumple los requisitos")
       return
     }
     if (password !== confirmPassword) {
@@ -104,6 +105,7 @@ export function ResetPasswordPage() {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <PasswordRequirements password={password} />
               </div>
 
               <div className="space-y-2">

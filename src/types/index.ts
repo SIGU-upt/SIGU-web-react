@@ -18,6 +18,9 @@ export interface User {
   role: Role
   sedeActualId: string | null
   sedePnfId: string | null
+  sedePnf?: SedePnf | null
+  trayectoActualId?: string | null
+  trayectoActual?: { id: string; numero: number; nombre: string } | null
   fechaNacimiento: string | null
   createdAt: string
   updatedAt: string
@@ -54,6 +57,7 @@ export interface Trayecto {
   pnfId: string
   numero: number
   nombre: string
+  pnf?: Pnf
 }
 
 export interface Tramo {
@@ -61,13 +65,21 @@ export interface Tramo {
   trayectoId: string
   numero: number
   isPer: boolean
+  fechaInicio: string | null
+  fechaFin: string | null
 }
 
 export interface UnidadCurricular {
   id: string
   trayectoId: string
   nombre: string
-  creditos: number
+  tramoId: string | null
+  trayecto?: Trayecto
+  tramo?: Tramo | null
+  // ADR-023: la UC ahora referencia un catálogo compartido entre trayectos.
+  ucCatalogoId?: string
+  codigo?: string
+  catalogo?: { id: string; codigo: string; nombre: string }
 }
 
 export interface PeriodoAcademico {
@@ -77,6 +89,7 @@ export interface PeriodoAcademico {
   fechaFin: string
   sedePnfId: string
   activo: boolean
+  advertencias?: string[]
 }
 
 export interface Seccion {
@@ -122,6 +135,7 @@ export interface AlumnoCohorte {
   trayectoId: string
   periodoId: string
   activa: boolean
+  alumno?: User
 }
 
 export interface Asistencia {
@@ -147,6 +161,7 @@ export interface SecurityLog {
   detalle: string | null
   ipAddress: string | null
   createdAt: string
+  user?: User | null
 }
 
 export interface PaginatedResponse<T> {
