@@ -27,7 +27,7 @@ interface InscripcionMasivaResponse {
 }
 
 const DIA_LABEL: Record<string, string> = {
-  LUNES: 'Lunes', MARTES: 'Martes', MIERCOLES: 'Miércoles', JUEVES: 'Jueves', VIERNES: 'Viernes', SABADO: 'Sábado',
+  LUNES: 'Lunes', MARTES: 'Martes', MIERCOLES: 'Miércoles', JUEVES: 'Jueves', VIERNES: 'Viernes', SABADO: 'Sábado', DOMINGO: 'Domingo',
 }
 
 export function SeccionDetallePage() {

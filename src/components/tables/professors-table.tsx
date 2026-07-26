@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Professor {
   id: string | number
@@ -50,6 +51,14 @@ interface ProfessorsTableProps {
   canEdit: boolean
   canResetDevice: boolean
   canDelete: boolean
+  // Filtros opcionales de ámbito. Cada select se muestra solo si se le pasan sus
+  // opciones: superadmin/analista reciben sede + PNF; rector solo PNF; coordinador ninguno.
+  sedeOptions?: { id: string; label: string }[]
+  sedeFilter?: string
+  onSedeFilterChange?: (value: string) => void
+  pnfOptions?: { id: string; label: string }[]
+  pnfFilter?: string
+  onPnfFilterChange?: (value: string) => void
   // Búsqueda y paginación resueltas por el servidor (?q=, page, meta).
   searchQuery: string
   onSearchQueryChange: (value: string) => void
@@ -59,7 +68,7 @@ interface ProfessorsTableProps {
   onPageChange: (page: number) => void
 }
 
-export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
+export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
@@ -105,6 +114,32 @@ export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onD
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
+          {sedeOptions && onSedeFilterChange && (
+            <Select value={sedeFilter || "__all__"} onValueChange={(v) => onSedeFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="Sede" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todas las sedes</SelectItem>
+                {sedeOptions.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {pnfOptions && onPnfFilterChange && (
+            <Select value={pnfFilter || "__all__"} onValueChange={(v) => onPnfFilterChange(v === "__all__" ? "" : v)}>
+              <SelectTrigger className="w-56 bg-background border-border shadow-sm">
+                <SelectValue placeholder="PNF" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Todos los PNF</SelectItem>
+                {pnfOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

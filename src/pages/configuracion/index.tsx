@@ -60,15 +60,20 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
     searchable: false,
     fields: [
       { name: 'numero', label: 'Número (1-3)', required: true, type: 'number' as const },
-      { name: 'trayectoId', label: 'Trayecto', required: true, type: 'select' as const, optionsEndpoint: '/trayectos', optionLabel: (t: any) => t.nombre, optionValue: (t: any) => t.id },
+      { name: 'trayectoId', label: 'Trayecto', required: true, type: 'select' as const, optionsEndpoint: '/trayectos', optionLabel: (t: any) => t.pnf?.nombre ? `${t.pnf.nombre} — ${t.nombre}` : t.nombre, optionValue: (t: any) => t.id },
       { name: 'isPer', label: 'Es PER', type: 'checkbox' as const },
       { name: 'fechaInicio', label: 'Fecha inicio (opcional)', type: 'date' as const, required: false },
       { name: 'fechaFin', label: 'Fecha fin (opcional)', type: 'date' as const, required: false },
     ],
-    columns: ['Número', 'PER'],
+    // La mayoría de los tramos se generan solos (A-4); esta pantalla existe
+    // sobre todo para el tramo PER, que es excepcional y necesita fechas
+    // propias. Se resume a 2 columnas y se agrega a qué trayecto/PNF
+    // pertenece (antes no lo mostraba, y "Trayecto 1" se repite entre PNF).
+    columns: ['Trayecto', 'Tramo', 'Vigencia'],
     renderRow: (t) => [
-      <span className="font-medium">{t.numero}</span>,
-      <Badge variant={t.isPer ? 'default' : 'secondary'}>{t.isPer ? 'Sí' : 'No'}</Badge>,
+      t._trayectoLabel ?? t.trayecto?.nombre ?? t.trayectoId,
+      <Badge variant={t.isPer ? 'default' : 'secondary'}>{t.isPer ? 'PER' : `Tramo ${t.numero}`}</Badge>,
+      <span className="text-sm text-muted-foreground">{t.fechaInicio && t.fechaFin ? `${t.fechaInicio} — ${t.fechaFin}` : '—'}</span>,
     ],
   },
   periodos: {
@@ -128,6 +133,11 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
 
   const canEdit = user ? (config.editRoles ?? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]).includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
+  // Un coordinador administra una sola sede-PNF: no tiene sentido que la elija
+  // al crear un período, se le asigna la suya automáticamente. La generación
+  // múltiple tampoco aplica (ya la bloquea el backend con 403 para este rol).
+  const isCoordinadorPeriodos = config.endpoint === '/periodos' && user?.role === Role.COORDINADOR
+  const formFields = isCoordinadorPeriodos ? config.fields.filter((f) => f.name !== 'sedePnfId') : config.fields
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
@@ -140,7 +150,24 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
       const params: Record<string, string> = {}
       if (debouncedSearch && config.searchable !== false) params.q = debouncedSearch
       const res = await api.get(config.endpoint, { params })
-      setData(res.data.data ?? res.data)
+      let list = res.data.data ?? res.data
+      // GET /tramos solo trae el trayecto anidado, no su PNF; se cruza acá con
+      // /trayectos (que sí trae pnf) para mostrar "PNF — Trayecto N" sin pedirle
+      // ese join extra al backend.
+      if (config.endpoint === '/tramos' && Array.isArray(list)) {
+        const trayectosRes = await api.get('/trayectos')
+        const trayectosList = trayectosRes.data.data ?? trayectosRes.data
+        const trayectoById = new Map(
+          (Array.isArray(trayectosList) ? trayectosList : []).map((t: any) => [t.id, t]),
+        )
+        list = list.map((tr: any) => {
+          const trayecto = trayectoById.get(tr.trayectoId) ?? tr.trayecto
+          const pnfNombre = trayecto?.pnf?.nombre
+          const trayectoNombre = trayecto?.nombre ?? tr.trayectoId
+          return { ...tr, _trayectoLabel: pnfNombre ? `${pnfNombre} — ${trayectoNombre}` : trayectoNombre }
+        })
+      }
+      setData(list)
     } catch { setData([]) }
     finally { setLoading(false) }
   }, [config.endpoint, config.searchable, debouncedSearch])
@@ -170,14 +197,16 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
     : displayData
 
   const handleCreate = async (form: Record<string, any>) => {
-    const res = await api.post(config.endpoint, form)
+    const payload = isCoordinadorPeriodos ? { ...form, sedePnfId: user?.sedePnfId } : form
+    const res = await api.post(config.endpoint, payload)
     res.data?.advertencias?.forEach((a: string) => toast.warning(a))
     await fetchData()
   }
 
   const handleEdit = async (form: Record<string, any>) => {
     if (!editing) return
-    const res = await api.patch(`${config.endpoint}/${editing.id}`, form)
+    const payload = isCoordinadorPeriodos ? { ...form, sedePnfId: user?.sedePnfId } : form
+    const res = await api.patch(`${config.endpoint}/${editing.id}`, payload)
     res.data?.advertencias?.forEach((a: string) => toast.warning(a))
     await fetchData()
   }
@@ -244,7 +273,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
-            {canEdit && config.hasGenerarMultiple && (
+            {canEdit && config.hasGenerarMultiple && user?.role !== Role.COORDINADOR && (
               <Button size="sm" variant="outline" onClick={openMultipleDialog}>
                 <Wand2 className="mr-2 h-4 w-4" />Generar en varias sedes
               </Button>
@@ -321,7 +350,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
         onOpenChange={setModalOpen}
         onSubmit={editing ? handleEdit : handleCreate}
         title={editing ? `Editar ${config.title}` : `Nuevo ${config.title}`}
-        fields={config.fields}
+        fields={formFields}
         initialData={editing}
         isEditing={!!editing}
       />
@@ -424,21 +453,33 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
 }
 
 export function ConfiguracionPage() {
+  const { user } = useAuth()
+  const isCoordinador = user?.role === Role.COORDINADOR
+  const isRector = user?.role === Role.RECTOR
+  // Sedes y Sede-PNF son de alcance global (todas las sedes de la institución):
+  // un coordinador o rector solo administra la suya, así que esas pestañas no
+  // aportan y solo confunden. El backend ya escopa /pnfs, /trayectos y /tramos
+  // por jurisdicción, así que esas quedan visibles y muestran automáticamente
+  // solo lo que le corresponde a cada quien.
+  const showSedeTabs = !isCoordinador && !isRector
+  const showPnfsTab = !isCoordinador
+  const defaultTab = showSedeTabs ? 'sedes' : showPnfsTab ? 'pnfs' : 'trayectos'
+
   return (
     <div className="space-y-6">
       <PageHeader title="Configuración" subtitle="Gestión de la estructura académica" icon={<Settings className="h-5 w-5" />} />
-      <Tabs defaultValue="sedes">
+      <Tabs defaultValue={defaultTab}>
         <TabsList className="flex-wrap">
-          <TabsTrigger value="sedes"><Building className="mr-2 h-4 w-4" />Sedes</TabsTrigger>
-          <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>
-          <TabsTrigger value="sedePnf"><Building className="mr-2 h-4 w-4" />Sede-PNF</TabsTrigger>
+          {showSedeTabs && <TabsTrigger value="sedes"><Building className="mr-2 h-4 w-4" />Sedes</TabsTrigger>}
+          {showPnfsTab && <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>}
+          {showSedeTabs && <TabsTrigger value="sedePnf"><Building className="mr-2 h-4 w-4" />Sede-PNF</TabsTrigger>}
           <TabsTrigger value="trayectos"><LayoutList className="mr-2 h-4 w-4" />Trayectos</TabsTrigger>
           <TabsTrigger value="tramos"><Clock className="mr-2 h-4 w-4" />Tramos</TabsTrigger>
           <TabsTrigger value="periodos"><Calendar className="mr-2 h-4 w-4" />Períodos</TabsTrigger>
         </TabsList>
-        <TabsContent value="sedes" className="mt-4"><CrudTabWithModals config={entityConfigs.sedes} /></TabsContent>
-        <TabsContent value="pnfs" className="mt-4"><CrudTabWithModals config={entityConfigs.pnfs} /></TabsContent>
-        <TabsContent value="sedePnf" className="mt-4"><CrudTabWithModals config={entityConfigs.sedePnf} /></TabsContent>
+        {showSedeTabs && <TabsContent value="sedes" className="mt-4"><CrudTabWithModals config={entityConfigs.sedes} /></TabsContent>}
+        {showPnfsTab && <TabsContent value="pnfs" className="mt-4"><CrudTabWithModals config={entityConfigs.pnfs} /></TabsContent>}
+        {showSedeTabs && <TabsContent value="sedePnf" className="mt-4"><CrudTabWithModals config={entityConfigs.sedePnf} /></TabsContent>}
         <TabsContent value="trayectos" className="mt-4"><CrudTabWithModals config={entityConfigs.trayectos} /></TabsContent>
         <TabsContent value="tramos" className="mt-4"><CrudTabWithModals config={entityConfigs.tramos} /></TabsContent>
         <TabsContent value="periodos" className="mt-4"><CrudTabWithModals config={entityConfigs.periodos} /></TabsContent>
