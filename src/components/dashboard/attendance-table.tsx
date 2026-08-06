@@ -53,27 +53,32 @@ export function AttendanceTable() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/attendance', { params: { limit: 10 } })
-      .then((res) => {
-        const list = res.data.data ?? res.data
-        setData((Array.isArray(list) ? list : []).map((a: any) => ({
-          id: a.id,
-          alumnoId: a.alumnoId,
-          student: a.alumno?.nombreCompleto ?? '—',
-          initials: (a.alumno?.nombres?.charAt(0) ?? '') + (a.alumno?.apellidos?.charAt(0) ?? ''),
-          subject: a.clase?.unidadCurricular?.nombre ?? '—',
-          date: a.fecha,
-          estado: a.estado,
-        })))
-      })
-      .catch(() => setData([]))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const filteredData = data.filter((item) =>
-    item.student.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.subject.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+    // La búsqueda va al servidor (antes filtraba en el navegador sobre estas
+    // mismas 10 filas: un alumno con cientos de asistencias pero fuera de las
+    // 10 más recientes nunca aparecía). Se debounce para no golpear la API en
+    // cada tecla.
+    const timeout = setTimeout(() => {
+      setLoading(true)
+      const params: Record<string, string | number> = { limit: 10 }
+      if (searchQuery.trim()) params.q = searchQuery.trim()
+      api.get('/attendance', { params })
+        .then((res) => {
+          const list = res.data.data ?? res.data
+          setData((Array.isArray(list) ? list : []).map((a: any) => ({
+            id: a.id,
+            alumnoId: a.alumnoId,
+            student: a.alumno?.nombreCompleto ?? '—',
+            initials: (a.alumno?.nombres?.charAt(0) ?? '') + (a.alumno?.apellidos?.charAt(0) ?? ''),
+            subject: a.clase?.unidadCurricular?.nombre ?? '—',
+            date: a.fecha,
+            estado: a.estado,
+          })))
+        })
+        .catch(() => setData([]))
+        .finally(() => setLoading(false))
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [searchQuery])
 
   return (
     <Card className="shadow-md">
@@ -109,8 +114,8 @@ export function AttendanceTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.length > 0 ? (
-                  filteredData.map((item) => (
+                {data.length > 0 ? (
+                  data.map((item) => (
                     <TableRow key={item.id} className="hover:bg-muted/30">
                       <TableCell>
                         <div className="flex items-center gap-3">
