@@ -15,7 +15,7 @@ import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
   [Role.COORDINADOR]: 'Coordinador',
-  [Role.ANALISTA]: 'Analista',
+  [Role.AUDITOR]: 'Auditor',
 }
 
 interface AdminUserFormData {
@@ -116,7 +116,7 @@ export function AdminUserFormModal({
     setLoading(true)
     setError(null)
     try {
-      // No enviar UUIDs vacíos: un ANALISTA (global) no tiene sede ni sede-PNF, y un
+      // No enviar UUIDs vacíos: un AUDITOR (global) no tiene sede ni sede-PNF, y un
       // string vacío falla la validación @IsUUID del backend ("debe ser un uuid").
       const payload: AdminUserFormData = { ...data }
       if (!payload.sedeActualId) delete payload.sedeActualId
