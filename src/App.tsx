@@ -28,7 +28,7 @@ function AppRoutes() {
     )
   }
 
-  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]
+  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]
 
   return (
     <>
@@ -111,7 +111,7 @@ function AppRoutes() {
                 Role.SUPERADMIN,
                 Role.RECTOR,
                 Role.COORDINADOR,
-                Role.ANALISTA,
+                Role.AUDITOR,
                 Role.DOCENTE,
               ]}
             >
@@ -123,7 +123,7 @@ function AppRoutes() {
           path="/configuracion"
           element={
             <PrivateRoute
-              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]}
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
             >
               <ConfiguracionPage />
             </PrivateRoute>
