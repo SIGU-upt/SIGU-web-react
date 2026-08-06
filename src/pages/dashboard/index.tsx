@@ -39,7 +39,7 @@ export function DashboardPage() {
   const roleLabels: Record<string, string> = {
     SUPERADMIN: 'Super Administrador',
     RECTOR: 'Rector',
-    ANALISTA: 'Analista',
+    AUDITOR: 'Auditor',
     COORDINADOR: 'Coordinador',
     DOCENTE: 'Docente',
     ALUMNO: 'Alumno',

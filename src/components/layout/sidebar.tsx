@@ -30,17 +30,17 @@ const navigation: NavItem[] = [
     id: "usuarios",
     name: "Usuarios",
     icon: Users,
-    roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA],
+    roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR],
     children: [
       { id: "docentes", name: "Docentes", path: "/docentes" },
       { id: "estudiantes", name: "Estudiantes", path: "/estudiantes" },
       { id: "personal-administrativo", name: "Personal Administrativo", path: "/personal-administrativo", roles: [Role.SUPERADMIN, Role.RECTOR] },
     ],
   },
-  { id: "unidades", name: "Unidades Curriculares", icon: BookOpen, path: "/unidades", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
-  { id: "secciones", name: "Secciones", icon: Layers, path: "/secciones", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
-  { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA, Role.DOCENTE] },
-  { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA] },
+  { id: "unidades", name: "Unidades Curriculares", icon: BookOpen, path: "/unidades", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: "secciones", name: "Secciones", icon: Layers, path: "/secciones", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR, Role.DOCENTE] },
+  { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR] },
 ]
 
