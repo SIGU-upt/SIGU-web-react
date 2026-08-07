@@ -15,6 +15,7 @@ import { ReportesPage } from '@/pages/reportes'
 import { ConfiguracionPage } from '@/pages/configuracion'
 import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
+import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -134,6 +135,16 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
               <SecurityLogsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/clases-suspendidas"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
+            >
+              <ClasesSuspendidasPage />
             </PrivateRoute>
           }
         />
