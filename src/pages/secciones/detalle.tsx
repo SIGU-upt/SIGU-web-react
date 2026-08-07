@@ -15,7 +15,7 @@ import { ClaseFormModal } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion } from "@/types"
+import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
 
 interface InscripcionMasivaResponse {
@@ -39,6 +39,7 @@ export function SeccionDetallePage() {
   const [clases, setClases] = useState<Clase[]>([])
   const [cohorte, setCohorte] = useState<AlumnoCohorte[]>([])
   const [inscripcionesPorClase, setInscripcionesPorClase] = useState<Record<string, Inscripcion[]>>({})
+  const [suspensionesPorClase, setSuspensionesPorClase] = useState<Record<string, ClaseSuspendida[]>>({})
   const [periodoActivo, setPeriodoActivo] = useState<PeriodoAcademico | null>(null)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -69,9 +70,10 @@ export function SeccionDetallePage() {
       const clasesArr = Array.isArray(clasesList) ? clasesList : []
       setClases(clasesArr)
 
-      const [cohorteRes, inscripcionesRes] = await Promise.all([
+      const [cohorteRes, inscripcionesRes, suspensionesRes] = await Promise.all([
         api.get('/cohortes', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
         Promise.all(clasesArr.map((c) => api.get('/inscripciones', { params: { claseId: c.id } }))),
+        Promise.all(clasesArr.map((c) => api.get(`/clases/${c.id}/suspensiones`))),
       ])
 
       const cohorteList = cohorteRes.data.data ?? cohorteRes.data
@@ -83,6 +85,13 @@ export function SeccionDetallePage() {
         inscripcionesMap[c.id] = Array.isArray(list) ? list : []
       })
       setInscripcionesPorClase(inscripcionesMap)
+
+      const suspensionesMap: Record<string, ClaseSuspendida[]> = {}
+      clasesArr.forEach((c, i) => {
+        const list = suspensionesRes[i].data.data ?? suspensionesRes[i].data
+        suspensionesMap[c.id] = Array.isArray(list) ? list : []
+      })
+      setSuspensionesPorClase(suspensionesMap)
 
       // Llamada aislada: un 404 de "sin período activo" es un caso válido (2 de 3
       // sede-PNF no tienen ninguno) y no debe tumbar el resto de la sección.
@@ -196,6 +205,7 @@ export function SeccionDetallePage() {
       setSuspendingClase(null)
       setSuspendFecha("")
       setSuspendMotivo("")
+      await fetchData()
     } finally {
       setSuspending(false)
     }
@@ -360,7 +370,14 @@ export function SeccionDetallePage() {
                 <TableBody>
                   {grupo.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell><Badge variant="secondary" className="font-mono">{c.nombreGrupo}</Badge></TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-mono">{c.nombreGrupo}</Badge>
+                        {(suspensionesPorClase[c.id] ?? []).length > 0 && (
+                          <Badge variant="destructive" className="ml-1">
+                            {(suspensionesPorClase[c.id] ?? []).length} suspendida(s)
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.docente?.nombreCompleto ?? '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.diaSemana ? DIA_LABEL[c.diaSemana] ?? c.diaSemana : '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.horaInicio && c.horaFin ? `${c.horaInicio} - ${c.horaFin}` : '—'}</TableCell>

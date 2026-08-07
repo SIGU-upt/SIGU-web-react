@@ -152,6 +152,8 @@ export interface ClaseSuspendida {
   claseId: string
   fecha: string
   motivo: string
+  suspendidoPorId: string | null
+  clase?: Clase
 }
 
 export interface SecurityLog {
