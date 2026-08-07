@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type UnidadCurricular, type User } from "@/types"
+import { Checkbox } from "@/components/ui/checkbox"
+import { type UnidadCurricular, type User, Role } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { useAuth } from "@/contexts/AuthContext"
 
 const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const
 
@@ -40,10 +42,17 @@ export function ClaseFormModal({
   initialData,
   isEditing,
 }: ClaseFormModalProps) {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [ucOptions, setUcOptions] = useState<UnidadCurricular[]>([])
   const [docenteOptions, setDocenteOptions] = useState<User[]>([])
+  const [mostrarOtrosPnf, setMostrarOtrosPnf] = useState(false)
+  // El backend fuerza `sedePnfId = currentUser.sedePnfId` en `GET /users` para
+  // un COORDINADOR (users.controller.ts), así que para ese rol el toggle no
+  // cambiaría nada: solo tiene efecto real para RECTOR (acotado a su sede, no
+  // a su PNF) y SUPERADMIN (sin acotar).
+  const puedeVerOtrosPnf = user?.role === Role.RECTOR || user?.role === Role.SUPERADMIN
 
   const defaultValues: ClaseFormData = {
     ucId: '', docenteId: '', nombreGrupo: '', diaSemana: '', horaInicio: '', horaFin: '', aula: '',
@@ -69,6 +78,7 @@ export function ClaseFormModal({
         horaFin: normalizeTime(initialData?.horaFin),
       })
       setError(null)
+      setMostrarOtrosPnf(false)
     }
   }, [open, initialData, reset])
 
@@ -78,11 +88,17 @@ export function ClaseFormModal({
       const list = res.data.data ?? res.data
       setUcOptions(Array.isArray(list) ? list : [])
     }).catch(() => setUcOptions([]))
-    api.get('/users', { params: { role: 'DOCENTE', sedePnfId, limit: 200 } }).then((res) => {
+    // El docente no está limitado a dictar solo en su propio PNF (Fase 7): la
+    // pertenencia a un sedePnfId es administrativa, no una restricción real. Con
+    // el toggle activo se omite el filtro para traer docentes de otros PNF.
+    const params = mostrarOtrosPnf && puedeVerOtrosPnf
+      ? { role: 'DOCENTE', limit: 200 }
+      : { role: 'DOCENTE', sedePnfId, limit: 200 }
+    api.get('/users', { params }).then((res) => {
       const list = res.data.data ?? res.data
       setDocenteOptions(Array.isArray(list) ? list : [])
     }).catch(() => setDocenteOptions([]))
-  }, [open, trayectoId, sedePnfId])
+  }, [open, trayectoId, sedePnfId, mostrarOtrosPnf, puedeVerOtrosPnf])
 
   const submitHandler = async (data: ClaseFormData) => {
     setLoading(true)
@@ -127,6 +143,18 @@ export function ClaseFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="docenteId">Docente</Label>
+            {puedeVerOtrosPnf && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="mostrarOtrosPnf"
+                  checked={mostrarOtrosPnf}
+                  onCheckedChange={(checked) => setMostrarOtrosPnf(checked === true)}
+                />
+                <Label htmlFor="mostrarOtrosPnf" className="text-xs font-normal text-muted-foreground">
+                  Mostrar docentes de otros PNF
+                </Label>
+              </div>
+            )}
             <Controller
               control={control}
               name="docenteId"
@@ -138,7 +166,10 @@ export function ClaseFormModal({
                   </SelectTrigger>
                   <SelectContent>
                     {docenteOptions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.nombreCompleto} — {d.ci}</SelectItem>
+                      <SelectItem key={d.id} value={d.id}>
+                        {d.nombreCompleto} — {d.ci}
+                        {d.sedePnfId !== sedePnfId && ' (otro PNF)'}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -190,7 +221,7 @@ export function ClaseFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="aula">Aula (opcional)</Label>
-            <p className="text-xs text-muted-foreground">Solo es informativo para el alumno; no afecta la asistencia ni el horario.</p>
+            <p className="text-xs text-muted-foreground">Si se indica, no puede coincidir con otra clase en el mismo horario.</p>
             <Input id="aula" placeholder="A-101" {...register('aula', { maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
             {errors.aula && <p className="text-xs text-destructive">{errors.aula.message}</p>}
           </div>
