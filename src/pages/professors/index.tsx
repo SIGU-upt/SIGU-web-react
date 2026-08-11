@@ -79,12 +79,25 @@ export function ProfessorsPage() {
       const res = await api.get('/users', { params })
       const list: User[] = res.data.data ?? res.data
       const docentes = Array.isArray(list) ? list : []
-      const clasesPorDocente = await Promise.all(
-        docentes.map((u) => api.get('/clases', { params: { docenteId: u.id } }).catch(() => ({ data: [] }))),
-      )
-      setUsers(docentes.map((u, i) => {
-        const clases = clasesPorDocente[i].data.data ?? clasesPorDocente[i].data
-        const subjects = (Array.isArray(clases) ? clases : [])
+
+      // Antes: una llamada a /clases por docente (N+1). Ahora: una sola
+      // llamada acotada al mismo alcance de sede/PNF que /users, y se agrupa
+      // por docenteId en el cliente.
+      const clasesParams: Record<string, string | number> = { limit: 200 }
+      if (isUnscoped && sedeFilter) clasesParams.sedeId = sedeFilter
+      if (pnfFilter) clasesParams.sedePnfId = pnfFilter
+      const clasesRes = await api.get('/clases', { params: clasesParams }).catch(() => ({ data: [] }))
+      const todasLasClases = clasesRes.data.data ?? clasesRes.data
+      const clasesPorDocenteId = new Map<string, any[]>()
+      for (const c of Array.isArray(todasLasClases) ? todasLasClases : []) {
+        const arr = clasesPorDocenteId.get(c.docenteId) ?? []
+        arr.push(c)
+        clasesPorDocenteId.set(c.docenteId, arr)
+      }
+
+      setUsers(docentes.map((u) => {
+        const clases = clasesPorDocenteId.get(u.id) ?? []
+        const subjects = clases
           .map((c: any) => c.unidadCurricular?.nombre)
           .filter(Boolean)
         return {
