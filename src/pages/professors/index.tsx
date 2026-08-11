@@ -23,10 +23,10 @@ export function ProfessorsPage() {
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
 
-  // Igual que en Estudiantes: superadmin/analista tienen alcance global (necesitan
+  // Igual que en Estudiantes: superadmin/auditor tienen alcance global (necesitan
   // sede + PNF para acotar), rector ya viene escopado a su sede por el backend
   // (solo elige PNF dentro de ella), coordinador ya está en una sola sede-PNF.
-  const isUnscoped = user?.role === Role.SUPERADMIN || user?.role === Role.ANALISTA
+  const isUnscoped = user?.role === Role.SUPERADMIN || user?.role === Role.AUDITOR
   const isRector = user?.role === Role.RECTOR
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canResetDevice = canEdit
@@ -44,13 +44,13 @@ export function ProfessorsPage() {
     }).catch(() => setSedePnfOptions([]))
   }, [])
 
-  // Opciones de sede (solo superadmin/analista): sedes únicas derivadas de las sede-PNF.
+  // Opciones de sede (solo superadmin/auditor): sedes únicas derivadas de las sede-PNF.
   const sedeOptions = isUnscoped
     ? Array.from(new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries())
         .map(([id, label]) => ({ id, label }))
     : undefined
 
-  // Opciones de PNF: para superadmin/analista se limitan a la sede elegida; para
+  // Opciones de PNF: para superadmin/auditor se limitan a la sede elegida; para
   // rector, el servidor ya devuelve solo las sede-PNF de su propia sede.
   const pnfOptions =
     isUnscoped || isRector
@@ -79,12 +79,25 @@ export function ProfessorsPage() {
       const res = await api.get('/users', { params })
       const list: User[] = res.data.data ?? res.data
       const docentes = Array.isArray(list) ? list : []
-      const clasesPorDocente = await Promise.all(
-        docentes.map((u) => api.get('/clases', { params: { docenteId: u.id } }).catch(() => ({ data: [] }))),
-      )
-      setUsers(docentes.map((u, i) => {
-        const clases = clasesPorDocente[i].data.data ?? clasesPorDocente[i].data
-        const subjects = (Array.isArray(clases) ? clases : [])
+
+      // Antes: una llamada a /clases por docente (N+1). Ahora: una sola
+      // llamada acotada al mismo alcance de sede/PNF que /users, y se agrupa
+      // por docenteId en el cliente.
+      const clasesParams: Record<string, string | number> = { limit: 200 }
+      if (isUnscoped && sedeFilter) clasesParams.sedeId = sedeFilter
+      if (pnfFilter) clasesParams.sedePnfId = pnfFilter
+      const clasesRes = await api.get('/clases', { params: clasesParams }).catch(() => ({ data: [] }))
+      const todasLasClases = clasesRes.data.data ?? clasesRes.data
+      const clasesPorDocenteId = new Map<string, any[]>()
+      for (const c of Array.isArray(todasLasClases) ? todasLasClases : []) {
+        const arr = clasesPorDocenteId.get(c.docenteId) ?? []
+        arr.push(c)
+        clasesPorDocenteId.set(c.docenteId, arr)
+      }
+
+      setUsers(docentes.map((u) => {
+        const clases = clasesPorDocenteId.get(u.id) ?? []
+        const subjects = clases
           .map((c: any) => c.unidadCurricular?.nombre)
           .filter(Boolean)
         return {

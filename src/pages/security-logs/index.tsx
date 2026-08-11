@@ -29,13 +29,14 @@ export function SecurityLogsPage() {
   const [fechaHasta, setFechaHasta] = useState("")
   const [search, setSearch] = useState("")
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (q: string) => {
     setLoading(true)
     try {
-      const params: Record<string, string> = {}
+      const params: Record<string, string> = { limit: '200' }
       if (accion) params.accion = accion
       if (fechaDesde) params.fechaDesde = fechaDesde
       if (fechaHasta) params.fechaHasta = fechaHasta
+      if (q.trim()) params.q = q.trim()
       const res = await api.get('/security-logs', { params })
       const list = res.data.data ?? res.data
       setLogs(Array.isArray(list) ? list : [])
@@ -43,14 +44,14 @@ export function SecurityLogsPage() {
     finally { setLoading(false) }
   }, [accion, fechaDesde, fechaHasta])
 
-  useEffect(() => { fetchData() }, [fetchData])
-
-  const filtered = logs.filter((l) =>
-    !search ||
-    l.user?.nombreCompleto?.toLowerCase().includes(search.toLowerCase()) ||
-    l.user?.ci?.toLowerCase().includes(search.toLowerCase()) ||
-    l.detalle?.toLowerCase().includes(search.toLowerCase())
-  )
+  // La búsqueda va al servidor (antes filtraba en el navegador sobre un
+  // `.take(200)` fijo: un evento fuera de esas 200 filas más recientes parecía
+  // no existir aunque se buscara por su cédula exacta). Se debounce para no
+  // golpear la API en cada tecla.
+  useEffect(() => {
+    const timeout = setTimeout(() => fetchData(search), 300)
+    return () => clearTimeout(timeout)
+  }, [fetchData, search])
 
   return (
     <div className="space-y-6">
@@ -92,14 +93,14 @@ export function SecurityLogsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.length === 0 && (
+                {logs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No se encontraron registros.
                     </TableCell>
                   </TableRow>
                 )}
-                {filtered.map((log) => (
+                {logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-sm text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</TableCell>
                     <TableCell className="text-sm">{log.user?.nombreCompleto ?? '—'}</TableCell>

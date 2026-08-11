@@ -19,7 +19,7 @@ import api from "@/config/api"
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
   [Role.COORDINADOR]: 'Coordinador',
-  [Role.ANALISTA]: 'Analista',
+  [Role.AUDITOR]: 'Auditor',
 }
 
 export function PersonalAdministrativoPage() {
@@ -39,8 +39,8 @@ export function PersonalAdministrativoPage() {
   const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
 
   const allowedRoles: Role[] = user?.role === Role.SUPERADMIN
-    ? [Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]
-    : [Role.COORDINADOR, Role.ANALISTA]
+    ? [Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]
+    : [Role.COORDINADOR, Role.AUDITOR]
 
   // Igual que en Estudiantes/Docentes: superadmin tiene alcance global (necesita
   // sede + PNF para acotar); rector ya viene escopado a su sede por el backend
@@ -86,7 +86,7 @@ export function PersonalAdministrativoPage() {
     setLoading(true)
     try {
       // El límite máximo del backend es 200; como se combinan varios roles a la vez
-      // (rector/coordinador/analista son listas acotadas), se pagina el resultado
+      // (rector/coordinador/auditor son listas acotadas), se pagina el resultado
       // combinado en el cliente en vez de fusionar meta.total de cada rol por separado.
       const extraParams: Record<string, string> = {}
       if (debouncedSearch) extraParams.q = debouncedSearch
@@ -160,7 +160,7 @@ export function PersonalAdministrativoPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Personal Administrativo" subtitle="Gestión de rectores, coordinadores y analistas" icon={<Shield className="h-5 w-5" />} />
+      <PageHeader title="Personal Administrativo" subtitle="Gestión de rectores, coordinadores y auditores" icon={<Shield className="h-5 w-5" />} />
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
