@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from "react"
-import { Settings, Search, Plus, Trash2, Building, BookOpen, LayoutList, Clock, MoreVertical, Wand2, Calendar } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,10 +19,13 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
 import api from "@/config/api"
 
-const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endpoint: string; fields: EntityField[]; columns: string[]; renderRow: (item: any) => React.ReactNode[]; editRoles?: Role[]; searchable?: boolean; hasGenerarEstructura?: boolean; hasGenerarMultiple?: boolean; groupLabel?: (item: any) => string }> = {
+const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endpoint: string; fields: EntityField[]; columns: string[]; renderRow: (item: any) => React.ReactNode[]; editRoles?: Role[]; searchable?: boolean; hasGenerarEstructura?: boolean; hasGenerarMultiple?: boolean; groupLabel?: (item: any) => string; rowLink?: (item: any) => string }> = {
   sedes: {
     title: 'Sedes', icon: <Building className="h-5 w-5" />, endpoint: '/sedes',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
+    // Fase 5B (§9.7): la fila lleva al detalle agregado de la sede — PNF que
+    // ofrece, docentes, alumnos y secciones, todo en un solo lugar.
+    rowLink: (s) => `/sedes/${s.id}`,
     fields: [
       { name: 'nombre', label: 'Nombre', required: true },
       { name: 'ubicacion', label: 'Ubicación', required: true },
@@ -33,6 +37,10 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
     title: 'PNFs', icon: <BookOpen className="h-5 w-5" />, endpoint: '/pnfs',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
     hasGenerarEstructura: true,
+    // Fase 5B (§9.7): la fila lleva al detalle agregado del PNF — trayectos y
+    // tramos (con su propio CRUD, ya no vive aquí como pestaña aislada, ver
+    // decisión #4), secciones, docentes y alumnos.
+    rowLink: (p) => `/pnfs/${p.id}`,
     fields: [
       { name: 'nombre', label: 'Nombre', required: true },
       { name: 'codigo', label: 'Código', required: true },
@@ -41,40 +49,6 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
     ],
     columns: ['Nombre', 'Código'],
     renderRow: (p) => [p.nombre, <Badge variant="secondary" className="font-mono">{p.codigo}</Badge>],
-  },
-  trayectos: {
-    title: 'Trayectos', icon: <LayoutList className="h-5 w-5" />, endpoint: '/trayectos',
-    groupLabel: (t) => t.pnf?.nombre ?? 'Sin PNF',
-    fields: [
-      { name: 'nombre', label: 'Nombre', required: true },
-      { name: 'numero', label: 'Número (0=PIU, 1-4)', required: true, type: 'number' as const },
-      { name: 'pnfId', label: 'PNF', required: true, type: 'select' as const, optionsEndpoint: '/pnfs', optionLabel: (p: any) => p.nombre, optionValue: (p: any) => p.id },
-    ],
-    columns: ['Nombre', 'Número'],
-    renderRow: (t) => [t.pnf?.nombre ? `${t.pnf.nombre} — ${t.nombre}` : t.nombre, <Badge variant="secondary">{t.numero}</Badge>],
-  },
-  tramos: {
-    title: 'Tramos', icon: <Clock className="h-5 w-5" />, endpoint: '/tramos',
-    // El backend (TramosService.findAll) no admite un filtro de texto 'q';
-    // enviarlo produce un 400 "Filtro 'q' no permitido". Se filtra en el cliente.
-    searchable: false,
-    fields: [
-      { name: 'numero', label: 'Número (1-3)', required: true, type: 'number' as const },
-      { name: 'trayectoId', label: 'Trayecto', required: true, type: 'select' as const, optionsEndpoint: '/trayectos', optionLabel: (t: any) => t.pnf?.nombre ? `${t.pnf.nombre} — ${t.nombre}` : t.nombre, optionValue: (t: any) => t.id },
-      { name: 'isPer', label: 'Es PER', type: 'checkbox' as const },
-      { name: 'fechaInicio', label: 'Fecha inicio (opcional)', type: 'date' as const, required: false },
-      { name: 'fechaFin', label: 'Fecha fin (opcional)', type: 'date' as const, required: false },
-    ],
-    // La mayoría de los tramos se generan solos (A-4); esta pantalla existe
-    // sobre todo para el tramo PER, que es excepcional y necesita fechas
-    // propias. Se resume a 2 columnas y se agrega a qué trayecto/PNF
-    // pertenece (antes no lo mostraba, y "Trayecto 1" se repite entre PNF).
-    columns: ['Trayecto', 'Tramo', 'Vigencia'],
-    renderRow: (t) => [
-      t._trayectoLabel ?? t.trayecto?.nombre ?? t.trayectoId,
-      <Badge variant={t.isPer ? 'default' : 'secondary'}>{t.isPer ? 'PER' : `Tramo ${t.numero}`}</Badge>,
-      <span className="text-sm text-muted-foreground">{t.fechaInicio && t.fechaFin ? `${t.fechaInicio} — ${t.fechaFin}` : '—'}</span>,
-    ],
   },
   periodos: {
     title: 'Períodos', icon: <Calendar className="h-5 w-5" />, endpoint: '/periodos',
@@ -114,6 +88,7 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
 
 function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -150,23 +125,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
       const params: Record<string, string> = {}
       if (debouncedSearch && config.searchable !== false) params.q = debouncedSearch
       const res = await api.get(config.endpoint, { params })
-      let list = res.data.data ?? res.data
-      // GET /tramos solo trae el trayecto anidado, no su PNF; se cruza acá con
-      // /trayectos (que sí trae pnf) para mostrar "PNF — Trayecto N" sin pedirle
-      // ese join extra al backend.
-      if (config.endpoint === '/tramos' && Array.isArray(list)) {
-        const trayectosRes = await api.get('/trayectos')
-        const trayectosList = trayectosRes.data.data ?? trayectosRes.data
-        const trayectoById = new Map(
-          (Array.isArray(trayectosList) ? trayectosList : []).map((t: any) => [t.id, t]),
-        )
-        list = list.map((tr: any) => {
-          const trayecto = trayectoById.get(tr.trayectoId) ?? tr.trayecto
-          const pnfNombre = trayecto?.pnf?.nombre
-          const trayectoNombre = trayecto?.nombre ?? tr.trayectoId
-          return { ...tr, _trayectoLabel: pnfNombre ? `${pnfNombre} — ${trayectoNombre}` : trayectoNombre }
-        })
-      }
+      const list = res.data.data ?? res.data
       setData(list)
     } catch { setData([]) }
     finally { setLoading(false) }
@@ -311,9 +270,13 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
                     </TableCell>
                   </TableRow>
                 )}
-                <TableRow key={item.id}>
+                <TableRow
+                  key={item.id}
+                  className={config.rowLink ? 'cursor-pointer' : undefined}
+                  onClick={config.rowLink ? () => navigate(config.rowLink!(item)) : undefined}
+                >
                   {config.renderRow(item).map((cell, i) => <TableCell key={i}>{cell}</TableCell>)}
-                  <TableCell className="text-right">
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     {canEdit ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -458,12 +421,13 @@ export function ConfiguracionPage() {
   const isRector = user?.role === Role.RECTOR
   // Sedes y Sede-PNF son de alcance global (todas las sedes de la institución):
   // un coordinador o rector solo administra la suya, así que esas pestañas no
-  // aportan y solo confunden. El backend ya escopa /pnfs, /trayectos y /tramos
-  // por jurisdicción, así que esas quedan visibles y muestran automáticamente
-  // solo lo que le corresponde a cada quien.
+  // aportan y solo confunden. La pestaña PNFs sí se muestra a un coordinador
+  // (Fase 5B, §9.7): el backend ya la escopa a su propio PNF, y es su único
+  // camino para llegar al detalle agregado (`/pnfs/:id`) donde ahora vive el
+  // CRUD de Trayectos y Tramos — antes eran pestañas aisladas aquí mismo
+  // (decisión #4: "eliminar las vistas aisladas, todo dentro del detalle de PNF").
   const showSedeTabs = !isCoordinador && !isRector
-  const showPnfsTab = !isCoordinador
-  const defaultTab = showSedeTabs ? 'sedes' : showPnfsTab ? 'pnfs' : 'trayectos'
+  const defaultTab = showSedeTabs ? 'sedes' : 'pnfs'
 
   return (
     <div className="space-y-6">
@@ -471,17 +435,13 @@ export function ConfiguracionPage() {
       <Tabs defaultValue={defaultTab}>
         <TabsList className="flex-wrap">
           {showSedeTabs && <TabsTrigger value="sedes"><Building className="mr-2 h-4 w-4" />Sedes</TabsTrigger>}
-          {showPnfsTab && <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>}
+          <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>
           {showSedeTabs && <TabsTrigger value="sedePnf"><Building className="mr-2 h-4 w-4" />Sede-PNF</TabsTrigger>}
-          <TabsTrigger value="trayectos"><LayoutList className="mr-2 h-4 w-4" />Trayectos</TabsTrigger>
-          <TabsTrigger value="tramos"><Clock className="mr-2 h-4 w-4" />Tramos</TabsTrigger>
           <TabsTrigger value="periodos"><Calendar className="mr-2 h-4 w-4" />Períodos</TabsTrigger>
         </TabsList>
         {showSedeTabs && <TabsContent value="sedes" className="mt-4"><CrudTabWithModals config={entityConfigs.sedes} /></TabsContent>}
-        {showPnfsTab && <TabsContent value="pnfs" className="mt-4"><CrudTabWithModals config={entityConfigs.pnfs} /></TabsContent>}
+        <TabsContent value="pnfs" className="mt-4"><CrudTabWithModals config={entityConfigs.pnfs} /></TabsContent>
         {showSedeTabs && <TabsContent value="sedePnf" className="mt-4"><CrudTabWithModals config={entityConfigs.sedePnf} /></TabsContent>}
-        <TabsContent value="trayectos" className="mt-4"><CrudTabWithModals config={entityConfigs.trayectos} /></TabsContent>
-        <TabsContent value="tramos" className="mt-4"><CrudTabWithModals config={entityConfigs.tramos} /></TabsContent>
         <TabsContent value="periodos" className="mt-4"><CrudTabWithModals config={entityConfigs.periodos} /></TabsContent>
       </Tabs>
     </div>
