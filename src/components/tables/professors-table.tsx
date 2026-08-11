@@ -52,7 +52,7 @@ interface ProfessorsTableProps {
   canResetDevice: boolean
   canDelete: boolean
   // Filtros opcionales de ámbito. Cada select se muestra solo si se le pasan sus
-  // opciones: superadmin/analista reciben sede + PNF; rector solo PNF; coordinador ninguno.
+  // opciones: superadmin/auditor reciben sede + PNF; rector solo PNF; coordinador ninguno.
   sedeOptions?: { id: string; label: string }[]
   sedeFilter?: string
   onSedeFilterChange?: (value: string) => void

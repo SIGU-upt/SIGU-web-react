@@ -1,7 +1,7 @@
 export enum Role {
   SUPERADMIN = 'SUPERADMIN',
   RECTOR = 'RECTOR',
-  ANALISTA = 'ANALISTA',
+  AUDITOR = 'AUDITOR',
   COORDINADOR = 'COORDINADOR',
   DOCENTE = 'DOCENTE',
   ALUMNO = 'ALUMNO',
@@ -122,20 +122,42 @@ export interface Inscripcion {
   id: string
   alumnoId: string
   claseId: string
-  periodoId: string | null
+  // ADR-025: obligatorio en el backend (antes opcional).
+  periodoId: string
   fechaInscripcion: string
   alumno?: User
   clase?: Clase
 }
 
+// ADR-025 (Propuesta B): el grupo real de ingreso — "cohorte 2026-I de Informática".
+export interface Cohorte {
+  id: string
+  nombre: string
+  sedePnfId: string
+  trayectoId: string
+  periodoIngresoId: string
+  cupo: number | null
+  sedePnf?: SedePnf
+  trayecto?: Trayecto
+  periodoIngreso?: PeriodoAcademico
+  miembrosActivos?: number
+  miembros?: AlumnoCohorte[]
+}
+
+// La matrícula individual de un alumno dentro de una Cohorte (grupo).
 export interface AlumnoCohorte {
   id: string
   alumnoId: string
+  cohorteId: string
   sedePnfId: string
   trayectoId: string
   periodoId: string
   activa: boolean
+  motivoRetiro: string | null
+  fechaRetiro: string | null
   alumno?: User
+  trayecto?: Trayecto
+  periodo?: PeriodoAcademico
 }
 
 export interface Asistencia {
@@ -152,6 +174,8 @@ export interface ClaseSuspendida {
   claseId: string
   fecha: string
   motivo: string
+  suspendidoPorId: string | null
+  clase?: Clase
 }
 
 export interface SecurityLog {
