@@ -13,6 +13,8 @@ import { SeccionesPage } from '@/pages/secciones'
 import { SeccionDetallePage } from '@/pages/secciones/detalle'
 import { ReportesPage } from '@/pages/reportes'
 import { ConfiguracionPage } from '@/pages/configuracion'
+import { PnfDetallePage } from '@/pages/pnfs/detalle'
+import { SedeDetallePage } from '@/pages/sedes/detalle'
 import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
 import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
@@ -128,6 +130,26 @@ function AppRoutes() {
               allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
             >
               <ConfiguracionPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pnfs/:id"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
+            >
+              <PnfDetallePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/sedes/:id"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
+            >
+              <SedeDetallePage />
             </PrivateRoute>
           }
         />
