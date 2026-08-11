@@ -13,8 +13,12 @@ import { SeccionesPage } from '@/pages/secciones'
 import { SeccionDetallePage } from '@/pages/secciones/detalle'
 import { ReportesPage } from '@/pages/reportes'
 import { ConfiguracionPage } from '@/pages/configuracion'
+import { PnfDetallePage } from '@/pages/pnfs/detalle'
+import { SedeDetallePage } from '@/pages/sedes/detalle'
 import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
+import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
+import { CohortesPage } from '@/pages/cohortes'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -28,7 +32,7 @@ function AppRoutes() {
     )
   }
 
-  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]
+  const adminRoles = [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]
 
   return (
     <>
@@ -111,7 +115,7 @@ function AppRoutes() {
                 Role.SUPERADMIN,
                 Role.RECTOR,
                 Role.COORDINADOR,
-                Role.ANALISTA,
+                Role.AUDITOR,
                 Role.DOCENTE,
               ]}
             >
@@ -123,9 +127,29 @@ function AppRoutes() {
           path="/configuracion"
           element={
             <PrivateRoute
-              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.ANALISTA]}
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
             >
               <ConfiguracionPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/pnfs/:id"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
+            >
+              <PnfDetallePage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/sedes/:id"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
+            >
+              <SedeDetallePage />
             </PrivateRoute>
           }
         />
@@ -134,6 +158,26 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
               <SecurityLogsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/clases-suspendidas"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
+            >
+              <ClasesSuspendidasPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/cohortes"
+          element={
+            <PrivateRoute
+              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
+            >
+              <CohortesPage />
             </PrivateRoute>
           }
         />

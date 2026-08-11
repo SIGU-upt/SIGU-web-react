@@ -87,9 +87,9 @@ export function StudentsPage() {
         idNumber: u.ci,
         email: u.email,
         sedePnfId: u.sedePnfId,
-        trayectoActualId: u.trayectoActualId ?? '',
+        // ADR-025: la cohorte activa manda; el atributo directo es respaldo.
+        trayectoActualId: u.trayectoActualId ?? u.cohorteActiva?.trayecto?.id ?? '',
         career: u.sedePnf?.pnf?.nombre ?? '—',
-        // ADR-022: el trayecto actual es atributo directo del alumno; la cohorte es respaldo.
         semester: u.trayectoActual?.numero ?? u.cohorteActiva?.trayecto?.numero ?? 0,
         status: 'Regular',
       })))
@@ -122,7 +122,9 @@ export function StudentsPage() {
 
   const handleCreate = async (data: any) => {
     const { trayectoId, ...userData } = data
-    // ADR-022: el trayecto actual se guarda como atributo directo del alumno.
+    // Asignación inicial directa (solo en creación; ADR-025 la retira de PATCH).
+    // El POST /cohortes de abajo es el que de verdad matricula al alumno y
+    // sincroniza este mismo campo del lado del servidor.
     const res = await api.post('/users', { ...userData, role: 'ALUMNO', trayectoActualId: trayectoId || undefined })
     const sedePnfId = data.sedePnfId ?? user?.sedePnfId
     if (trayectoId && sedePnfId) {
@@ -137,7 +139,7 @@ export function StudentsPage() {
         })
       } catch (err: any) {
         if (err?.response?.status === 404) {
-          // El trayecto ya quedó asignado al alumno (ADR-022); lo que falta es la
+          // El trayecto ya quedó asignado al alumno; lo que falta es la
           // matrícula en un período (cohorte), que necesita un período activo.
           toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
         } else {
@@ -154,9 +156,32 @@ export function StudentsPage() {
     if (data.apellidos) payload.apellidos = data.apellidos
     if (data.email) payload.email = data.email
     if (data.sedePnfId) payload.sedePnfId = data.sedePnfId
-    // ADR-022: editar el trayecto actual del alumno.
-    if (data.trayectoId) payload.trayectoActualId = data.trayectoId
     await api.patch(`/users/${editingUser.id}`, payload)
+
+    // ADR-025: el trayecto ya no se edita por PATCH /users (la cohorte activa
+    // manda). Si cambió, se matricula en una cohorte nueva — misma mecánica
+    // que handleCreate — que sincroniza trayectoActualId del lado del servidor.
+    if (data.trayectoId && data.trayectoId !== editingUser.trayectoActualId) {
+      const sedePnfId = data.sedePnfId ?? editingUser.sedePnfId
+      if (sedePnfId) {
+        try {
+          const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
+          const periodo = periodoRes.data
+          await api.post('/cohortes', {
+            alumnoId: editingUser.id,
+            sedePnfId,
+            trayectoId: data.trayectoId,
+            periodoId: periodo.id,
+          })
+        } catch (err: any) {
+          if (err?.response?.status === 404) {
+            toast.warning('Los demás datos se actualizaron, pero no hay un período académico activo para esa sede-PNF, así que el trayecto no cambió. Cree un período activo primero.')
+          } else {
+            toast.warning('Los demás datos se actualizaron, pero no fue posible cambiar el trayecto. Puede intentarlo de nuevo.')
+          }
+        }
+      }
+    }
     await fetchData()
   }
 

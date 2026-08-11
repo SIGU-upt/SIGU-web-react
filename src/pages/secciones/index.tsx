@@ -23,6 +23,7 @@ export function SeccionesPage() {
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
+  const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Seccion | null>(null)
   const [deleting, setDeleting] = useState<Seccion | null>(null)
@@ -31,21 +32,23 @@ export function SeccionesPage() {
   const canDelete = user?.role === Role.SUPERADMIN
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(1) }, 300)
     return () => clearTimeout(timer)
   }, [search])
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string> = {}
+      const params: Record<string, string | number> = { page, limit: 10 }
       if (debouncedSearch) params.q = debouncedSearch
       if (user?.sedePnfId) params.sedePnfId = user.sedePnfId
       const res = await api.get('/secciones', { params })
-      setData(res.data.data ?? res.data)
+      const list = res.data.data ?? res.data
+      setData(Array.isArray(list) ? list : [])
+      if (res.data.meta) setMeta(res.data.meta)
     } catch { setData([]) }
     finally { setLoading(false) }
-  }, [debouncedSearch, user?.sedePnfId])
+  }, [debouncedSearch, user?.sedePnfId, page])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -66,14 +69,8 @@ export function SeccionesPage() {
     await fetchData()
   }
 
-  const filtered = Array.isArray(data) ? data.filter((s) =>
-    !search || s.codigo.toLowerCase().includes(search.toLowerCase())
-  ) : []
-
-  const perPage = 10
-  const totalPages = Math.ceil(filtered.length / perPage)
+  const perPage = meta.limit || 10
   const start = (page - 1) * perPage
-  const paginated = filtered.slice(start, start + perPage)
 
   return (
     <div className="space-y-6">
@@ -106,7 +103,7 @@ export function SeccionesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginated.map((s) => (
+                  {data.map((s) => (
                     <TableRow key={s.id} className="cursor-pointer" onClick={() => navigate(`/secciones/${s.id}`)}>
                       <TableCell><Badge variant="secondary" className="font-mono">{s.codigo}</Badge></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.trayecto?.nombre ?? s.trayectoId}</TableCell>
@@ -132,7 +129,7 @@ export function SeccionesPage() {
                   ))}
                 </TableBody>
               </Table>
-              <PaginationControls currentPage={page} totalPages={totalPages} totalItems={filtered.length} startIndex={start} endIndex={start + perPage} onPageChange={setPage} label="secciones" />
+              <PaginationControls currentPage={page} totalPages={meta.totalPages} totalItems={meta.total} startIndex={start} endIndex={start + perPage} onPageChange={setPage} label="secciones" />
             </>
           )}
         </CardContent>

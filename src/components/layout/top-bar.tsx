@@ -19,7 +19,7 @@ import { Role } from "@/types"
 const roleLabels: Record<Role, string> = {
   [Role.SUPERADMIN]: "Super Administrador",
   [Role.RECTOR]: "Rector",
-  [Role.ANALISTA]: "Analista",
+  [Role.AUDITOR]: "Auditor",
   [Role.COORDINADOR]: "Coordinador",
   [Role.DOCENTE]: "Docente",
   [Role.ALUMNO]: "Alumno",

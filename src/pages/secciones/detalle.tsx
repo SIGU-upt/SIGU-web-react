@@ -15,7 +15,7 @@ import { ClaseFormModal } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion } from "@/types"
+import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
 
 interface InscripcionMasivaResponse {
@@ -39,6 +39,7 @@ export function SeccionDetallePage() {
   const [clases, setClases] = useState<Clase[]>([])
   const [cohorte, setCohorte] = useState<AlumnoCohorte[]>([])
   const [inscripcionesPorClase, setInscripcionesPorClase] = useState<Record<string, Inscripcion[]>>({})
+  const [suspensionesPorClase, setSuspensionesPorClase] = useState<Record<string, ClaseSuspendida[]>>({})
   const [periodoActivo, setPeriodoActivo] = useState<PeriodoAcademico | null>(null)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -55,6 +56,45 @@ export function SeccionDetallePage() {
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
 
+  // NOTA: /inscripciones solo admite filtrar por un único claseId a la vez
+  // (no acepta una lista de claseId ni un filtro por seccionId — ver
+  // inscripciones.controller.ts / inscripciones.service.ts, ALLOWED_FILTERS),
+  // así que sigue haciendo una llamada por cada clase de la sección. No se
+  // agrega aquí un filtro que el backend no soporta.
+  const fetchInscripcionesYSuspensiones = useCallback(async (clasesArr: Clase[]) => {
+    const [inscripcionesRes, suspensionesRes] = await Promise.all([
+      Promise.all(clasesArr.map((c) => api.get('/inscripciones', { params: { claseId: c.id } }))),
+      Promise.all(clasesArr.map((c) => api.get(`/clases/${c.id}/suspensiones`))),
+    ])
+
+    const inscripcionesMap: Record<string, Inscripcion[]> = {}
+    clasesArr.forEach((c, i) => {
+      const list = inscripcionesRes[i].data.data ?? inscripcionesRes[i].data
+      inscripcionesMap[c.id] = Array.isArray(list) ? list : []
+    })
+    setInscripcionesPorClase(inscripcionesMap)
+
+    const suspensionesMap: Record<string, ClaseSuspendida[]> = {}
+    clasesArr.forEach((c, i) => {
+      const list = suspensionesRes[i].data.data ?? suspensionesRes[i].data
+      suspensionesMap[c.id] = Array.isArray(list) ? list : []
+    })
+    setSuspensionesPorClase(suspensionesMap)
+  }, [])
+
+  // Re-carga solo la lista de clases de la sección (y sus inscripciones/
+  // suspensiones), sin volver a pedir sección/cohorte/período — usada tras
+  // crear, editar o eliminar una clase, que son las únicas mutaciones que
+  // cambian la lista de clases en sí.
+  const refreshClases = useCallback(async () => {
+    if (!id) return
+    const clasesRes = await api.get('/clases', { params: { seccionId: id } })
+    const clasesList: Clase[] = clasesRes.data.data ?? clasesRes.data
+    const clasesArr = Array.isArray(clasesList) ? clasesList : []
+    setClases(clasesArr)
+    await fetchInscripcionesYSuspensiones(clasesArr)
+  }, [id, fetchInscripcionesYSuspensiones])
+
   const fetchData = useCallback(async () => {
     if (!id) return
     setLoading(true)
@@ -69,20 +109,13 @@ export function SeccionDetallePage() {
       const clasesArr = Array.isArray(clasesList) ? clasesList : []
       setClases(clasesArr)
 
-      const [cohorteRes, inscripcionesRes] = await Promise.all([
+      const [cohorteRes] = await Promise.all([
         api.get('/cohortes', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
-        Promise.all(clasesArr.map((c) => api.get('/inscripciones', { params: { claseId: c.id } }))),
+        fetchInscripcionesYSuspensiones(clasesArr),
       ])
 
       const cohorteList = cohorteRes.data.data ?? cohorteRes.data
       setCohorte(Array.isArray(cohorteList) ? cohorteList : [])
-
-      const inscripcionesMap: Record<string, Inscripcion[]> = {}
-      clasesArr.forEach((c, i) => {
-        const list = inscripcionesRes[i].data.data ?? inscripcionesRes[i].data
-        inscripcionesMap[c.id] = Array.isArray(list) ? list : []
-      })
-      setInscripcionesPorClase(inscripcionesMap)
 
       // Llamada aislada: un 404 de "sin período activo" es un caso válido (2 de 3
       // sede-PNF no tienen ninguno) y no debe tumbar el resto de la sección.
@@ -105,7 +138,7 @@ export function SeccionDetallePage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, fetchInscripcionesYSuspensiones])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -141,19 +174,19 @@ export function SeccionDetallePage() {
 
   const handleCreate = async (form: Record<string, any>) => {
     await api.post('/clases', { ...form, seccionId: id })
-    await fetchData()
+    await refreshClases()
   }
 
   const handleEdit = async (form: Record<string, any>) => {
     if (!editing) return
     await api.patch(`/clases/${editing.id}`, form)
-    await fetchData()
+    await refreshClases()
   }
 
   const handleDelete = async () => {
     if (!deleting) return
     await api.delete(`/clases/${deleting.id}`)
-    await fetchData()
+    await refreshClases()
   }
 
   const handleInscribirCohorte = async () => {
@@ -168,7 +201,7 @@ export function SeccionDetallePage() {
         claseIds: claseIdsSinAmbiguedad,
       })
       setResultado(res.data)
-      await fetchData()
+      await fetchInscripcionesYSuspensiones(clases)
     } catch (err: any) {
       toast.error(err.response?.data?.message ?? 'No se pudo inscribir la cohorte.')
     } finally {
@@ -178,20 +211,34 @@ export function SeccionDetallePage() {
 
   const handleInscribirIndividual = async (data: { alumnoId: string; claseIds: string[] }) => {
     const res = await api.post('/inscripciones/batch', data)
-    await fetchData()
+    await fetchInscripcionesYSuspensiones(clases)
     return res.data
   }
 
   const handleDesinscribir = async (inscripcionId: string) => {
     await api.delete(`/inscripciones/${inscripcionId}`)
-    await fetchData()
+    // Actualiza solo el estado local: ya sabemos qué inscripción se quitó,
+    // no hace falta re-pedir todo al servidor.
+    setInscripcionesPorClase((prev) => {
+      const next: Record<string, Inscripcion[]> = {}
+      for (const [claseId, list] of Object.entries(prev)) {
+        next[claseId] = list.filter((ins) => ins.id !== inscripcionId)
+      }
+      return next
+    })
   }
 
   const handleSuspenderClase = async () => {
     if (!suspendingClase || !suspendFecha || !suspendMotivo) return
     setSuspending(true)
     try {
-      await api.post(`/clases/${suspendingClase.id}/suspender`, { fecha: suspendFecha, motivo: suspendMotivo })
+      const res = await api.post(`/clases/${suspendingClase.id}/suspender`, { fecha: suspendFecha, motivo: suspendMotivo })
+      const nuevaSuspension: ClaseSuspendida = res.data
+      // Actualiza solo la clase suspendida en vez de recargar todo.
+      setSuspensionesPorClase((prev) => ({
+        ...prev,
+        [suspendingClase.id]: [...(prev[suspendingClase.id] ?? []), nuevaSuspension],
+      }))
       toast.success('Clase suspendida correctamente.')
       setSuspendingClase(null)
       setSuspendFecha("")
@@ -360,7 +407,14 @@ export function SeccionDetallePage() {
                 <TableBody>
                   {grupo.map((c) => (
                     <TableRow key={c.id}>
-                      <TableCell><Badge variant="secondary" className="font-mono">{c.nombreGrupo}</Badge></TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-mono">{c.nombreGrupo}</Badge>
+                        {(suspensionesPorClase[c.id] ?? []).length > 0 && (
+                          <Badge variant="destructive" className="ml-1">
+                            {(suspensionesPorClase[c.id] ?? []).length} suspendida(s)
+                          </Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.docente?.nombreCompleto ?? '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.diaSemana ? DIA_LABEL[c.diaSemana] ?? c.diaSemana : '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{c.horaInicio && c.horaFin ? `${c.horaInicio} - ${c.horaFin}` : '—'}</TableCell>
