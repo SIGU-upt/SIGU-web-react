@@ -4,6 +4,7 @@ import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { downloadExportedFile } from "@/lib/export"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Trayecto, type SedePnf } from "@/types"
 
@@ -37,11 +38,11 @@ export function StudentsPage() {
   }, [search])
 
   useEffect(() => {
-    api.get('/trayectos').then((res) => {
+    api.get('/trayectos', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setTrayectoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTrayectoOptions([]))
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setSedePnfOptions([]))
@@ -60,7 +61,12 @@ export function StudentsPage() {
     isSuperadmin || isRector
       ? sedePnfOptions
           .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
-          .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+          .map((sp) => ({
+            id: sp.id,
+            // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles
+            // en el select (ej. "Informatica" en Socopó y en Barinas).
+            label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
+          }))
       : undefined
 
   // El trayecto se limita al PNF elegido (evita la lista ambigua con trayectos
@@ -77,7 +83,7 @@ export function StudentsPage() {
       if (debouncedSearch) params.q = debouncedSearch
       if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
       if (pnfFilter) params.sedePnfId = pnfFilter
-      if (trayectoFilter) params.trayectoId = trayectoFilter
+      if (trayectoFilter) params.trayectoNumero = trayectoFilter
       const res = await api.get('/users', { params })
       const list = res.data.data ?? res.data
       setUsers((Array.isArray(list) ? list : []).map((u: User & { cohorteActiva?: any }) => ({
@@ -197,6 +203,15 @@ export function StudentsPage() {
     toast.success(`Dispositivo de ${resettingDeviceUser.name} reiniciado correctamente.`)
   }
 
+  const handleExport = async () => {
+    const params: Record<string, string> = { role: 'ALUMNO' }
+    if (debouncedSearch) params.q = debouncedSearch
+    if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
+    if (pnfFilter) params.sedePnfId = pnfFilter
+    if (trayectoFilter) params.trayectoNumero = trayectoFilter
+    await downloadExportedFile('/export/usuarios', params, 'estudiantes.xlsx')
+  }
+
   const handleImport = async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
@@ -214,6 +229,7 @@ export function StudentsPage() {
         data={users}
         loading={loading}
         onImport={handleImport}
+        onExport={handleExport}
         onCreate={() => { setEditingUser(null); setModalOpen(true) }}
         onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
         onDelete={(item) => setDeletingUser(item)}
