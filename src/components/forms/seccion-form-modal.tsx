@@ -5,15 +5,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Role, type SedePnf, type Trayecto } from "@/types"
+import { Role, type SedePnf, type Trayecto, type Turno } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+
+const TURNO_LABELS: Record<Turno, string> = {
+  MANANA: "Mañana",
+  TARDE: "Tarde",
+  NOCHE: "Noche",
+  FIN_DE_SEMANA: "Fin de semana",
+}
 
 interface SeccionFormData {
   sedePnfId: string
   trayectoId: string
   codigo: string
+  turno?: Turno | ""
 }
 
 interface SeccionFormModalProps {
@@ -46,14 +54,14 @@ export function SeccionFormModal({
   const [selectedSedeId, setSelectedSedeId] = useState("")
 
   const { register, handleSubmit, reset, watch, setValue, control, formState: { errors } } = useForm<SeccionFormData>({
-    defaultValues: { sedePnfId: '', trayectoId: '', codigo: '', ...initialData },
+    defaultValues: { sedePnfId: '', trayectoId: '', codigo: '', turno: '', ...initialData },
   })
   const sedePnfId = watch('sedePnfId')
 
   useEffect(() => {
     if (open) {
       reset({
-        sedePnfId: '', trayectoId: '', codigo: '', ...initialData,
+        sedePnfId: '', trayectoId: '', codigo: '', turno: '', ...initialData,
         ...(isCoordinador && currentUser?.sedePnfId ? { sedePnfId: currentUser.sedePnfId } : {}),
       })
       setSelectedSedeId(isRector && currentUser?.sedeActualId ? currentUser.sedeActualId : "")
@@ -103,7 +111,7 @@ export function SeccionFormModal({
     setLoading(true)
     setError(null)
     try {
-      await onSubmit(data)
+      await onSubmit({ ...data, turno: data.turno || undefined })
       onOpenChange(false)
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Error al guardar')
@@ -185,6 +193,25 @@ export function SeccionFormModal({
             <Label htmlFor="codigo">Código</Label>
             <Input id="codigo" placeholder="IN21" {...register('codigo', { ...requiredTextRule, maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
             {errors.codigo && <p className="text-xs text-destructive">{errors.codigo.message}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="turno">Turno</Label>
+            <Controller
+              control={control}
+              name="turno"
+              render={({ field }) => (
+                <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <SelectTrigger id="turno" className="w-full">
+                    <SelectValue placeholder="Sin especificar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.entries(TURNO_LABELS) as [Turno, string][]).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
           </div>
 
           {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}

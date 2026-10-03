@@ -92,11 +92,14 @@ export interface PeriodoAcademico {
   advertencias?: string[]
 }
 
+export type Turno = "MANANA" | "TARDE" | "NOCHE" | "FIN_DE_SEMANA"
+
 export interface Seccion {
   id: string
   sedePnfId: string
   trayectoId: string
   codigo: string
+  turno?: Turno | null
   sedePnf?: SedePnf
   trayecto?: Trayecto
 }

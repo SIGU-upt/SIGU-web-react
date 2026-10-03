@@ -17,6 +17,12 @@ interface BatchResult {
   errores: { claseId: string; motivo: string }[]
 }
 
+interface ErrorConAtribucion {
+  alumnoId: string
+  claseId: string
+  motivo: string
+}
+
 interface InscripcionIndividualModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -39,7 +45,7 @@ export function InscripcionIndividualModal({
   const [selectedClaseIds, setSelectedClaseIds] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [resultado, setResultado] = useState<{ inscripcionesCreadas: number; yaInscritas: number; errores: string[] } | null>(null)
+  const [resultado, setResultado] = useState<{ inscripcionesCreadas: number; yaInscritas: number; errores: ErrorConAtribucion[] } | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -76,6 +82,12 @@ export function InscripcionIndividualModal({
     setSelectedAlumnoIds((prev) => prev.includes(alumnoId) ? prev.filter((id) => id !== alumnoId) : [...prev, alumnoId])
   }
 
+  const alumnoNombre = (alumnoId: string) => alumnos.find((a) => a.id === alumnoId)?.nombreCompleto ?? alumnoId
+  const claseNombre = (claseId: string) => {
+    const c = clases.find((cl) => cl.id === claseId)
+    return c ? `${c.unidadCurricular?.nombre ?? 'Materia'} (${c.nombreGrupo})` : claseId
+  }
+
   // Un solo grupo por materia (regla R-1 del backend): al elegir un grupo se
   // descarta cualquier otro grupo ya seleccionado de la misma unidad curricular,
   // evitando el 409 antes de llamar al servidor. Se mantiene Checkbox (no Radio)
@@ -102,9 +114,9 @@ export function InscripcionIndividualModal({
       const agregado = resultados.reduce((acc, r) => {
         acc.inscripcionesCreadas += r.inscripcionesCreadas
         acc.yaInscritas += r.yaInscritas
-        acc.errores.push(...r.errores.map((e) => e.motivo))
+        acc.errores.push(...r.errores.map((e) => ({ alumnoId: r.alumnoId, claseId: e.claseId, motivo: e.motivo })))
         return acc
-      }, { inscripcionesCreadas: 0, yaInscritas: 0, errores: [] as string[] })
+      }, { inscripcionesCreadas: 0, yaInscritas: 0, errores: [] as ErrorConAtribucion[] })
       setResultado(agregado)
       setSelectedAlumnoIds([])
       setSelectedClaseIds([])
@@ -132,12 +144,15 @@ export function InscripcionIndividualModal({
               {alumnos.length === 0 && (
                 <p className="p-3 text-sm text-muted-foreground">No se encontraron alumnos.</p>
               )}
-              {alumnos.map((a) => (
-                <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent cursor-pointer">
-                  <Checkbox checked={selectedAlumnoIds.includes(a.id)} onCheckedChange={() => toggleAlumno(a.id)} />
-                  <span>{a.nombreCompleto} — {a.ci}</span>
-                </label>
-              ))}
+              {alumnos.map((a) => {
+                const trayecto = a.trayectoActual?.nombre ?? a.cohorteActiva?.trayecto?.nombre
+                return (
+                  <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent cursor-pointer">
+                    <Checkbox checked={selectedAlumnoIds.includes(a.id)} onCheckedChange={() => toggleAlumno(a.id)} />
+                    <span>{a.nombreCompleto} — {a.ci}{trayecto ? ` · ${trayecto}` : ''}</span>
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -168,7 +183,9 @@ export function InscripcionIndividualModal({
               <p className="flex items-center gap-1.5"><Check className="h-4 w-4 text-primary" /> Inscripciones creadas: <span className="font-semibold">{resultado.inscripcionesCreadas}</span> — ya inscritas: {resultado.yaInscritas}</p>
               {resultado.errores.length > 0 && (
                 <ul className="list-disc pl-5 text-muted-foreground">
-                  {resultado.errores.map((motivo, i) => <li key={i}>{motivo}</li>)}
+                  {resultado.errores.map((e, i) => (
+                    <li key={i}>{alumnoNombre(e.alumnoId)} — {claseNombre(e.claseId)}: {e.motivo}</li>
+                  ))}
                 </ul>
               )}
             </div>
