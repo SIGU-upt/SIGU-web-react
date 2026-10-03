@@ -21,33 +21,51 @@ export function SedeDetallePage() {
   const [alumnos, setAlumnos] = useState<User[]>([])
   const [alumnosMeta, setAlumnosMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
   const [alumnosPage, setAlumnosPage] = useState(1)
+  const [alumnosLoading, setAlumnosLoading] = useState(true)
   const [loading, setLoading] = useState(true)
 
   const fetchData = useCallback(async () => {
     if (!id) return
     setLoading(true)
     try {
-      const [sedeRes, sedePnfRes, seccionesRes, docentesRes, alumnosRes] = await Promise.all([
+      const [sedeRes, sedePnfRes, seccionesRes, docentesRes] = await Promise.all([
         api.get(`/sedes/${id}`),
         api.get('/sede-pnf', { params: { sedeId: id } }),
         api.get('/secciones', { params: { sedeId: id } }),
         api.get('/users', { params: { role: 'DOCENTE', sedeId: id, limit: 200 } }),
-        api.get('/users', { params: { role: 'ALUMNO', sedeId: id, page: alumnosPage, limit: 20 } }),
       ])
       setSede(sedeRes.data)
       setSedePnfs(sedePnfRes.data.data ?? sedePnfRes.data ?? [])
       setSecciones(seccionesRes.data.data ?? seccionesRes.data ?? [])
       setDocentes(docentesRes.data.data ?? docentesRes.data ?? [])
-      setAlumnos(alumnosRes.data.data ?? [])
-      if (alumnosRes.data.meta) setAlumnosMeta(alumnosRes.data.meta)
     } catch {
       setSede(null)
     } finally {
       setLoading(false)
     }
-  }, [id, alumnosPage])
+  }, [id])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Separado de fetchData a propósito: antes paginar Alumnos volvía a pedir
+  // sede/sede-PNF/secciones/docentes y desmontaba toda la pantalla mientras
+  // cargaba (mismo gate de loading para todo). Ahora solo esta tabla muestra
+  // "Cargando..." y el resto de la pantalla queda montado.
+  const fetchAlumnos = useCallback(async () => {
+    if (!id) return
+    setAlumnosLoading(true)
+    try {
+      const alumnosRes = await api.get('/users', { params: { role: 'ALUMNO', sedeId: id, page: alumnosPage, limit: 20 } })
+      setAlumnos(alumnosRes.data.data ?? [])
+      if (alumnosRes.data.meta) setAlumnosMeta(alumnosRes.data.meta)
+    } catch {
+      setAlumnos([])
+    } finally {
+      setAlumnosLoading(false)
+    }
+  }, [id, alumnosPage])
+
+  useEffect(() => { fetchAlumnos() }, [fetchAlumnos])
 
   if (loading) {
     return <div className="text-center py-10 text-muted-foreground">Cargando...</div>
@@ -157,7 +175,9 @@ export function SedeDetallePage() {
           <CardTitle className="flex items-center gap-2 text-lg"><GraduationCap className="h-5 w-5" /> Alumnos ({alumnosMeta.total})</CardTitle>
         </CardHeader>
         <CardContent>
-          {alumnos.length === 0 ? (
+          {alumnosLoading ? (
+            <p className="text-center py-4 text-sm text-muted-foreground">Cargando...</p>
+          ) : alumnos.length === 0 ? (
             <p className="text-center py-4 text-sm text-muted-foreground">Sin alumnos en esta sede.</p>
           ) : (
             <>
