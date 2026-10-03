@@ -5,6 +5,7 @@ import {
   Users,
   Trash2,
   SmartphoneNfc,
+  Download,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -46,6 +47,7 @@ interface StudentsTableProps {
   data: Student[]
   loading: boolean
   onImport: (file: File) => Promise<any>
+  onExport: () => void
   onCreate: () => void
   onEdit: (item: Student) => void
   onDelete: (item: Student) => void
@@ -73,9 +75,15 @@ interface StudentsTableProps {
   onPageChange: (page: number) => void
 }
 
-export function StudentsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps) {
+export function StudentsTable({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
+  // El trayecto se filtra por número, no por fila: "Trayecto 1" de PNF
+  // distintos son filas distintas que comparten número — se deduplica para
+  // el select y el valor que viaja es el número, no un trayectoId puntual.
+  const trayectoNumeroOptions = Array.from(
+    new Map(trayectoOptions.map((t) => [t.numero, t.nombre])).entries(),
+  ).sort(([a], [b]) => a - b)
 
   return (
     <Card className="shadow-md">
@@ -90,6 +98,10 @@ export function StudentsTable({ data, loading, onImport, onCreate, onEdit, onDel
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={onExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
             {canEdit && (
               <ImportModal
                 onImport={onImport}
@@ -151,8 +163,8 @@ export function StudentsTable({ data, loading, onImport, onCreate, onEdit, onDel
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">Todos los trayectos</SelectItem>
-              {trayectoOptions.map((t) => (
-                <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+              {trayectoNumeroOptions.map(([numero, nombre]) => (
+                <SelectItem key={numero} value={String(numero)}>{nombre}</SelectItem>
               ))}
             </SelectContent>
           </Select>

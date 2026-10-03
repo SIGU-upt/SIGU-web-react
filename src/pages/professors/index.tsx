@@ -4,6 +4,7 @@ import { ProfessorsTable } from "@/components/tables/professors-table"
 import { UserFormModal } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { downloadExportedFile } from "@/lib/export"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type SedePnf } from "@/types"
 
@@ -38,7 +39,7 @@ export function ProfessorsPage() {
   }, [search])
 
   useEffect(() => {
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setSedePnfOptions([]))
@@ -56,7 +57,12 @@ export function ProfessorsPage() {
     isUnscoped || isRector
       ? sedePnfOptions
           .filter((sp) => !isUnscoped || !sedeFilter || sp.sedeId === sedeFilter)
-          .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+          .map((sp) => ({
+            id: sp.id,
+            // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles
+            // en el select (ej. "Informatica" en Socopó y en Barinas).
+            label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
+          }))
       : undefined
 
   const handleSedeFilterChange = (value: string) => {
@@ -158,12 +164,21 @@ export function ProfessorsPage() {
     return res.data
   }
 
+  const handleExport = async () => {
+    const params: Record<string, string> = { role: 'DOCENTE' }
+    if (debouncedSearch) params.q = debouncedSearch
+    if (isUnscoped && sedeFilter) params.sedeId = sedeFilter
+    if (pnfFilter) params.sedePnfId = pnfFilter
+    await downloadExportedFile('/export/usuarios', params, 'docentes.xlsx')
+  }
+
   return (
     <div className="space-y-6">
       <ProfessorsTable
         data={users}
         loading={loading}
         onImport={handleImport}
+        onExport={handleExport}
         onCreate={() => { setEditingUser(null); setModalOpen(true) }}
         onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
         onDelete={(item) => setDeletingUser(item)}
