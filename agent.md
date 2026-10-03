@@ -25,6 +25,7 @@ Login real contra `POST /api/v1/auth/login` vía `AuthContext` (`src/contexts/Au
 - Idioma: código en inglés; textos de interfaz en **español formal** ("usted"/infinitivo, sin tuteo).
 - Componentes `PascalCase`, archivos `kebab-case`.
 - Ramas: `tipo/descripcion-corta`, máx. 3 palabras tras el prefijo. Commits semánticos con una línea en blanco entre título y cuerpo. **Prohibida la palabra "relax".**
+- Antes de abrir un PR, correr `/security-review` sobre el diff (además, `.github/workflows/security-review.yml` lo repite automáticamente en CI).
 
 ## 7. Si necesitas un dato que la API no expone
 No lo inventes en el cliente. Solicítalo al Arquitecto Líder para registrarlo como ADR y que el Backend lo provea.
