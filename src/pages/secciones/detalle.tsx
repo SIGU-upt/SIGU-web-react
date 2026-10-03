@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { PageHeader } from "@/components/ui/page-header"
 import { ClaseFormModal } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -279,24 +278,32 @@ export function SeccionDetallePage() {
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Secciones
       </Button>
 
-      <PageHeader
-        title={`Sección ${seccion.codigo}`}
-        subtitle={`${seccion.trayecto?.nombre ?? seccion.trayectoId} — ${seccion.sedePnf?.pnf?.nombre ?? ''} (${seccion.sedePnf?.sede?.nombre ?? ''})`}
-        icon={<Layers className="h-5 w-5" />}
-        actions={canEdit && (
-          <>
-            <Button variant="outline" onClick={() => setIndividualModalOpen(true)} disabled={clases.length === 0}>
+      <div className="rounded-2xl bg-primary text-primary-foreground p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent/70 text-accent-foreground shrink-0 shadow-sm ring-1 ring-white/20">
+            <Layers className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Sección {seccion.codigo}</h1>
+            <p className="text-primary-foreground/80 mt-1">
+              {seccion.trayecto?.nombre ?? seccion.trayectoId} — {seccion.sedePnf?.pnf?.nombre ?? ''} ({seccion.sedePnf?.sede?.nombre ?? ''})
+            </p>
+          </div>
+        </div>
+        {canEdit && (
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white" onClick={() => setIndividualModalOpen(true)} disabled={clases.length === 0}>
               <UserPlus className="mr-2 h-4 w-4" /> Inscribir alumnos
             </Button>
-            <Button variant="outline" onClick={handleInscribirCohorte} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0}>
+            <Button variant="outline" className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white" onClick={handleInscribirCohorte} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0}>
               <Users className="mr-2 h-4 w-4" /> {inscribiendo ? 'Inscribiendo...' : 'Inscribir cohorte completa'}
             </Button>
-            <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => { setEditing(null); setModalOpen(true) }}>
               <Plus className="mr-2 h-4 w-4" /> Agregar Clase
             </Button>
-          </>
+          </div>
         )}
-      />
+      </div>
 
       <p className="text-sm text-muted-foreground -mt-4">
         Una Sección es una etiqueta administrativa (todo el trayecto de este PNF-sede) — los alumnos no se inscriben en la Sección directamente, se matriculan en cada Clase. "Inscribir cohorte completa" matricula automáticamente a los alumnos de esta cohorte en las materias que tienen un solo grupo; usa "Inscribir alumnos" para materias con varios grupos (por cupo) o para alumnos con materias pendientes de otro trayecto.
@@ -345,35 +352,28 @@ export function SeccionDetallePage() {
           {cohorte.length === 0 ? (
             <p className="text-center py-6 text-sm text-muted-foreground">Ningún alumno tiene esta cohorte como trayecto oficial activo.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-semibold">Nombre</TableHead>
-                  <TableHead className="font-semibold">Cédula</TableHead>
-                  <TableHead className="font-semibold">Estado</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cohorte.map((ac) => {
-                  const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
-                  return (
-                    <TableRow key={ac.id}>
-                      <TableCell>{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
-                      <TableCell>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3">
+              {cohorte.map((ac) => {
+                const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
+                return (
+                  <Card key={ac.id} className={`border-l-4 ${inscritas > 0 ? "border-l-primary" : "border-l-border"}`}>
+                    <CardContent className="p-4">
+                      <p className="font-semibold text-sm">{ac.alumno?.nombreCompleto ?? ac.alumnoId}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{ac.alumno?.ci ?? '—'}</p>
+                      <div className="mt-2.5">
                         {inscritas > 0 ? (
-                          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/15">
+                          <Badge className="bg-success/15 text-success hover:bg-success/15">
                             Inscrito{clases.length > 0 ? ` (${inscritas}/${clases.length})` : ''}
                           </Badge>
                         ) : (
                           <Badge variant="secondary">Sin inscribir</Badge>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -387,7 +387,8 @@ export function SeccionDetallePage() {
             <p className="text-center py-8 text-muted-foreground">Esta sección aún no tiene clases.</p>
           )}
           {gruposPorMateria.map((grupo) => (
-            <div key={grupo[0].ucId}>
+            <Card key={grupo[0].ucId}>
+              <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="font-medium">{grupo[0].unidadCurricular?.nombre ?? '—'}</h3>
                 {grupo.length > 1 && <Badge variant="secondary">{grupo.length} grupos</Badge>}
@@ -408,7 +409,9 @@ export function SeccionDetallePage() {
                   {grupo.map((c) => (
                     <TableRow key={c.id}>
                       <TableCell>
-                        <Badge variant="secondary" className="font-mono">{c.nombreGrupo}</Badge>
+                        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-2 text-primary-foreground text-xs font-bold whitespace-nowrap">
+                          {c.nombreGrupo}
+                        </span>
                         {(suspensionesPorClase[c.id] ?? []).length > 0 && (
                           <Badge variant="destructive" className="ml-1">
                             {(suspensionesPorClase[c.id] ?? []).length} suspendida(s)
@@ -463,7 +466,8 @@ export function SeccionDetallePage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </CardContent>
       </Card>
