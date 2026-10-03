@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Search, MoreVertical, FileBarChart } from "lucide-react"
+import { Search, MoreVertical, FileBarChart, Paperclip } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { openFileInNewTab } from "@/lib/export"
 import api from "@/config/api"
 
 interface AttendanceRow {
@@ -32,6 +33,8 @@ interface AttendanceRow {
   subject: string
   date: string
   estado: string
+  justificadoPorNombre: string | null
+  tieneEvidencia: boolean
 }
 
 const getStatusBadge = (estado: string) => {
@@ -72,6 +75,8 @@ export function AttendanceTable() {
             subject: a.clase?.unidadCurricular?.nombre ?? '—',
             date: a.fecha,
             estado: a.estado,
+            justificadoPorNombre: a.justificadoPor?.nombreCompleto ?? null,
+            tieneEvidencia: !!a.evidenciaMimeType,
           })))
         })
         .catch(() => setData([]))
@@ -129,7 +134,12 @@ export function AttendanceTable() {
                       </TableCell>
                       <TableCell className="text-foreground">{item.subject}</TableCell>
                       <TableCell className="text-muted-foreground">{item.date}</TableCell>
-                      <TableCell>{getStatusBadge(item.estado)}</TableCell>
+                      <TableCell>
+                        {getStatusBadge(item.estado)}
+                        {item.estado === 'JUSTIFICADO' && item.justificadoPorNombre && (
+                          <p className="mt-1 text-xs text-muted-foreground">por {item.justificadoPorNombre}</p>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -144,6 +154,12 @@ export function AttendanceTable() {
                                 Ver reporte del alumno
                               </Link>
                             </DropdownMenuItem>
+                            {item.tieneEvidencia && (
+                              <DropdownMenuItem onClick={() => openFileInNewTab(`/attendance/${item.id}/evidencia`)}>
+                                <Paperclip className="mr-2 h-4 w-4" />
+                                Ver evidencia
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
