@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CedulaInput } from "@/components/ui/cedula-input"
 import { Role, type SedePnf, type Trayecto } from "@/types"
 import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword } from "@/components/forms/password-requirements"
 import { Eye, EyeOff, Wand2 } from "lucide-react"
@@ -62,10 +63,13 @@ export function UserFormModal({
   useEffect(() => {
     if (open) {
       reset({ role: defaultRole, ...initialData })
-      setSelectedSedeId("")
+      // Un RECTOR solo tiene una sede posible — dejar el select vacío obligaba
+      // a un clic de más para elegir la única opción real (WEB #audit-multirol).
+      // SUPERADMIN sí parte vacío: no tiene una sede propia que preseleccionar.
+      setSelectedSedeId(!isEditing && currentUser?.role === Role.RECTOR ? currentUser.sedeActualId ?? "" : "")
       setError(null)
     }
-  }, [open, initialData, defaultRole, reset])
+  }, [open, initialData, defaultRole, reset, isEditing, currentUser])
 
   useEffect(() => {
     if (open && (showPnfField || showTrayectoField)) {
@@ -141,7 +145,19 @@ export function UserFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="ci">Cédula</Label>
-            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing && !ciEditable} />
+            <Controller
+              control={control}
+              name="ci"
+              rules={ciRule}
+              render={({ field }) => (
+                <CedulaInput
+                  id="ci"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  disabled={isEditing && !ciEditable}
+                />
+              )}
+            />
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
