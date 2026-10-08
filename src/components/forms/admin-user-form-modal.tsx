@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CedulaInput } from "@/components/ui/cedula-input"
 import { Role, type Sede, type SedePnf } from "@/types"
 import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword } from "@/components/forms/password-requirements"
 import { Eye, EyeOff, Wand2 } from "lucide-react"
@@ -180,7 +181,19 @@ export function AdminUserFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="ci">Cédula</Label>
-            <Input id="ci" placeholder="V-12345678" {...register('ci', ciRule)} disabled={isEditing && !ciEditable} />
+            <Controller
+              control={control}
+              name="ci"
+              rules={ciRule}
+              render={({ field }) => (
+                <CedulaInput
+                  id="ci"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  disabled={isEditing && !ciEditable}
+                />
+              )}
+            />
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
