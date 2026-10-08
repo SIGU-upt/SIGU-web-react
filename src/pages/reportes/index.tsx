@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
-import { FileBarChart, Search, UserSearch, Download, Users } from "lucide-react"
+import { FileBarChart, Search, UserSearch, Download, Users, AlertTriangle, FileCheck2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,20 +9,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
-import { type Trayecto, type Clase, type User, type SedePnf } from "@/types"
+import { JustificarAsistenciaModal } from "@/components/forms/justificar-asistencia-modal"
+import { Role, type Trayecto, type Clase, type User, type SedePnf } from "@/types"
+import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { downloadExportedFile } from "@/lib/export"
 
-async function downloadExportedFile(url: string, params: Record<string, string> | undefined, filename: string) {
-  const res = await api.get(url, { params, responseType: 'blob' })
-  const blobUrl = URL.createObjectURL(res.data)
-  const link = document.createElement('a')
-  link.href = blobUrl
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(blobUrl)
+interface AlumnoEnRiesgo {
+  alumnoId: string
+  nombreCompleto: string
+  ci: string
+  porcentajeGlobal: number
 }
 
 export function ReportesPage() {
+  const { user } = useAuth()
+  const puedeJustificar = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE].includes(user.role) : false
+  const [justificando, setJustificando] = useState<{ alumnoId: string; nombre: string; asistenciaId: string | null } | null>(null)
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState(searchParams.get('tab') || "clase")
   const [claseTrayectoId, setClaseTrayectoId] = useState("")
@@ -40,17 +43,20 @@ export function ReportesPage() {
   const [error, setError] = useState<string | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [trayectoId, setTrayectoId] = useState("")
-  const [trayectoReport, setTrayectoReport] = useState<any[] | null>(null)
+  const [trayectoReport, setTrayectoReport] = useState<AlumnoEnRiesgo[] | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeReportFilter, setSedeReportFilter] = useState("")
   const [sedePnfReportFilter, setSedePnfReportFilter] = useState("") // sedePnfId
+  const [riesgoSedeFilter, setRiesgoSedeFilter] = useState("")
+  const [riesgoSedePnfFilter, setRiesgoSedePnfFilter] = useState("")
+  const [riesgoReport, setRiesgoReport] = useState<AlumnoEnRiesgo[] | null>(null)
 
   useEffect(() => {
-    api.get('/trayectos').then((res) => {
+    api.get('/trayectos', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setTrayectoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTrayectoOptions([]))
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setSedePnfOptions([]))
@@ -75,11 +81,20 @@ export function ReportesPage() {
   ).map(([id, label]) => ({ id, label }))
   const reportPnfOptions = sedePnfOptions
     .filter((sp) => !sedeReportFilter || sp.sedeId === sedeReportFilter)
-    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+    .map((sp) => ({
+      id: sp.id,
+      // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles.
+      label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
+    }))
   const reportSelectedPnfId = sedePnfOptions.find((sp) => sp.id === sedePnfReportFilter)?.pnfId
   const reportTrayectoOptions = reportSelectedPnfId
     ? trayectoOptions.filter((t) => t.pnfId === reportSelectedPnfId)
     : trayectoOptions
+  // El trayecto se filtra por número, no por fila: "Trayecto 1" de PNF
+  // distintos son filas distintas que comparten número.
+  const claseTrayectoNumeroOptions = Array.from(
+    new Map(trayectoOptions.map((t) => [t.numero, t.nombre])).entries(),
+  ).sort(([a], [b]) => a - b)
 
   const [claseOptionsLoading, setClaseOptionsLoading] = useState(false)
 
@@ -88,7 +103,7 @@ export function ReportesPage() {
     setClaseOptions([])
     if (!claseTrayectoId) return
     setClaseOptionsLoading(true)
-    api.get('/clases', { params: { trayectoId: claseTrayectoId } }).then((res) => {
+    api.get('/clases', { params: { trayectoNumero: claseTrayectoId } }).then((res) => {
       const list = res.data.data ?? res.data
       setClaseOptions(Array.isArray(list) ? list : [])
     }).catch(() => setClaseOptions([]))
@@ -136,23 +151,31 @@ export function ReportesPage() {
     }
   }
 
-  const fetchAlumnoReport = async () => {
-    if (!alumnoId) return
+  const fetchAlumnoReport = async (idOverride?: string) => {
+    const id = idOverride ?? alumnoId
+    if (!id) return
     setLoading(true)
     setError(null)
     try {
-      const res = await api.get(`/reports/alumno/${alumnoId}`)
+      const res = await api.get(`/reports/alumno/${id}`)
       setAlumnoReport(res.data)
-      // Si se llegó por un enlace directo (?alumnoId=), puede que el alumno no esté
-      // entre los primeros resultados de la búsqueda; se agrega para que el Select lo muestre.
-      setAlumnoOptions((prev) => prev.some((a) => a.id === alumnoId)
+      // Si se llegó por un enlace directo (?alumnoId=) o desde "Alumnos en Riesgo",
+      // puede que el alumno no esté entre los primeros resultados de la búsqueda;
+      // se agrega para que el Select lo muestre.
+      setAlumnoOptions((prev) => prev.some((a) => a.id === id)
         ? prev
-        : [{ id: alumnoId, nombreCompleto: res.data.nombreCompleto, ci: res.data.ci } as User, ...prev])
+        : [{ id, nombreCompleto: res.data.nombreCompleto, ci: res.data.ci } as User, ...prev])
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al cargar el reporte')
     } finally {
       setLoading(false)
     }
+  }
+
+  const verDetalleAlumno = (id: string) => {
+    setAlumnoId(id)
+    setTab('alumno')
+    fetchAlumnoReport(id)
   }
 
   useEffect(() => {
@@ -169,10 +192,60 @@ export function ReportesPage() {
     } catch { /* el interceptor de axios ya muestra el toast de error */ }
   }
 
+  const handleJustificar = async (data: { motivo: string; evidencia?: File }) => {
+    if (!justificando) return
+    const form = new FormData()
+    form.append('motivo', data.motivo)
+    if (data.evidencia) form.append('evidencia', data.evidencia)
+
+    if (justificando.asistenciaId) {
+      await api.patch(`/attendance/${justificando.asistenciaId}/justificar`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } else {
+      form.append('claseId', classId)
+      form.append('alumnoId', justificando.alumnoId)
+      form.append('fecha', fecha)
+      await api.post('/attendance/justificar', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    }
+    await fetchClassReport()
+  }
+
+  const fetchRiesgoReport = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await api.get('/reports/en-riesgo', {
+        params: riesgoSedePnfFilter ? { sedePnfId: riesgoSedePnfFilter } : undefined,
+      })
+      setRiesgoReport(res.data)
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const riesgoPnfOptions = sedePnfOptions
+    .filter((sp) => !riesgoSedeFilter || sp.sedeId === riesgoSedeFilter)
+    .map((sp) => ({
+      id: sp.id,
+      label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
+    }))
+
   const exportAlumnoReport = async () => {
     if (!alumnoReport?.clases?.length || !alumnoId) return
     try {
       await downloadExportedFile(`/export/alumno/${alumnoId}`, undefined, `historial_${alumnoReport.ci}.xlsx`)
+    } catch { /* el interceptor de axios ya muestra el toast de error */ }
+  }
+
+  const exportConstancia = async () => {
+    if (!alumnoReport || !alumnoId) return
+    try {
+      await downloadExportedFile(`/export/constancia/${alumnoId}`, undefined, `constancia_asistencia_${alumnoReport.ci}.pdf`)
     } catch { /* el interceptor de axios ya muestra el toast de error */ }
   }
 
@@ -190,6 +263,7 @@ export function ReportesPage() {
           <TabsTrigger value="clase">Por Clase</TabsTrigger>
           <TabsTrigger value="alumno">Por Alumno</TabsTrigger>
           <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>
+          <TabsTrigger value="riesgo">Alumnos en Riesgo</TabsTrigger>
         </TabsList>
         <TabsContent value="clase" className="space-y-4 mt-4">
           <Card>
@@ -199,8 +273,8 @@ export function ReportesPage() {
                 <Select value={claseTrayectoId} onValueChange={setClaseTrayectoId}>
                   <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un trayecto" /></SelectTrigger>
                   <SelectContent>
-                    {trayectoOptions.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>
+                    {claseTrayectoNumeroOptions.map(([numero, nombre]) => (
+                      <SelectItem key={numero} value={String(numero)}>{nombre}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -243,6 +317,7 @@ export function ReportesPage() {
                           <TableHead>Alumno</TableHead>
                           <TableHead>CI</TableHead>
                           <TableHead>Estado</TableHead>
+                          {puedeJustificar && <TableHead className="text-right">Acciones</TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -251,6 +326,19 @@ export function ReportesPage() {
                             <TableCell>{a.nombreCompleto}</TableCell>
                             <TableCell className="text-muted-foreground">{a.ci}</TableCell>
                             <TableCell><Badge className={estadoColor(a.estado)}>{a.estado}</Badge></TableCell>
+                            {puedeJustificar && (
+                              <TableCell className="text-right">
+                                {a.estado !== 'JUSTIFICADO' && a.estado !== 'PRESENTE' && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setJustificando({ alumnoId: a.alumnoId, nombre: a.nombreCompleto, asistenciaId: a.asistenciaId ?? null })}
+                                  >
+                                    <FileCheck2 className="mr-1 h-3.5 w-3.5" /> Justificar
+                                  </Button>
+                                )}
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))}
                       </TableBody>
@@ -278,12 +366,17 @@ export function ReportesPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={fetchAlumnoReport} disabled={loading || !alumnoId}>
+                <Button onClick={() => fetchAlumnoReport()} disabled={loading || !alumnoId}>
                   <UserSearch className="mr-2 h-4 w-4" />Consultar
                 </Button>
                 {alumnoReport?.clases?.length > 0 && (
                   <Button variant="outline" onClick={exportAlumnoReport}>
                     <Download className="mr-2 h-4 w-4" />Descargar Excel
+                  </Button>
+                )}
+                {alumnoReport && (
+                  <Button variant="outline" onClick={exportConstancia}>
+                    <FileCheck2 className="mr-2 h-4 w-4" />Descargar Constancia (PDF)
                   </Button>
                 )}
               </div>
@@ -410,7 +503,68 @@ export function ReportesPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="riesgo" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader><CardTitle>Alumnos por Debajo del Umbral de Asistencia</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <Select value={riesgoSedeFilter} onValueChange={(v) => { setRiesgoSedeFilter(v); setRiesgoSedePnfFilter("") }}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Todas las sedes" /></SelectTrigger>
+                  <SelectContent>
+                    {reportSedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={riesgoSedePnfFilter} onValueChange={setRiesgoSedePnfFilter} disabled={!riesgoSedeFilter}>
+                  <SelectTrigger className="max-w-xs"><SelectValue placeholder={riesgoSedeFilter ? "Todos los PNF" : "Elija primero una sede"} /></SelectTrigger>
+                  <SelectContent>
+                    {riesgoPnfOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button onClick={fetchRiesgoReport} disabled={loading}>
+                  <AlertTriangle className="mr-2 h-4 w-4" />Consultar
+                </Button>
+              </div>
+              {error && <div className="text-sm text-destructive">{error}</div>}
+              {riesgoReport && (
+                riesgoReport.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">Ningún alumno está por debajo del umbral en esta jurisdicción.</p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Alumno</TableHead>
+                        <TableHead>CI</TableHead>
+                        <TableHead>%</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {riesgoReport.map((a) => (
+                        <TableRow key={a.alumnoId}>
+                          <TableCell>
+                            <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left">{a.nombreCompleto}</button>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{a.ci}</TableCell>
+                          <TableCell className="text-destructive font-bold">{a.porcentajeGlobal}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+      <JustificarAsistenciaModal
+        open={!!justificando}
+        onOpenChange={(v) => { if (!v) setJustificando(null) }}
+        onConfirm={handleJustificar}
+        alumnoNombre={justificando?.nombre}
+      />
     </div>
   )
 }

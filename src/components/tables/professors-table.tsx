@@ -5,6 +5,7 @@ import {
   GraduationCap,
   Trash2,
   SmartphoneNfc,
+  Download,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -44,6 +45,7 @@ interface ProfessorsTableProps {
   data: Professor[]
   loading: boolean
   onImport: (file: File) => Promise<any>
+  onExport: () => void
   onCreate: () => void
   onEdit: (item: Professor) => void
   onDelete: (item: Professor) => void
@@ -68,7 +70,7 @@ interface ProfessorsTableProps {
   onPageChange: (page: number) => void
 }
 
-export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
+export function ProfessorsTable({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
@@ -85,6 +87,10 @@ export function ProfessorsTable({ data, loading, onImport, onCreate, onEdit, onD
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" onClick={onExport}>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
             {canEdit && (
               <ImportModal
                 onImport={onImport}

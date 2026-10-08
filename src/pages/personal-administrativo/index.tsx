@@ -160,7 +160,18 @@ export function PersonalAdministrativoPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Personal Administrativo" subtitle="Gestión de rectores, coordinadores y auditores" icon={<Shield className="h-5 w-5" />} />
+      <PageHeader
+        title="Personal Administrativo"
+        subtitle={
+          // Un RECTOR solo puede gestionar coordinadores y auditores de su
+          // propia sede (nunca otros rectores) — el subtítulo genérico de
+          // SUPERADMIN sugería lo contrario aunque la lista ya lo respetaba.
+          user?.role === Role.RECTOR
+            ? "Gestión de coordinadores y auditores de su sede"
+            : "Gestión de rectores, coordinadores y auditores"
+        }
+        icon={<Shield className="h-5 w-5" />}
+      />
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">

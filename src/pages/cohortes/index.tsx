@@ -1,5 +1,5 @@
 import { Fragment, useState, useCallback, useEffect } from "react"
-import { GraduationCap, ChevronDown, ChevronRight, UserMinus } from "lucide-react"
+import { GraduationCap, ChevronDown, ChevronRight, UserMinus, CalendarClock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { PageHeader } from "@/components/ui/page-header"
 import { CohorteGrupoFormModal } from "@/components/forms/cohorte-grupo-form-modal"
 import { RetirarCohorteModal } from "@/components/forms/retirar-cohorte-modal"
+import { AsistenteCierrePeriodoModal } from "@/components/forms/asistente-cierre-periodo-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Cohorte, type AlumnoCohorte } from "@/types"
 import api from "@/config/api"
@@ -22,6 +23,7 @@ export function CohortesPage() {
   const [miembros, setMiembros] = useState<AlumnoCohorte[]>([])
   const [loadingMiembros, setLoadingMiembros] = useState(false)
   const [retirando, setRetirando] = useState<AlumnoCohorte | null>(null)
+  const [cerrandoPeriodo, setCerrandoPeriodo] = useState(false)
 
   const canGestionar = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
@@ -85,7 +87,15 @@ export function CohortesPage() {
         title="Cohortes"
         subtitle="Grupos de ingreso — nombre, cupo y miembros"
         icon={<GraduationCap className="h-5 w-5" />}
-        actions={canGestionar ? <Button onClick={() => setCreating(true)}>Nueva Cohorte</Button> : undefined}
+        actions={canGestionar ? (
+          <>
+            <Button variant="outline" onClick={() => setCerrandoPeriodo(true)}>
+              <CalendarClock className="mr-2 h-4 w-4" />
+              Cierre de Período
+            </Button>
+            <Button onClick={() => setCreating(true)}>Nueva Cohorte</Button>
+          </>
+        ) : undefined}
       />
       <Card className="shadow-md">
         <CardContent className="pt-6">
@@ -215,6 +225,11 @@ export function CohortesPage() {
         onOpenChange={(v) => { if (!v) setRetirando(null) }}
         onConfirm={handleRetirar}
         alumnoNombre={retirando?.alumno?.nombreCompleto}
+      />
+      <AsistenteCierrePeriodoModal
+        open={cerrandoPeriodo}
+        onOpenChange={setCerrandoPeriodo}
+        onDone={fetchData}
       />
     </div>
   )
