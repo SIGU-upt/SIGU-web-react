@@ -12,6 +12,7 @@ import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -124,8 +125,8 @@ export function AdminUserFormModal({
       if (!payload.sedePnfId) delete payload.sedePnfId
       await onSubmit(payload)
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }

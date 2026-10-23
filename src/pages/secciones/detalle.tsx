@@ -15,10 +15,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ClaseFormModal } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { useAuth } from "@/contexts/AuthContext"
+import { getErrorMessage } from "@/lib/errors"
 import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
+import { downloadExportedFile } from "@/lib/export"
 
 interface InscripcionMasivaResponse {
   procesados: number
@@ -252,6 +255,22 @@ export function SeccionDetallePage() {
     await refreshClases()
   }
 
+  const handleExportHorario = async () => {
+    if (!id) return
+    await downloadExportedFile('/export/horario', { seccionId: id }, 'horario.xlsx')
+  }
+
+  const handleImportHorario = async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await api.post('/import/horario', formData, {
+      params: { seccionId: id },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    await refreshClases()
+    return res.data
+  }
+
   const handleInscribirCohorte = async () => {
     if (!seccion || !periodoActivo || claseIdsSinAmbiguedad.length === 0) return
     setInscribiendo(true)
@@ -265,8 +284,8 @@ export function SeccionDetallePage() {
       })
       setResultado(res.data)
       await fetchInscripcionesYSuspensiones(clases)
-    } catch (err: any) {
-      toast.error(err.response?.data?.message ?? 'No se pudo inscribir la cohorte.')
+    } catch (err) {
+      toast.error(getErrorMessage(err, 'No se pudo inscribir la cohorte.'))
     } finally {
       setInscribiendo(false)
     }
@@ -463,8 +482,35 @@ export function SeccionDetallePage() {
       </Card>
 
       <Card className="shadow-md">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 flex flex-row items-center justify-between">
           <h2 className="text-lg font-semibold">Clases</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportHorario} disabled={clases.length === 0}>
+              Exportar horario
+            </Button>
+            <ImportModal
+              onImport={handleImportHorario}
+              triggerLabel="Importar horario"
+              title="Importar horario desde Excel"
+              description="Columnas: seccion, materia, docenteCi, grupo, dia, horaInicio, horaFin, aula. Solo se aceptan filas de esta sección; cada fila se valida como si se creara la clase una por una (horario coherente y sin solapamiento), y las filas con error no se crean y quedan en el reporte."
+              buttonLabel="Importar"
+              renderResult={(result: { creadas: number; errores: { fila: number; motivo: string }[] }) => (
+                <div className="text-sm space-y-1 ml-7">
+                  <p>Clases creadas: {result.creadas}</p>
+                  {result.errores.length > 0 && (
+                    <div className="text-destructive">
+                      <p>Filas con error: {result.errores.length}</p>
+                      <ul className="list-disc pl-5">
+                        {result.errores.slice(0, 10).map((e, i) => (
+                          <li key={i}>Fila {e.fila}: {e.motivo}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            />
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {gruposPorMateria.length === 0 && (

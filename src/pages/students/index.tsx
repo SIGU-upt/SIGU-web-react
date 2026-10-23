@@ -5,6 +5,7 @@ import { UserFormModal } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
+import { getErrorStatus } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Trayecto, type SedePnf } from "@/types"
 
@@ -89,6 +90,11 @@ export function StudentsPage() {
       setUsers((Array.isArray(list) ? list : []).map((u: User & { cohorteActiva?: any }) => ({
         id: u.id,
         name: u.nombreCompleto,
+        // Se conservan por separado para editar: `name` puede partirse mal en
+        // un nombre compuesto ("Juan Carlos Pérez Rodríguez" no es "nombre
+        // apellido"), y estos dos campos ya llegan correctos desde el servidor.
+        nombres: u.nombres,
+        apellidos: u.apellidos,
         initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
         idNumber: u.ci,
         email: u.email,
@@ -143,8 +149,8 @@ export function StudentsPage() {
           trayectoId,
           periodoId: periodo.id,
         })
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
+      } catch (err) {
+        if (getErrorStatus(err) === 404) {
           // El trayecto ya quedó asignado al alumno; lo que falta es la
           // matrícula en un período (cohorte), que necesita un período activo.
           toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
@@ -179,8 +185,8 @@ export function StudentsPage() {
             trayectoId: data.trayectoId,
             periodoId: periodo.id,
           })
-        } catch (err: any) {
-          if (err?.response?.status === 404) {
+        } catch (err) {
+          if (getErrorStatus(err) === 404) {
             toast.warning('Los demás datos se actualizaron, pero no hay un período académico activo para esa sede-PNF, así que el trayecto no cambió. Cree un período activo primero.')
           } else {
             toast.warning('Los demás datos se actualizaron, pero no fue posible cambiar el trayecto. Puede intentarlo de nuevo.')
@@ -259,7 +265,7 @@ export function StudentsPage() {
         onOpenChange={setModalOpen}
         onSubmit={editingUser ? handleEdit : handleCreate}
         defaultRole={Role.ALUMNO}
-        initialData={editingUser ? { nombres: editingUser.name?.split(' ')[0], apellidos: editingUser.name?.split(' ').slice(1).join(' '), ci: editingUser.idNumber, email: editingUser.email, sedePnfId: editingUser.sedePnfId, trayectoId: editingUser.trayectoActualId } : undefined}
+        initialData={editingUser ? { nombres: editingUser.nombres, apellidos: editingUser.apellidos, ci: editingUser.idNumber, email: editingUser.email, sedePnfId: editingUser.sedePnfId, trayectoId: editingUser.trayectoActualId } : undefined}
         isEditing={!!editingUser}
       />
 

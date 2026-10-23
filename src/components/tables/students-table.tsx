@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ImportModal } from "@/components/dashboard/import-modal"
+import { ImportModal, type ImportResult } from "@/components/dashboard/import-modal"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -46,7 +46,7 @@ interface Student {
 interface StudentsTableProps {
   data: Student[]
   loading: boolean
-  onImport: (file: File) => Promise<any>
+  onImport: (file: File) => Promise<ImportResult>
   onExport: () => void
   onCreate: () => void
   onEdit: (item: Student) => void

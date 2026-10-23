@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import api from "@/config/api"
 import { requiredTextRule, nonNegativeNumberRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
 export interface EntityField {
   name: string
@@ -86,8 +87,8 @@ export function EntityFormModal({
       }
       await onSubmit(data)
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }
