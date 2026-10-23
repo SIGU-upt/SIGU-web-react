@@ -158,6 +158,7 @@ export function UserFormModal({
                 />
               )}
             />
+            {isEditing && !ciEditable && <p className="text-xs text-muted-foreground">Solo el superadministrador puede modificar la cédula</p>}
             {errors.ci && <p className="text-xs text-destructive">{errors.ci.message}</p>}
           </div>
           <div className="space-y-2">
