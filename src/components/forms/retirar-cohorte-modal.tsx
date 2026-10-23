@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
+import { getErrorMessage } from "@/lib/errors"
 
 interface RetirarCohorteModalProps {
   open: boolean
@@ -29,8 +30,8 @@ export function RetirarCohorteModal({ open, onOpenChange, onConfirm, alumnoNombr
     try {
       await onConfirm({ motivo: motivo.trim(), fecha: fecha || undefined })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'No se pudo retirar al alumno')
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo retirar al alumno'))
     } finally {
       setLoading(false)
     }

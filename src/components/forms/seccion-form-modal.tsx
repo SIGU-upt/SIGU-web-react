@@ -9,6 +9,7 @@ import { Role, type SedePnf, type Trayecto, type Turno } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
 const TURNO_LABELS: Record<Turno, string> = {
   MANANA: "Mañana",
@@ -113,8 +114,8 @@ export function SeccionFormModal({
     try {
       await onSubmit({ ...data, turno: data.turno || undefined })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }

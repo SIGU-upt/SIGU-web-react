@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { type User, type Clase } from "@/types"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 
 interface BatchResult {
   alumnoId: string
@@ -120,8 +121,8 @@ export function InscripcionIndividualModal({
       setResultado(agregado)
       setSelectedAlumnoIds([])
       setSelectedClaseIds([])
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al inscribir')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al inscribir'))
     } finally {
       setLoading(false)
     }

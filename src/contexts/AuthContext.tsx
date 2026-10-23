@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import api from '@/config/api'
+import { getErrorMessage } from '@/lib/errors'
 import type { User } from '@/types'
 import { Role } from '@/types'
 
@@ -89,10 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setState({ user: userRes.data, isLoading: false, isAuthenticated: true })
       return null
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Error de conexión'
-      return message
+    } catch (err) {
+      return getErrorMessage(err)
     }
   }, [])
 
