@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { type UnidadCurricular, type User, Role } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 
 const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const
@@ -106,8 +107,8 @@ export function ClaseFormModal({
     try {
       await onSubmit(data)
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }

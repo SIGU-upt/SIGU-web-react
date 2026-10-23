@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
 interface UCFormData {
   nombre: string
@@ -130,8 +131,8 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     try {
       await onSubmit({ ...data, tramoId: data.tramoId === SIN_TRAMO ? undefined : data.tramoId })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }

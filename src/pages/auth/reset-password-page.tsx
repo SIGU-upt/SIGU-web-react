@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
 
 export function ResetPasswordPage() {
@@ -36,8 +37,8 @@ export function ResetPasswordPage() {
     try {
       await api.post("/auth/reset-password", { token, password })
       setSuccess(true)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Error de conexión")
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }
