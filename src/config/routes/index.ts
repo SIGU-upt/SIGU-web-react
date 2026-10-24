@@ -10,7 +10,7 @@ export interface RouteConfig {
   path: string;
   title: string;
   breadTitle: string;
-  component: React.ComponentType<any>;
+  component: React.ComponentType;
   isPublic?: boolean;
 }
 

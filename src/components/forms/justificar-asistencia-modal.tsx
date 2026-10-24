@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { getErrorMessage } from "@/lib/errors"
 
 const TIPOS_ACEPTADOS = "image/jpeg,image/png,image/webp,application/pdf"
 const TAMANO_MAXIMO = 5 * 1024 * 1024
@@ -45,8 +46,8 @@ export function JustificarAsistenciaModal({ open, onOpenChange, onConfirm, alumn
     try {
       await onConfirm({ motivo: motivo.trim(), evidencia: evidencia ?? undefined })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'No se pudo justificar la inasistencia')
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo justificar la inasistencia'))
     } finally {
       setLoading(false)
     }

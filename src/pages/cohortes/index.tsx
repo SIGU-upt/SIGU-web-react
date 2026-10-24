@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/ui/page-header"
-import { CohorteGrupoFormModal } from "@/components/forms/cohorte-grupo-form-modal"
+import { CohorteGrupoFormModal, type CohorteGrupoFormData } from "@/components/forms/cohorte-grupo-form-modal"
 import { RetirarCohorteModal } from "@/components/forms/retirar-cohorte-modal"
 import { AsistenteCierrePeriodoModal } from "@/components/forms/asistente-cierre-periodo-modal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -59,12 +59,12 @@ export function CohortesPage() {
     }
   }
 
-  const handleCreate = async (formData: any) => {
+  const handleCreate = async (formData: CohorteGrupoFormData) => {
     await api.post('/cohortes-grupos', formData)
     await fetchData()
   }
 
-  const handleUpdate = async (formData: any) => {
+  const handleUpdate = async (formData: CohorteGrupoFormData) => {
     if (!editing) return
     await api.patch(`/cohortes-grupos/${editing.id}`, { nombre: formData.nombre, cupo: formData.cupo })
     await fetchData()

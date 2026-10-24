@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react"
-import { Users, BookOpen, LayoutDashboard, GraduationCap } from "lucide-react"
+import { Users, LayoutDashboard, GraduationCap, Building2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
-import { UserFormModal } from "@/components/forms/user-form-modal"
+import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { Role } from "@/types"
 
 interface DashboardData {
@@ -15,6 +16,7 @@ interface DashboardData {
   totalAlumnos: number
   totalClases: number
   totalInscripciones: number
+  sedeNombre: string
 }
 
 export function DashboardPage() {
@@ -32,7 +34,7 @@ export function DashboardPage() {
 
   const canCreateUsers = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
-  const handleCreateUser = async (data: any) => {
+  const handleCreateUser = async (data: UserFormData) => {
     await api.post('/users', { ...data, role: newUserRole })
   }
 
@@ -46,6 +48,10 @@ export function DashboardPage() {
     VIGILANTE: 'Vigilante',
   }
   const roleName = user ? (roleLabels[user.role] || user.role) : ''
+
+  const totalPersonas = (stats?.totalDocentes ?? 0) + (stats?.totalAlumnos ?? 0)
+  const docentesPct = totalPersonas ? ((stats?.totalDocentes ?? 0) / totalPersonas) * 100 : 0
+  const alumnosPct = totalPersonas ? ((stats?.totalAlumnos ?? 0) / totalPersonas) * 100 : 0
 
   return (
     <div className="space-y-6">
@@ -67,82 +73,99 @@ export function DashboardPage() {
         )}
       />
 
+      {stats && (
+        // Los números de abajo ya vienen acotados a la jurisdicción del rol
+        // (sede para RECTOR, sede-PNF para COORDINADOR) — sin esto no había
+        // ninguna forma de saber, mirando la pantalla, si eran del sistema
+        // completo o de un subconjunto.
+        <Badge variant="outline" className="gap-1.5 py-1.5">
+          <Building2 className="h-3.5 w-3.5" />
+          Ámbito: {stats.sedeNombre}
+        </Badge>
+      )}
+
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Cargando estadísticas...</div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="shadow-md">
-            <CardContent className="p-6">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="lg:col-span-2">
+            <CardContent className="flex h-full flex-col p-6">
               <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Total Docentes</p>
-                  <p className="text-3xl font-bold">{stats?.totalDocentes ?? '—'}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Usuarios</p>
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                  <Users className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-                  <GraduationCap className="h-6 w-6 text-primary-foreground" />
+              </div>
+
+              <div className="mt-6 flex-1">
+                <p className="text-5xl font-bold">{stats?.totalUsuarios ?? '—'}</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Incluye personal académico y administrativo
+                </p>
+              </div>
+
+              <div>
+                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                  <div className="bg-primary" style={{ width: `${docentesPct}%` }} />
+                  <div className="bg-accent" style={{ width: `${alumnosPct}%` }} />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    Docentes
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    Alumnos
+                  </span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">Total Alumnos</p>
-                  <p className="text-3xl font-bold">{stats?.totalAlumnos ?? '—'}</p>
+          {/* En lg, este wrapper pasa de `contents` (aplana sus hijos en el
+              grid exterior, igual que antes) a columna flex que estira su
+              altura a la de la tarjeta grande de la izquierda; el espacio
+              sobrante se reparte como separación entre bloques (justify-between)
+              en vez de inflar el padding interno de cada tarjeta chica. */}
+          <div className="contents lg:flex lg:flex-col lg:col-span-2 lg:justify-between lg:gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <p className="mb-3 text-sm font-medium text-muted-foreground">Docentes y Alumnos</p>
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-2xl font-bold">{stats?.totalDocentes ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">Docentes</p>
+                  </div>
+                  <div className="mx-4 h-10 w-px bg-border" />
+                  <div className="flex-1">
+                    <p className="text-2xl font-bold">{stats?.totalAlumnos ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">Alumnos</p>
+                  </div>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-md">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
+            <div className="contents lg:grid lg:grid-cols-2 lg:gap-4">
+              <Card>
+                <CardContent className="p-6">
                   <p className="text-sm font-medium text-muted-foreground">Total Clases</p>
-                  <p className="text-3xl font-bold">{stats?.totalClases ?? '—'}</p>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-                  <BookOpen className="h-6 w-6 text-accent-foreground" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  <p className="mt-2 text-3xl font-bold">{stats?.totalClases ?? '—'}</p>
+                </CardContent>
+              </Card>
 
-      {stats && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="shadow-md">
-            <CardContent className="p-6 space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Usuarios</p>
-              <p className="text-3xl font-bold">{stats.totalUsuarios}</p>
-            </CardContent>
-          </Card>
-          <Card className="shadow-md">
-            <CardContent className="p-6 space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Inscripciones Totales</p>
-              <p className="text-3xl font-bold">{stats.totalInscripciones}</p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardContent className="p-6">
+                  <p className="text-sm font-medium text-muted-foreground">Inscripciones</p>
+                  <p className="mt-2 text-3xl font-bold">{stats?.totalInscripciones ?? '—'}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       )}
 
       <AttendanceTable />
-
-      <Card className="shadow-md">
-        <CardContent className="p-8 text-center">
-          <GraduationCap className="h-12 w-12 text-primary mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-foreground">SIGU — Sistema de Gestión Universitaria</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            UPT José Félix Ribas — Núcleo Socopó
-          </p>
-        </CardContent>
-      </Card>
 
       {newUserRole && (
         <UserFormModal
