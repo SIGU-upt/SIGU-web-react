@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -22,8 +23,8 @@ export function ForgotPasswordPage() {
     try {
       const res = await api.post("/auth/forgot-password", { email: email.trim() })
       setMessage(res.data?.message ?? "Si el email está registrado, recibirá instrucciones para restablecer su contraseña")
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Error de conexión")
+    } catch (err) {
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

@@ -9,8 +9,9 @@ import { Role, type SedePnf, type Trayecto, type PeriodoAcademico } from "@/type
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
-interface CohorteGrupoFormData {
+export interface CohorteGrupoFormData {
   nombre: string
   sedePnfId: string
   trayectoId: string
@@ -106,8 +107,8 @@ export function CohorteGrupoFormModal({
     try {
       await onSubmit({ ...data, cupo: data.cupo ? Number(data.cupo) : undefined })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }
