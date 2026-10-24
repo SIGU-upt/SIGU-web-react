@@ -106,8 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState({ user: null, isLoading: false, isAuthenticated: false })
   }, [])
 
-  const warningTimer = useRef<ReturnType<typeof setTimeout>>()
-  const logoutTimer = useRef<ReturnType<typeof setTimeout>>()
+  const warningTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const logoutTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     if (!state.isAuthenticated) return
