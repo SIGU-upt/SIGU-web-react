@@ -104,7 +104,7 @@ export function ImportProfessorsModal({ onImport }: ImportProfessorsModalProps) 
           )}
 
           {status === "error" && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive dark:text-[#F3A08A] border border-destructive/20 animate-in fade-in zoom-in duration-300">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <p className="text-sm font-medium">Error al procesar el archivo. Asegúrate de que el formato sea correcto.</p>
             </div>

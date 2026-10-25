@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { FormError } from "@/components/ui/form-error"
 import { useAuth } from "@/contexts/AuthContext"
 
 export function LoginPage() {
@@ -33,6 +34,11 @@ export function LoginPage() {
 
     if (ci.length < 6) {
       setError('La cédula debe tener al menos 6 dígitos.')
+      return
+    }
+
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.')
       return
     }
 
@@ -121,11 +127,7 @@ export function LoginPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <FormError>{error}</FormError>}
 
             <Button
               type="submit"

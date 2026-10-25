@@ -13,7 +13,9 @@ import { JustificarAsistenciaModal } from "@/components/forms/justificar-asisten
 import { Role, type Trayecto, type Clase, type User, type SedePnf } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
+import { hoyLocal } from "@/lib/fecha"
 
 interface AlumnoEnRiesgo {
   alumnoId: string
@@ -35,7 +37,7 @@ export function ReportesPage() {
   const [alumnoSearch, setAlumnoSearch] = useState("")
   const [debouncedAlumnoSearch, setDebouncedAlumnoSearch] = useState("")
   const [alumnoId, setAlumnoId] = useState(searchParams.get('alumnoId') || "")
-  const hoy = new Date().toISOString().split('T')[0]
+  const hoy = hoyLocal()
   const [fecha, setFecha] = useState(hoy)
   const [classReport, setClassReport] = useState<any>(null)
   const [alumnoReport, setAlumnoReport] = useState<any>(null)
@@ -119,8 +121,8 @@ export function ReportesPage() {
         params: sedePnfReportFilter ? { sedePnfId: sedePnfReportFilter } : undefined,
       })
       setTrayectoReport(res.data)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al cargar el reporte'))
     } finally {
       setLoading(false)
     }
@@ -144,8 +146,8 @@ export function ReportesPage() {
     try {
       const res = await api.get(`/reports/clase/${classId}`, { params: { fecha } })
       setClassReport(res.data)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al cargar el reporte'))
     } finally {
       setLoading(false)
     }
@@ -165,8 +167,8 @@ export function ReportesPage() {
       setAlumnoOptions((prev) => prev.some((a) => a.id === id)
         ? prev
         : [{ id, nombreCompleto: res.data.nombreCompleto, ci: res.data.ci } as User, ...prev])
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al cargar el reporte'))
     } finally {
       setLoading(false)
     }
@@ -221,8 +223,8 @@ export function ReportesPage() {
         params: riesgoSedePnfFilter ? { sedePnfId: riesgoSedePnfFilter } : undefined,
       })
       setRiesgoReport(res.data)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cargar el reporte')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al cargar el reporte'))
     } finally {
       setLoading(false)
     }

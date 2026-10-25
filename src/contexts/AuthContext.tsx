@@ -1,7 +1,13 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { toast } from 'sonner'
 import api from '@/config/api'
+import { getErrorMessage } from '@/lib/errors'
 import type { User } from '@/types'
 import { Role } from '@/types'
+
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000
+const IDLE_WARNING_MS = 25 * 60 * 1000
+const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'scroll', 'touchstart'] as const
 
 interface JwtPayload {
   sub: string
@@ -89,10 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setState({ user: userRes.data, isLoading: false, isAuthenticated: true })
       return null
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message || err.message || 'Error de conexión'
-      return message
+    } catch (err) {
+      return getErrorMessage(err)
     }
   }, [])
 
@@ -101,6 +105,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('sigu_user')
     setState({ user: null, isLoading: false, isAuthenticated: false })
   }, [])
+
+  const warningTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const logoutTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => {
+    if (!state.isAuthenticated) return
+
+    const resetTimers = () => {
+      clearTimeout(warningTimer.current)
+      clearTimeout(logoutTimer.current)
+      warningTimer.current = setTimeout(() => {
+        toast.warning('Su sesión se cerrará en 5 minutos por inactividad.')
+      }, IDLE_WARNING_MS)
+      logoutTimer.current = setTimeout(() => {
+        logout()
+        toast.info('Sesión cerrada por inactividad.')
+      }, IDLE_TIMEOUT_MS)
+    }
+
+    resetTimers()
+    ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, resetTimers))
+
+    return () => {
+      clearTimeout(warningTimer.current)
+      clearTimeout(logoutTimer.current)
+      ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, resetTimers))
+    }
+  }, [state.isAuthenticated, logout])
 
   return (
     <AuthContext.Provider value={{ ...state, login, logout }}>

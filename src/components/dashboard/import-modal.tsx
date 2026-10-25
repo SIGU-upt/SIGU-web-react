@@ -1,17 +1,30 @@
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { FileSpreadsheet, Upload, CheckCircle2, AlertCircle, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { downloadCsv } from "@/lib/export-csv"
+import { getErrorMessage } from "@/lib/errors"
 
-interface ImportResult {
+export interface ImportResult {
   creados: number
   actualizados: number
   cohortesAsignadas: number
   inscripcionesCreadas: number
   errores: { fila: number; ci: string; motivo: string }[]
+}
+
+function defaultRenderResult(result: ImportResult) {
+  return (
+    <div className="text-sm space-y-1 ml-7">
+      <p>Creados: {result.creados}</p>
+      <p>Actualizados: {result.actualizados}</p>
+      <p>Cohortes asignadas: {result.cohortesAsignadas}</p>
+      <p>Inscripciones creadas: {result.inscripcionesCreadas}</p>
+      {result.errores.length > 0 && <p className="text-destructive">Errores: {result.errores.length}</p>}
+    </div>
+  )
 }
 
 const TEMPLATE_EXAMPLES: Record<string, string> = {
@@ -23,19 +36,34 @@ const TEMPLATE_EXAMPLES: Record<string, string> = {
   clasesIds: '',
 }
 
-interface ImportModalProps {
-  onImport: (file: File) => Promise<ImportResult>
+interface ImportModalProps<TResult = ImportResult> {
+  onImport: (file: File) => Promise<TResult>
   title: string
   description: string
   buttonLabel: string
-  templateHeaders: string[]
-  templateFilename: string
+  // Sin estos dos, el modal no ofrece "Descargar plantilla" (útil cuando el
+  // formato esperado ya se explica en `description`, como en horarios).
+  templateHeaders?: string[]
+  templateFilename?: string
+  // Por defecto renderiza la forma de resultado de la importación de
+  // usuarios; otros importadores (horario, etc.) pasan su propio render.
+  renderResult?: (result: TResult) => ReactNode
+  triggerLabel?: string
 }
 
-export function ImportModal({ onImport, title, description, buttonLabel, templateHeaders, templateFilename }: ImportModalProps) {
+export function ImportModal<TResult = ImportResult>({
+  onImport,
+  title,
+  description,
+  buttonLabel,
+  templateHeaders,
+  templateFilename,
+  renderResult = defaultRenderResult as unknown as (result: TResult) => ReactNode,
+  triggerLabel = "Carga Masiva (Excel)",
+}: ImportModalProps<TResult>) {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle")
-  const [result, setResult] = useState<ImportResult | null>(null)
+  const [result, setResult] = useState<TResult | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +75,7 @@ export function ImportModal({ onImport, title, description, buttonLabel, templat
   }
 
   const handleDownloadTemplate = () => {
+    if (!templateHeaders || !templateFilename) return
     const exampleRow: Record<string, string> = {}
     templateHeaders.forEach((h) => { exampleRow[h] = TEMPLATE_EXAMPLES[h] ?? '' })
     downloadCsv(templateFilename, [exampleRow])
@@ -61,8 +90,8 @@ export function ImportModal({ onImport, title, description, buttonLabel, templat
       const r = await onImport(file)
       setResult(r)
       setStatus("success")
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || "Error al procesar el archivo")
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err, "Error al procesar el archivo"))
       setStatus("error")
     }
   }
@@ -72,7 +101,7 @@ export function ImportModal({ onImport, title, description, buttonLabel, templat
       <DialogTrigger asChild>
         <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Carga Masiva (Excel)
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -84,10 +113,12 @@ export function ImportModal({ onImport, title, description, buttonLabel, templat
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
-          <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="w-full">
-            <Download className="mr-2 h-4 w-4" />
-            Descargar plantilla
-          </Button>
+          {templateHeaders && templateFilename && (
+            <Button type="button" variant="outline" onClick={handleDownloadTemplate} className="w-full">
+              <Download className="mr-2 h-4 w-4" />
+              Descargar plantilla
+            </Button>
+          )}
           <div className="space-y-2">
             <Label htmlFor="excel-file">Seleccionar Archivo</Label>
             <Input id="excel-file" type="file" accept=".xlsx, .xls" onChange={handleFileChange}
@@ -97,18 +128,12 @@ export function ImportModal({ onImport, title, description, buttonLabel, templat
           {status === "success" && result && (
             <div className="space-y-2 p-3 rounded-lg bg-success/10 text-success border border-success/20">
               <div className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5" /><p className="font-medium">Importación completada</p></div>
-              <div className="text-sm space-y-1 ml-7">
-                <p>Creados: {result.creados}</p>
-                <p>Actualizados: {result.actualizados}</p>
-                <p>Cohortes asignadas: {result.cohortesAsignadas}</p>
-                <p>Inscripciones creadas: {result.inscripcionesCreadas}</p>
-                {result.errores.length > 0 && <p className="text-destructive">Errores: {result.errores.length}</p>}
-              </div>
+              {renderResult(result)}
             </div>
           )}
 
           {status === "error" && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive dark:text-[#F3A08A] border border-destructive/20">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <p className="text-sm">{errorMsg}</p>
             </div>

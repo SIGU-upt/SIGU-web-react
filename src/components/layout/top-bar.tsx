@@ -1,6 +1,17 @@
-import { Bell, ChevronDown, LogOut, User, Menu } from "lucide-react"
+import { Fragment } from "react"
+import { Link, useLocation } from "react-router-dom"
+import { Bell, ChevronDown, HelpCircle, LogOut, User } from "lucide-react"
+import { useOnboardingTour } from "@/components/onboarding/use-onboarding-tour"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Sidebar } from "./sidebar"
+import { routeLabels } from "./sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
 
@@ -26,8 +37,27 @@ const roleLabels: Record<Role, string> = {
   [Role.VIGILANTE]: "Vigilante",
 }
 
+// Deriva el rastro de breadcrumb del propio pathname: el primer segmento
+// contra el mapa de `navigation` (una sola fuente de verdad), y un segundo
+// tramo genérico "Detalle" cuando hay un id de por medio (ej. /secciones/:id)
+// — no hay forma de saber el nombre real de la entidad sin otra llamada al
+// servidor, que queda fuera de alcance de un breadcrumb.
+function useBreadcrumbs(pathname: string) {
+  const segments = pathname.split("/").filter(Boolean)
+  if (segments.length === 0) return []
+  const basePath = `/${segments[0]}`
+  const crumbs = [{ label: routeLabels[basePath] ?? segments[0], path: basePath }]
+  if (segments.length > 1) {
+    crumbs.push({ label: "Detalle", path: pathname })
+  }
+  return crumbs
+}
+
 export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const { user } = useAuth()
+  const location = useLocation()
+  const crumbs = useBreadcrumbs(location.pathname)
+  const { startTour } = useOnboardingTour()
 
   const initials = user
     ? (user.nombres?.charAt(0) ?? '') + (user.apellidos?.charAt(0) ?? '')
@@ -35,35 +65,61 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
   const roleName = user ? (roleLabels[user.role] ?? user.role) : ''
 
-  return (
-    <header className="fixed left-0 lg:left-64 right-0 top-0 z-30 h-16 border-b border-border bg-card shadow-sm">
-      <div className="flex h-full items-center justify-between px-4 md:px-6">
-        <div className="lg:hidden flex items-center mr-2">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Abrir menú de navegación">
-                <Menu className="h-6 w-6 text-muted-foreground" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64 border-none">
-              <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-              <Sidebar />
-            </SheetContent>
-          </Sheet>
-        </div>
+  // Sin sistema de notificaciones real todavía — se deja el contador en 0 a
+  // propósito (no hardcodeado en el badge) para que quede obvio que es un
+  // placeholder, y el badge desaparece en vez de mostrar un "0" permanente
+  // que entrena a ignorarlo.
+  const unreadCount = 0
 
-        <div className="flex-1"></div>
+  return (
+    <header className="sticky top-0 z-30 h-16 border-b border-border bg-card shadow-bar">
+      <div className="flex h-full items-center gap-4 px-4 md:px-6">
+        {/* En escritorio el colapso vive dentro de la propia sidebar (su
+            footer); esto solo queda para abrir el sheet móvil, que no tiene
+            otra forma de abrirse porque su contenido no está en pantalla. */}
+        <SidebarTrigger className="lg:hidden" />
+
+        <Breadcrumb className="hidden sm:block">
+          <BreadcrumbList>
+            {crumbs.map((crumb, i) => (
+              <Fragment key={crumb.path}>
+                {i > 0 && <BreadcrumbSeparator />}
+                <BreadcrumbItem>
+                  {i === crumbs.length - 1 ? (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link to={crumb.path}>{crumb.label}</Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
+            ))}
+          </BreadcrumbList>
+        </Breadcrumb>
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Ayuda: repasar el recorrido"
+            data-tour="help-button"
+            onClick={startTour}
+          >
+            <HelpCircle className="h-5 w-5 text-muted-foreground" />
+          </Button>
+
           <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
                 <Bell className="h-5 w-5 text-muted-foreground" />
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-bold">
-                  0
-                </Badge>
+                {unreadCount > 0 && (
+                  <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-bold">
+                    {unreadCount}
+                  </Badge>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">

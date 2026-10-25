@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Search, Check } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { type User, type Clase } from "@/types"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 
 interface BatchResult {
   alumnoId: string
@@ -120,8 +122,8 @@ export function InscripcionIndividualModal({
       setResultado(agregado)
       setSelectedAlumnoIds([])
       setSelectedClaseIds([])
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al inscribir')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al inscribir'))
     } finally {
       setLoading(false)
     }
@@ -176,7 +178,7 @@ export function InscripcionIndividualModal({
             </div>
           </div>
 
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <FormError>{error}</FormError>}
 
           {resultado && (
             <div className="rounded-md bg-muted p-3 text-sm space-y-1">
