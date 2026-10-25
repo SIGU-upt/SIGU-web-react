@@ -219,3 +219,57 @@
     font-family: var(--font-sans);
   }
 }
+
+/* driver.js (tour interactivo) trae su propio CSS claro y no sigue el tema de
+   la app — en oscuro, el texto y los botones quedaban casi del mismo color
+   que el fondo (encontrado por la auditoría de accesibilidad automatizada,
+   contraste 1.46:1 en el botón "Siguiente"). Se sobreescriben sus clases con
+   los tokens del tema para que responda a ambos modos igual que el resto. */
+.driver-popover {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.driver-popover-title,
+.driver-popover-description {
+  color: var(--popover-foreground);
+}
+.driver-popover-arrow-side-left.driver-popover-arrow,
+.driver-popover-arrow-side-right.driver-popover-arrow,
+.driver-popover-arrow-side-top.driver-popover-arrow,
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-color: transparent;
+}
+.driver-popover-arrow-side-bottom {
+  border-top-color: var(--popover);
+}
+.driver-popover-arrow-side-top {
+  border-bottom-color: var(--popover);
+}
+.driver-popover-arrow-side-left {
+  border-right-color: var(--popover);
+}
+.driver-popover-arrow-side-right {
+  border-left-color: var(--popover);
+}
+.driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+.driver-popover-close-btn:hover {
+  color: var(--popover-foreground);
+}
+.driver-popover-footer button {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 1px solid var(--primary);
+  text-shadow: none;
+}
+.driver-popover-footer .driver-popover-prev-btn {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+}
+.driver-popover-progress-text {
+  color: var(--muted-foreground);
+}
