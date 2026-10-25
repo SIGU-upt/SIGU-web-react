@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
 import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
+import { FormError } from "@/components/ui/form-error"
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -64,9 +65,7 @@ export function ResetPasswordPage() {
         <CardContent>
           {!token ? (
             <div className="space-y-4">
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                El enlace de recuperación es inválido. Solicite uno nuevo.
-              </div>
+              <FormError>El enlace de recuperación es inválido. Solicite uno nuevo.</FormError>
               <Link to="/forgot-password" className="block text-center text-sm text-primary hover:underline">
                 Solicitar nuevo enlace
               </Link>
@@ -126,11 +125,7 @@ export function ResetPasswordPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
+              {error && <FormError>{error}</FormError>}
 
               <Button
                 type="submit"

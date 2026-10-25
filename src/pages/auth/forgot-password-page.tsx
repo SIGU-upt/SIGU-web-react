@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
+import { FormError } from "@/components/ui/form-error"
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -75,11 +76,7 @@ export function ForgotPasswordPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {error}
-                </div>
-              )}
+              {error && <FormError>{error}</FormError>}
 
               <Button
                 type="submit"

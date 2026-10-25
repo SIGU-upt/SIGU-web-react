@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { CalendarClock, ArrowRight, AlertTriangle, CheckCircle2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -242,7 +243,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
               <p className="text-xs text-destructive">La fecha de fin debe ser posterior a la de inicio</p>
             )}
 
-            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+            {error && <FormError>{error}</FormError>}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
@@ -287,7 +288,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
               </div>
             )}
 
-            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+            {error && <FormError>{error}</FormError>}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setStep(1)} disabled={loading}>Atrás</Button>

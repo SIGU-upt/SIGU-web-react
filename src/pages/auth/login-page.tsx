@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
+import { FormError } from "@/components/ui/form-error"
 import { useAuth } from "@/contexts/AuthContext"
 
 export function LoginPage() {
@@ -126,11 +127,7 @@ export function LoginPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+            {error && <FormError>{error}</FormError>}
 
             <Button
               type="submit"

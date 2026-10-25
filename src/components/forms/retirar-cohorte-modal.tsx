@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -52,7 +53,7 @@ export function RetirarCohorteModal({ open, onOpenChange, onConfirm, alumnoNombr
             <Label htmlFor="fecha">Fecha (opcional, por defecto hoy)</Label>
             <Input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
           </div>
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <FormError>{error}</FormError>}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>

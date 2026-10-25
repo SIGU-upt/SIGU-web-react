@@ -133,7 +133,7 @@ export function ImportModal<TResult = ImportResult>({
           )}
 
           {status === "error" && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive border border-destructive/20">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive dark:text-[#F3A08A] border border-destructive/20">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <p className="text-sm">{errorMsg}</p>
             </div>
