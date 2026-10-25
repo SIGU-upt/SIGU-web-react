@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,8 +10,9 @@ import { Role, type SedePnf, type Trayecto, type PeriodoAcademico } from "@/type
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
-interface CohorteGrupoFormData {
+export interface CohorteGrupoFormData {
   nombre: string
   sedePnfId: string
   trayectoId: string
@@ -106,8 +108,8 @@ export function CohorteGrupoFormModal({
     try {
       await onSubmit({ ...data, cupo: data.cupo ? Number(data.cupo) : undefined })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }
@@ -214,7 +216,7 @@ export function CohorteGrupoFormModal({
             {errors.cupo && <p className="text-xs text-destructive">{errors.cupo.message}</p>}
           </div>
 
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <FormError>{error}</FormError>}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>

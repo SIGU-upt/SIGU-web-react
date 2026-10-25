@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
 interface UCFormData {
   nombre: string
@@ -130,8 +132,8 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     try {
       await onSubmit({ ...data, tramoId: data.tramoId === SIN_TRAMO ? undefined : data.tramoId })
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }
@@ -221,7 +223,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
               )}
             />
           </div>
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <FormError>{error}</FormError>}
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancelar</Button>
             <Button type="submit" disabled={loading}>{loading ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear U.C'}</Button>

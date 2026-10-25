@@ -6,11 +6,17 @@ import {
   ShieldCheck,
   Github,
   Smartphone,
+  Download,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const APP_REPO_URL = "https://github.com/SIGU-upt/SIGU-app-flutter"
+// Hasta que se suba un APK real (ver docs/PENDIENTES.md), el botón de
+// descarga apunta aquí; se puede cambiar por la URL pública de Supabase sin
+// tocar nada más.
+const APP_DOWNLOAD_URL = import.meta.env.VITE_APP_DOWNLOAD_URL || APP_REPO_URL
 
 const CARACTERISTICAS = [
   {
@@ -44,11 +50,14 @@ export function LandingPage() {
             </div>
             <span className="text-xl font-bold text-primary tracking-tight">SIGU</span>
           </div>
-          <Link to="/login">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Iniciar sesión
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/login">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Iniciar sesión
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -105,15 +114,20 @@ export function LandingPage() {
               Descargue la aplicación móvil de SIGU para registrar y controlar la asistencia de
               sus clases desde su teléfono.
             </p>
-            <div className="mt-6">
-              <a href={APP_REPO_URL} target="_blank" rel="noopener noreferrer">
+            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <a href={APP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="h-12 px-8 text-base font-semibold"
+                  className="h-12 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
                 >
+                  <Download className="h-5 w-5" />
+                  Descargar la aplicación (APK)
+                </Button>
+              </a>
+              <a href={APP_REPO_URL} target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold">
                   <Github className="h-5 w-5" />
-                  Descargar la aplicación desde aquí
+                  Ver el código fuente
                 </Button>
               </a>
             </div>

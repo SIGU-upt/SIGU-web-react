@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,8 +13,9 @@ import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
+import { getErrorMessage } from "@/lib/errors"
 
-interface UserFormData {
+export interface UserFormData {
   nombres: string
   apellidos: string
   ci: string
@@ -115,8 +117,8 @@ export function UserFormModal({
       if (!payload.sedePnfId) delete payload.sedePnfId
       await onSubmit(payload)
       onOpenChange(false)
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Error al guardar')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Error al guardar'))
     } finally {
       setLoading(false)
     }
@@ -269,7 +271,7 @@ export function UserFormModal({
             </div>
           )}
 
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+          {error && <FormError>{error}</FormError>}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>

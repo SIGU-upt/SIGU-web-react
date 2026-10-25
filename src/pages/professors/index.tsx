@@ -109,6 +109,9 @@ export function ProfessorsPage() {
         return {
           id: u.id,
           name: u.nombreCompleto,
+          // Se conservan por separado para editar (ver mismo fix en students/index.tsx).
+          nombres: u.nombres,
+          apellidos: u.apellidos,
           initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
           idNumber: u.ci,
           email: u.email,
@@ -205,7 +208,7 @@ export function ProfessorsPage() {
         onOpenChange={setModalOpen}
         onSubmit={editingUser ? handleEdit : handleCreate}
         defaultRole={Role.DOCENTE}
-        initialData={editingUser ? { nombres: editingUser.name?.split(' ')[0], apellidos: editingUser.name?.split(' ').slice(1).join(' '), ci: editingUser.idNumber, email: editingUser.email, sedePnfId: editingUser.sedePnfId } : undefined}
+        initialData={editingUser ? { nombres: editingUser.nombres, apellidos: editingUser.apellidos, ci: editingUser.idNumber, email: editingUser.email, sedePnfId: editingUser.sedePnfId } : undefined}
         isEditing={!!editingUser}
       />
 
