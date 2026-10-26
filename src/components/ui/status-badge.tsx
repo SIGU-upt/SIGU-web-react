@@ -39,7 +39,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         return "border-primary/30 text-primary"
       case "electiva":
       case "elective":
-        return "border-amber-500/30 text-amber-600"
+        return "border-amber-500/30 text-amber-600 dark:text-amber-400"
       default:
         return "bg-secondary text-secondary-foreground"
     }
