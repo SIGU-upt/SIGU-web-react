@@ -161,7 +161,7 @@ export function Sidebar() {
         <SidebarTrigger
           className="self-end text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:self-center [&>svg]:transition-transform [&>svg]:duration-200 group-data-[state=collapsed]:[&>svg]:rotate-180"
         />
-        <p className="text-[10px] text-sidebar-foreground/40 text-center uppercase tracking-widest group-data-[collapsible=icon]:hidden">
+        <p className="text-[10px] text-sidebar-foreground/70 text-center uppercase tracking-widest group-data-[collapsible=icon]:hidden">
           © 2026 SIGU CORE v1.0
         </p>
       </SidebarFooter>

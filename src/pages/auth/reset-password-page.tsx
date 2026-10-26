@@ -9,6 +9,7 @@ import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
 import { PasswordRequirements, passwordMeetsRequirements } from "@/components/forms/password-requirements"
 import { FormError } from "@/components/ui/form-error"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -47,6 +48,9 @@ export function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="flex items-center gap-3 mb-8">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
           <GraduationCap className="h-8 w-8" />

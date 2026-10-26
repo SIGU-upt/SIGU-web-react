@@ -321,7 +321,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
 
             {resultado.inscripcionesHuerfanas.length > 0 && (
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-amber-600 dark:text-amber-400">
                   <AlertTriangle className="h-4 w-4" /> {resultado.inscripcionesHuerfanas.length} inscripciones del trayecto anterior quedaron sin sentido
                 </div>
                 <p className="text-xs text-muted-foreground">
