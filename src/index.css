@@ -224,52 +224,56 @@
    la app — en oscuro, el texto y los botones quedaban casi del mismo color
    que el fondo (encontrado por la auditoría de accesibilidad automatizada,
    contraste 1.46:1 en el botón "Siguiente"). Se sobreescriben sus clases con
-   los tokens del tema para que responda a ambos modos igual que el resto. */
+   los tokens del tema para que responda a ambos modos igual que el resto.
+   `!important`: el import de "driver.js/dist/driver.css" vive en un componente
+   (use-onboarding-tour.ts) y Vite lo agrupa después de este archivo en el CSS
+   final, así que sin !important gana por orden de cascada y este bloque no
+   hacía nada — se confirmó en vivo que el popover seguía blanco en oscuro. */
 .driver-popover {
-  background-color: var(--popover);
-  color: var(--popover-foreground);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
 }
 .driver-popover-title,
 .driver-popover-description {
-  color: var(--popover-foreground);
+  color: var(--popover-foreground) !important;
 }
 .driver-popover-arrow-side-left.driver-popover-arrow,
 .driver-popover-arrow-side-right.driver-popover-arrow,
 .driver-popover-arrow-side-top.driver-popover-arrow,
 .driver-popover-arrow-side-bottom.driver-popover-arrow {
-  border-color: transparent;
+  border-color: transparent !important;
 }
 .driver-popover-arrow-side-bottom {
-  border-top-color: var(--popover);
+  border-top-color: var(--popover) !important;
 }
 .driver-popover-arrow-side-top {
-  border-bottom-color: var(--popover);
+  border-bottom-color: var(--popover) !important;
 }
 .driver-popover-arrow-side-left {
-  border-right-color: var(--popover);
+  border-right-color: var(--popover) !important;
 }
 .driver-popover-arrow-side-right {
-  border-left-color: var(--popover);
+  border-left-color: var(--popover) !important;
 }
 .driver-popover-close-btn {
-  color: var(--muted-foreground);
+  color: var(--muted-foreground) !important;
 }
 .driver-popover-close-btn:hover {
-  color: var(--popover-foreground);
+  color: var(--popover-foreground) !important;
 }
 .driver-popover-footer button {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: 1px solid var(--primary);
-  text-shadow: none;
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+  border: 1px solid var(--primary) !important;
+  text-shadow: none !important;
 }
 .driver-popover-footer .driver-popover-prev-btn {
-  background-color: var(--secondary);
-  color: var(--secondary-foreground);
-  border-color: var(--border);
+  background-color: var(--secondary) !important;
+  color: var(--secondary-foreground) !important;
+  border-color: var(--border) !important;
 }
 .driver-popover-progress-text {
-  color: var(--muted-foreground);
+  color: var(--muted-foreground) !important;
 }
