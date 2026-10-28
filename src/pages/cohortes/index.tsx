@@ -72,7 +72,7 @@ export function CohortesPage() {
 
   const handleRetirar = async (retiroData: { motivo: string; fecha?: string }) => {
     if (!retirando) return
-    await api.patch(`/cohortes/${retirando.id}/retirar`, retiroData)
+    await api.patch(`/matriculas/${retirando.id}/retirar`, retiroData)
     toast.success('Alumno retirado de la cohorte')
     if (expandedId) {
       const res = await api.get(`/cohortes-grupos/${expandedId}`)
