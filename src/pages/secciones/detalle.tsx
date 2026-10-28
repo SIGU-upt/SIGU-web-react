@@ -133,7 +133,7 @@ export function SeccionDetallePage() {
       setClases(clasesArr)
 
       const [cohorteRes, trayectoRes] = await Promise.all([
-        api.get('/cohortes', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
+        api.get('/matriculas', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
         api.get('/clases', { params: { trayectoId: seccionData.trayectoId, sedePnfId: seccionData.sedePnfId } }),
         fetchInscripcionesYSuspensiones(clasesArr),
       ])

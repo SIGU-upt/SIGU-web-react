@@ -108,7 +108,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
     setLoadingAfectados(true)
     setStep(2)
     try {
-      const res = await api.get('/cohortes', {
+      const res = await api.get('/matriculas', {
         params: { sedePnfId, trayectoId: trayectoOrigenId, activa: true, limit: 200 },
       })
       const list = res.data.data ?? res.data
@@ -135,7 +135,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
       const nuevoPeriodoId = periodoRes.data.id
 
       if (alumnosAfectados.length > 0) {
-        const promoverRes = await api.post('/cohortes/promover', {
+        const promoverRes = await api.post('/matriculas/promover', {
           alumnoIds: alumnosAfectados.map((a) => a.alumnoId),
           trayectoIdDestino: trayectoDestinoId,
           periodoId: nuevoPeriodoId,

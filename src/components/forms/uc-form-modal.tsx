@@ -15,6 +15,7 @@ interface UCFormData {
   nombre: string
   trayectoId: string
   tramoId?: string
+  tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
 }
 
 interface UCFormModalProps {
@@ -40,13 +41,13 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   const [selectedPnfId, setSelectedPnfId] = useState("")
 
   const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UCFormData>({
-    defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, ...initialData },
+    defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData },
   })
   const trayectoId = watch('trayectoId')
 
   useEffect(() => {
     if (open) {
-      reset({ nombre: '', trayectoId: '', tramoId: SIN_TRAMO, ...initialData })
+      reset({ nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData })
       setSelectedSedeId("")
       setSelectedPnfId("")
       setError(null)
@@ -218,6 +219,27 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
                     {tramoOptions.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.isPer ? 'PER' : `Tramo ${t.numero}`}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tipo">Tipo</Label>
+            <p className="text-xs text-muted-foreground">
+              La Práctica Profesional exige 80% de asistencia mínima (Art. 24b del reglamento), no el 75% general.
+            </p>
+            <Controller
+              control={control}
+              name="tipo"
+              render={({ field }) => (
+                <Select value={field.value ?? 'REGULAR'} onValueChange={field.onChange}>
+                  <SelectTrigger id="tipo" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="REGULAR">Regular (75% de asistencia)</SelectItem>
+                    <SelectItem value="PRACTICA_PROFESIONAL">Práctica Profesional (80% de asistencia)</SelectItem>
                   </SelectContent>
                 </Select>
               )}
