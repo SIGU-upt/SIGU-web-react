@@ -143,7 +143,7 @@ export function StudentsPage() {
       try {
         const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
         const periodo = periodoRes.data
-        await api.post('/cohortes', {
+        await api.post('/matriculas', {
           alumnoId: res.data.id,
           sedePnfId,
           trayectoId,
@@ -179,7 +179,7 @@ export function StudentsPage() {
         try {
           const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
           const periodo = periodoRes.data
-          await api.post('/cohortes', {
+          await api.post('/matriculas', {
             alumnoId: editingUser.id,
             sedePnfId,
             trayectoId: data.trayectoId,

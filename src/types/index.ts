@@ -69,6 +69,10 @@ export interface Tramo {
   fechaFin: string | null
 }
 
+// Art. 24(b) del reglamento: Práctica Profesional exige 80% de asistencia, no
+// el 75% general de una UC regular — ver `ReportsService.umbralDe()` (backend).
+export type TipoUnidadCurricular = 'REGULAR' | 'PRACTICA_PROFESIONAL'
+
 export interface UnidadCurricular {
   id: string
   trayectoId: string
@@ -79,7 +83,7 @@ export interface UnidadCurricular {
   // ADR-023: la UC ahora referencia un catálogo compartido entre trayectos.
   ucCatalogoId?: string
   codigo?: string
-  catalogo?: { id: string; codigo: string; nombre: string }
+  catalogo?: { id: string; codigo: string; nombre: string; tipo?: TipoUnidadCurricular }
 }
 
 export interface PeriodoAcademico {
