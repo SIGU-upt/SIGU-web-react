@@ -48,6 +48,7 @@ export function CurriculumUnitsPage() {
       nombre: formData.nombre,
       trayectoId: formData.trayectoId,
       tramoId: formData.tramoId ?? null,
+      tipo: formData.tipo,
     })
     await fetchData()
   }
@@ -77,7 +78,7 @@ export function CurriculumUnitsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={editing ? handleEdit : handleCreate}
-        initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoId: editing._raw.tramoId ?? undefined } : undefined}
+        initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoId: editing._raw.tramoId ?? undefined, tipo: editing._raw.catalogo?.tipo } : undefined}
         isEditing={!!editing}
         ucCatalogoId={editing?._raw.ucCatalogoId}
       />
