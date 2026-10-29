@@ -121,7 +121,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-border/50 bg-muted/20 dark:bg-muted/70 -mx-6 px-6">
+        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/20 dark:bg-muted/70 -mx-6 px-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60 dark:text-primary" />
             <Input
