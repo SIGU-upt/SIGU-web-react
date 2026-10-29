@@ -104,7 +104,7 @@ export function ClasesSuspendidasPage() {
             <>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50 dark:bg-muted">
+                  <TableRow className="bg-muted">
                     <TableHead className="font-semibold">Fecha</TableHead>
                     <TableHead className="font-semibold">Materia</TableHead>
                     <TableHead className="font-semibold">Sección</TableHead>

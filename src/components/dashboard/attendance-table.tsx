@@ -122,7 +122,7 @@ export function AttendanceTable() {
           <div className="rounded-lg border border-border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted">
+                <TableRow className="bg-muted">
                   <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
                   <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
                   <TableHead className="font-semibold text-foreground">Fecha</TableHead>
@@ -133,7 +133,7 @@ export function AttendanceTable() {
               <TableBody>
                 {data.length > 0 ? (
                   data.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-muted/30 dark:hover:bg-muted/70">
+                    <TableRow key={item.id} className="hover:bg-muted/70">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9">
