@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Fragment } from "react"
+import { useState, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
 import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar } from "lucide-react"
 import { toast } from "sonner"
@@ -13,13 +13,32 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/ui/page-header"
-import { EntityFormModal, type EntityField } from "@/components/forms/entity-form-modal"
+import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role } from "@/types"
+import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico } from "@/types"
 import api from "@/config/api"
 
-const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endpoint: string; fields: EntityField[]; columns: string[]; renderRow: (item: any) => React.ReactNode[]; editRoles?: Role[]; searchable?: boolean; hasGenerarEstructura?: boolean; hasGenerarMultiple?: boolean; groupLabel?: (item: any) => string; rowLink?: (item: any) => string }> = {
+// Fila genérica de la tabla: la forma exacta depende de la pestaña (sede, PNF, período o sede-PNF).
+// Los períodos llegan con su relación sedePnf cargada.
+type ConfigItem = { id: string; sedePnf?: SedePnf } & Partial<Sede & Pnf & SedePnf & PeriodoAcademico>
+
+interface EntityConfig {
+  title: string
+  icon: React.ReactNode
+  endpoint: string
+  fields: EntityField[]
+  columns: string[]
+  renderRow: (item: ConfigItem) => React.ReactNode[]
+  editRoles?: Role[]
+  searchable?: boolean
+  hasGenerarEstructura?: boolean
+  hasGenerarMultiple?: boolean
+  groupLabel?: (item: ConfigItem) => string
+  rowLink?: (item: ConfigItem) => string
+}
+
+const entityConfigs: Record<string, EntityConfig> = {
   sedes: {
     title: 'Sedes', icon: <Building className="h-5 w-5" />, endpoint: '/sedes',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
@@ -60,7 +79,7 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
       { name: 'nombre', label: 'Nombre', required: true },
       { name: 'fechaInicio', label: 'Fecha inicio', type: 'date' as const, required: true },
       { name: 'fechaFin', label: 'Fecha fin', type: 'date' as const, required: true },
-      { name: 'sedePnfId', label: 'Sede-PNF', required: true, type: 'select' as const, optionsEndpoint: '/sede-pnf', optionLabel: (sp: any) => `${sp.pnf?.nombre ?? sp.pnfId} — ${sp.sede?.nombre ?? sp.sedeId}`, optionValue: (sp: any) => sp.id },
+      { name: 'sedePnfId', label: 'Sede-PNF', required: true, type: 'select' as const, optionsEndpoint: '/sede-pnf', optionLabel: (sp: SedePnf) => `${sp.pnf?.nombre ?? sp.pnfId} — ${sp.sede?.nombre ?? sp.sedeId}`, optionValue: (sp: SedePnf) => sp.id },
       { name: 'activo', label: 'Activo', type: 'checkbox' as const, defaultValue: true },
     ],
     columns: ['Nombre', 'Vigencia', 'Sede-PNF', 'Activo'],
@@ -78,30 +97,30 @@ const entityConfigs: Record<string, { title: string; icon: React.ReactNode; endp
     // enviarlo produce un 400 "Filtro 'q' no permitido". Se filtra en el cliente.
     searchable: false,
     fields: [
-      { name: 'sedeId', label: 'Sede', required: true, type: 'select' as const, optionsEndpoint: '/sedes', optionLabel: (s: any) => s.nombre, optionValue: (s: any) => s.id },
-      { name: 'pnfId', label: 'PNF', required: true, type: 'select' as const, optionsEndpoint: '/pnfs', optionLabel: (p: any) => p.nombre, optionValue: (p: any) => p.id },
+      { name: 'sedeId', label: 'Sede', required: true, type: 'select' as const, optionsEndpoint: '/sedes', optionLabel: (s: Sede) => s.nombre, optionValue: (s: Sede) => s.id },
+      { name: 'pnfId', label: 'PNF', required: true, type: 'select' as const, optionsEndpoint: '/pnfs', optionLabel: (p: Pnf) => p.nombre, optionValue: (p: Pnf) => p.id },
     ],
     columns: ['Sede', 'PNF'],
     renderRow: (sp) => [sp.sede?.nombre ?? '—', <Badge variant="secondary" className="font-mono">{sp.pnf?.codigo ?? sp.pnf?.nombre ?? '—'}</Badge>],
   },
 }
 
-function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] }) {
+function CrudTabWithModals({ config }: { config: EntityConfig }) {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<ConfigItem[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
-  const [deleting, setDeleting] = useState<any>(null)
-  const [generatingFor, setGeneratingFor] = useState<any>(null)
+  const [editing, setEditing] = useState<ConfigItem | null>(null)
+  const [deleting, setDeleting] = useState<ConfigItem | null>(null)
+  const [generatingFor, setGeneratingFor] = useState<ConfigItem | null>(null)
   const [genNumeroTrayectos, setGenNumeroTrayectos] = useState(4)
   const [genRequierePiu, setGenRequierePiu] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [multipleOpen, setMultipleOpen] = useState(false)
-  const [multipleSedePnfOptions, setMultipleSedePnfOptions] = useState<any[]>([])
+  const [multipleSedePnfOptions, setMultipleSedePnfOptions] = useState<SedePnf[]>([])
   const [multipleForm, setMultipleForm] = useState({ nombre: '', fechaInicio: '', fechaFin: '', activo: true })
   const [multipleSedePnfIds, setMultipleSedePnfIds] = useState<string[]>([])
   const [generatingMultiple, setGeneratingMultiple] = useState(false)
@@ -112,7 +131,10 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
   // al crear un período, se le asigna la suya automáticamente. La generación
   // múltiple tampoco aplica (ya la bloquea el backend con 403 para este rol).
   const isCoordinadorPeriodos = config.endpoint === '/periodos' && user?.role === Role.COORDINADOR
-  const formFields = isCoordinadorPeriodos ? config.fields.filter((f) => f.name !== 'sedePnfId') : config.fields
+  const formFields = useMemo(
+    () => (isCoordinadorPeriodos ? config.fields.filter((f) => f.name !== 'sedePnfId') : config.fields),
+    [isCoordinadorPeriodos, config.fields],
+  )
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
@@ -155,14 +177,14 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
     ? [...(Array.isArray(displayData) ? displayData : [])].sort((a, b) => config.groupLabel!(a).localeCompare(config.groupLabel!(b)))
     : displayData
 
-  const handleCreate = async (form: Record<string, any>) => {
+  const handleCreate = async (form: FormValues) => {
     const payload = isCoordinadorPeriodos ? { ...form, sedePnfId: user?.sedePnfId } : form
     const res = await api.post(config.endpoint, payload)
     res.data?.advertencias?.forEach((a: string) => toast.warning(a))
     await fetchData()
   }
 
-  const handleEdit = async (form: Record<string, any>) => {
+  const handleEdit = async (form: FormValues) => {
     if (!editing) return
     const payload = isCoordinadorPeriodos ? { ...form, sedePnfId: user?.sedePnfId } : form
     const res = await api.patch(`${config.endpoint}/${editing.id}`, payload)
@@ -314,7 +336,7 @@ function CrudTabWithModals({ config }: { config: typeof entityConfigs[string] })
         onSubmit={editing ? handleEdit : handleCreate}
         title={editing ? `Editar ${config.title}` : `Nuevo ${config.title}`}
         fields={formFields}
-        initialData={editing}
+        initialData={editing ?? undefined}
         isEditing={!!editing}
       />
 

@@ -23,7 +23,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { routeLabels } from "./sidebar"
+import { routeLabels } from "./navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
 

@@ -43,15 +43,15 @@ interface Student {
   status: string
 }
 
-interface StudentsTableProps {
-  data: Student[]
+interface StudentsTableProps<T extends Student> {
+  data: T[]
   loading: boolean
   onImport: (file: File) => Promise<ImportResult>
   onExport: () => void
   onCreate: () => void
-  onEdit: (item: Student) => void
-  onDelete: (item: Student) => void
-  onResetDevice: (item: Student) => void
+  onEdit: (item: T) => void
+  onDelete: (item: T) => void
+  onResetDevice: (item: T) => void
   canEdit: boolean
   canResetDevice: boolean
   canDelete: boolean
@@ -75,7 +75,7 @@ interface StudentsTableProps {
   onPageChange: (page: number) => void
 }
 
-export function StudentsTable({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps) {
+export function StudentsTable<T extends Student>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps<T>) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
   // El trayecto se filtra por número, no por fila: "Trayecto 1" de PNF

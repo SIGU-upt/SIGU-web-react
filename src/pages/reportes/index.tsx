@@ -22,6 +22,48 @@ interface AlumnoEnRiesgo {
   nombreCompleto: string
   ci: string
   porcentajeGlobal: number
+  porEncimaUmbral?: boolean
+}
+
+// Respuestas de /reports/clase/:id y /reports/alumno/:id (ver reports.service.ts en la API).
+interface AlumnoDeClase {
+  alumnoId: string
+  nombreCompleto: string
+  ci: string
+  estado: string
+  // null cuando el estado es AUSENTE inferido (no hay fila de asistencia persistida).
+  asistenciaId: string | null
+}
+
+interface ClaseReporte {
+  fecha: string
+  nombreUc: string
+  nombreDocente: string
+  nombreGrupo: string
+  alumnos: AlumnoDeClase[]
+}
+
+interface ClaseDelAlumno {
+  claseId: string
+  nombreUc: string
+  nombreGrupo: string
+  asistencias: number
+  porcentaje: number
+  totalSesiones?: number
+  // Alias obsoleto de totalSesiones; se conserva como respaldo.
+  totalClases?: number
+  sesionesInferidas?: boolean
+}
+
+interface AlumnoReporte {
+  nombreCompleto: string
+  ci: string
+  totalMaterias: number
+  totalSesiones: number
+  porcentajeGlobal: number
+  porEncimaUmbral: boolean
+  umbral?: number
+  clases: ClaseDelAlumno[]
 }
 
 export function ReportesPage() {
@@ -39,8 +81,8 @@ export function ReportesPage() {
   const [alumnoId, setAlumnoId] = useState(searchParams.get('alumnoId') || "")
   const hoy = hoyLocal()
   const [fecha, setFecha] = useState(hoy)
-  const [classReport, setClassReport] = useState<any>(null)
-  const [alumnoReport, setAlumnoReport] = useState<any>(null)
+  const [classReport, setClassReport] = useState<ClaseReporte | null>(null)
+  const [alumnoReport, setAlumnoReport] = useState<AlumnoReporte | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
@@ -292,7 +334,7 @@ export function ReportesPage() {
                 <Button onClick={fetchClassReport} disabled={loading || !classId}>
                   <Search className="mr-2 h-4 w-4" />Consultar
                 </Button>
-                {classReport?.alumnos?.length > 0 && (
+                {(classReport?.alumnos?.length ?? 0) > 0 && (
                   <Button variant="outline" onClick={exportClassReport}>
                     <Download className="mr-2 h-4 w-4" />Descargar Excel
                   </Button>
@@ -323,7 +365,7 @@ export function ReportesPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {classReport.alumnos?.map((a: any) => (
+                        {classReport.alumnos?.map((a) => (
                           <TableRow key={a.alumnoId}>
                             <TableCell>{a.nombreCompleto}</TableCell>
                             <TableCell className="text-muted-foreground">{a.ci}</TableCell>
@@ -371,7 +413,7 @@ export function ReportesPage() {
                 <Button onClick={() => fetchAlumnoReport()} disabled={loading || !alumnoId}>
                   <UserSearch className="mr-2 h-4 w-4" />Consultar
                 </Button>
-                {alumnoReport?.clases?.length > 0 && (
+                {(alumnoReport?.clases?.length ?? 0) > 0 && (
                   <Button variant="outline" onClick={exportAlumnoReport}>
                     <Download className="mr-2 h-4 w-4" />Descargar Excel
                   </Button>
@@ -412,7 +454,7 @@ export function ReportesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {alumnoReport.clases?.map((c: any) => (
+                      {alumnoReport.clases?.map((c) => (
                         <TableRow key={c.claseId}>
                           <TableCell>{c.nombreUc}</TableCell>
                           <TableCell>{c.nombreGrupo}</TableCell>
@@ -429,7 +471,7 @@ export function ReportesPage() {
                       ))}
                     </TableBody>
                   </Table>
-                  {alumnoReport.clases?.some((c: any) => c.sesionesInferidas) && (
+                  {alumnoReport.clases?.some((c) => c.sesionesInferidas) && (
                     <p className="text-xs text-muted-foreground">* Sesiones esperadas estimadas a partir de las fechas con asistencia registrada.</p>
                   )}
                 </div>
@@ -489,7 +531,7 @@ export function ReportesPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {trayectoReport.map((a: any) => (
+                      {trayectoReport.map((a) => (
                         <TableRow key={a.alumnoId}>
                           <TableCell>{a.nombreCompleto}</TableCell>
                           <TableCell className="text-muted-foreground">{a.ci}</TableCell>

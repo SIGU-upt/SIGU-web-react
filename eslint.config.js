@@ -20,4 +20,28 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  // Hooks y variantes que viven junto a su componente por diseño (patrón shadcn/ui y
+  // el contexto de auth). Se permiten por nombre en vez de apagar la regla: cualquier
+  // otro export que no sea un componente sigue marcándose.
+  {
+    files: ['src/components/ui/**/*.tsx', 'src/contexts/AuthContext.tsx'],
+    rules: {
+      'react-refresh/only-export-components': [
+        'error',
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            'badgeVariants',
+            'buttonGroupVariants',
+            'buttonVariants',
+            'navigationMenuTriggerStyle',
+            'toggleVariants',
+            'useFormField',
+            'useSidebar',
+            'useAuth',
+          ],
+        },
+      ],
+    },
+  },
 ])

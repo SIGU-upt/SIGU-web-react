@@ -19,7 +19,7 @@ const TURNO_LABELS: Record<Turno, string> = {
   FIN_DE_SEMANA: "Fin de semana",
 }
 
-interface SeccionFormData {
+export interface SeccionFormData {
   sedePnfId: string
   trayectoId: string
   codigo: string

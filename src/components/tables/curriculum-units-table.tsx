@@ -39,16 +39,16 @@ interface CurriculumUnit {
   status: "Activa" | "Inactiva"
 }
 
-interface CurriculumUnitsTableProps {
-  data: CurriculumUnit[]
+interface CurriculumUnitsTableProps<T extends CurriculumUnit> {
+  data: T[]
   onCreate?: () => void
-  onEdit?: (item: CurriculumUnit) => void
-  onDelete?: (item: CurriculumUnit) => void
+  onEdit?: (item: T) => void
+  onDelete?: (item: T) => void
   canEdit?: boolean
   canDelete?: boolean
 }
 
-export function CurriculumUnitsTable({ data, onCreate, onEdit, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps) {
+export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate, onEdit, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10

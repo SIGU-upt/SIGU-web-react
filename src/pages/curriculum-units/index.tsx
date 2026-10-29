@@ -6,13 +6,32 @@ import api from "@/config/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type UnidadCurricular } from "@/types"
 
+// Fila de la tabla; `_raw` conserva la UC original para editar y eliminar.
+interface UcRow {
+  id: string
+  code: string
+  name: string
+  trayecto: string
+  type: 'Obligatoria' | 'Electiva'
+  status: 'Activa' | 'Inactiva'
+  _raw: UnidadCurricular
+}
+
+// Datos que entrega el formulario de UC (ver UCFormModal).
+interface UcFormValues {
+  nombre: string
+  trayectoId: string
+  tramoId?: string
+  tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
+}
+
 export function CurriculumUnitsPage() {
   const { user } = useAuth()
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<UcRow[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<any>(null)
-  const [deleting, setDeleting] = useState<any>(null)
+  const [editing, setEditing] = useState<UcRow | null>(null)
+  const [deleting, setDeleting] = useState<UcRow | null>(null)
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
@@ -38,12 +57,13 @@ export function CurriculumUnitsPage() {
     fetchData()
   }, [fetchData])
 
-  const handleCreate = async (formData: any) => {
+  const handleCreate = async (formData: UcFormValues) => {
     await api.post('/unidades-curriculares', formData)
     await fetchData()
   }
 
-  const handleEdit = async (formData: any) => {
+  const handleEdit = async (formData: UcFormValues) => {
+    if (!editing) return
     await api.patch(`/unidades-curriculares/${editing._raw.id}`, {
       nombre: formData.nombre,
       trayectoId: formData.trayectoId,
@@ -67,8 +87,8 @@ export function CurriculumUnitsPage() {
         <CurriculumUnitsTable
           data={data}
           onCreate={() => { setEditing(null); setModalOpen(true) }}
-          onEdit={(item: any) => { setEditing(item); setModalOpen(true) }}
-          onDelete={(item: any) => setDeleting(item)}
+          onEdit={(item) => { setEditing(item); setModalOpen(true) }}
+          onDelete={(item) => setDeleting(item)}
           canEdit={canEdit}
           canDelete={canDelete}
         />
