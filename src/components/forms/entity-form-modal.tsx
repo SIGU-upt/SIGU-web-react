@@ -11,14 +11,25 @@ import api from "@/config/api"
 import { requiredTextRule, nonNegativeNumberRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
+// Valores de un formulario genérico: cada campo es texto, número, booleano o fecha.
+export type FormValues = Record<string, unknown>
+
+// Ítem de una lista de opciones cargada desde la API (sede, PNF, sede-PNF...).
+interface OptionItem {
+  id?: string
+  nombre?: string
+}
+
 export interface EntityField {
   name: string
   label: string
   type?: 'text' | 'number' | 'checkbox' | 'select' | 'date'
   required?: boolean
   optionsEndpoint?: string
-  optionLabel?: (item: any) => string
-  optionValue?: (item: any) => string
+  // Se declaran como métodos (no propiedades) para que acepten callbacks tipados con
+  // la entidad concreta, p. ej. (sp: SedePnf) => string, sin recurrir a any.
+  optionLabel?(item: unknown): string
+  optionValue?(item: unknown): string
   // Solo se muestra al CREAR (se oculta al editar). Útil para inputs que disparan
   // generación (ej. cantidad de trayectos al crear un PNF), que no aplican al editar.
   createOnly?: boolean
@@ -29,10 +40,11 @@ export interface EntityField {
 interface EntityFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: Record<string, any>) => Promise<void>
+  onSubmit: (data: FormValues) => Promise<void>
   title: string
   fields: EntityField[]
-  initialData?: Record<string, any>
+  // Cualquier entidad (Trayecto, Tramo...) sirve como valores iniciales.
+  initialData?: object
   isEditing?: boolean
 }
 
@@ -42,7 +54,7 @@ export function EntityFormModal({
 }: EntityFormModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [optionsByField, setOptionsByField] = useState<Record<string, any[]>>({})
+  const [optionsByField, setOptionsByField] = useState<Record<string, unknown[]>>({})
 
   // Al editar se ocultan los campos marcados como createOnly.
   const visibleFields = useMemo(
@@ -50,13 +62,16 @@ export function EntityFormModal({
     [fields, isEditing],
   )
 
-  const defaultValues = visibleFields.reduce((acc, f) => {
-    acc[f.name] =
-      initialData?.[f.name] ?? f.defaultValue ?? (f.type === 'checkbox' ? false : '')
-    return acc
-  }, {} as Record<string, any>)
+  const defaultValues = useMemo(
+    () => visibleFields.reduce<FormValues>((acc, f) => {
+      acc[f.name] =
+        (initialData as FormValues | undefined)?.[f.name] ?? f.defaultValue ?? (f.type === 'checkbox' ? false : '')
+      return acc
+    }, {}),
+    [visibleFields, initialData],
+  )
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<FormValues>({
     defaultValues,
   })
 
@@ -65,7 +80,7 @@ export function EntityFormModal({
       reset(defaultValues)
       setError(null)
     }
-  }, [open, initialData])
+  }, [open, defaultValues, reset])
 
   useEffect(() => {
     if (!open) return
@@ -78,7 +93,7 @@ export function EntityFormModal({
     })
   }, [open, visibleFields])
 
-  const submitHandler = async (data: Record<string, any>) => {
+  const submitHandler = async (data: FormValues) => {
     setLoading(true)
     setError(null)
     try {
@@ -122,14 +137,15 @@ export function EntityFormModal({
                   name={f.name}
                   rules={{ required: f.required !== false ? 'Requerido' : false }}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value as string} onValueChange={field.onChange}>
                       <SelectTrigger id={f.name} className="w-full">
                         <SelectValue placeholder={`Seleccione ${f.label.toLowerCase()}`} />
                       </SelectTrigger>
                       <SelectContent>
                         {(optionsByField[f.name] ?? []).map((opt) => {
-                          const value = f.optionValue ? f.optionValue(opt) : opt.id
-                          const label = f.optionLabel ? f.optionLabel(opt) : opt.nombre
+                          const item = opt as OptionItem
+                          const value = (f.optionValue ? f.optionValue(opt) : item.id) ?? ''
+                          const label = f.optionLabel ? f.optionLabel(opt) : item.nombre
                           return <SelectItem key={value} value={value}>{label}</SelectItem>
                         })}
                       </SelectContent>

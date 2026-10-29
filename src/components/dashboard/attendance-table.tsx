@@ -25,6 +25,18 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { openFileInNewTab } from "@/lib/export"
 import api from "@/config/api"
 
+// Registro de asistencia tal como lo devuelve GET /attendance (con sus relaciones).
+interface AttendanceApiItem {
+  id: string
+  alumnoId: string
+  fecha: string
+  estado: string
+  alumno?: { nombreCompleto?: string; nombres?: string; apellidos?: string }
+  clase?: { unidadCurricular?: { nombre?: string } }
+  justificadoPor?: { nombreCompleto?: string } | null
+  evidenciaMimeType?: string | null
+}
+
 interface AttendanceRow {
   id: string
   alumnoId: string
@@ -67,7 +79,7 @@ export function AttendanceTable() {
       api.get('/attendance', { params })
         .then((res) => {
           const list = res.data.data ?? res.data
-          setData((Array.isArray(list) ? list : []).map((a: any) => ({
+          setData((Array.isArray(list) ? list : []).map((a: AttendanceApiItem) => ({
             id: a.id,
             alumnoId: a.alumnoId,
             student: a.alumno?.nombreCompleto ?? '—',

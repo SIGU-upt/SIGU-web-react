@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
-import { SeccionFormModal } from "@/components/forms/seccion-form-modal"
+import { SeccionFormModal, type SeccionFormData } from "@/components/forms/seccion-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Seccion, type SedePnf, type Trayecto, type Turno } from "@/types"
@@ -113,12 +113,12 @@ export function SeccionesPage() {
     setTrayectoFilter("")
   }
 
-  const handleCreate = async (form: Record<string, any>) => {
+  const handleCreate = async (form: SeccionFormData) => {
     await api.post('/secciones', form)
     await fetchData()
   }
 
-  const handleEdit = async (form: Record<string, any>) => {
+  const handleEdit = async (form: SeccionFormData) => {
     if (!editing) return
     await api.patch(`/secciones/${editing.id}`, form)
     await fetchData()

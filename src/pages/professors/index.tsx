@@ -1,21 +1,35 @@
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { ProfessorsTable } from "@/components/tables/professors-table"
-import { UserFormModal } from "@/components/forms/user-form-modal"
+import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type User, type SedePnf } from "@/types"
+import { Role, type User, type SedePnf, type Clase } from "@/types"
+
+// Fila de la tabla de docentes. Conserva nombres y apellidos por separado para editar.
+interface ProfessorRow {
+  id: string
+  name: string
+  nombres: string
+  apellidos: string
+  initials: string
+  idNumber: string
+  email: string
+  sedePnfId?: string
+  subjects: string[]
+  status: string
+}
 
 export function ProfessorsPage() {
   const { user } = useAuth()
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<ProfessorRow[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
-  const [deletingUser, setDeletingUser] = useState<any>(null)
-  const [resettingDeviceUser, setResettingDeviceUser] = useState<any>(null)
+  const [editingUser, setEditingUser] = useState<ProfessorRow | null>(null)
+  const [deletingUser, setDeletingUser] = useState<ProfessorRow | null>(null)
+  const [resettingDeviceUser, setResettingDeviceUser] = useState<ProfessorRow | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
@@ -94,7 +108,7 @@ export function ProfessorsPage() {
       if (pnfFilter) clasesParams.sedePnfId = pnfFilter
       const clasesRes = await api.get('/clases', { params: clasesParams }).catch(() => ({ data: [] }))
       const todasLasClases = clasesRes.data.data ?? clasesRes.data
-      const clasesPorDocenteId = new Map<string, any[]>()
+      const clasesPorDocenteId = new Map<string, Clase[]>()
       for (const c of Array.isArray(todasLasClases) ? todasLasClases : []) {
         const arr = clasesPorDocenteId.get(c.docenteId) ?? []
         arr.push(c)
@@ -104,8 +118,8 @@ export function ProfessorsPage() {
       setUsers(docentes.map((u) => {
         const clases = clasesPorDocenteId.get(u.id) ?? []
         const subjects = clases
-          .map((c: any) => c.unidadCurricular?.nombre)
-          .filter(Boolean)
+          .map((c) => c.unidadCurricular?.nombre)
+          .filter((n): n is string => Boolean(n))
         return {
           id: u.id,
           name: u.nombreCompleto,
@@ -115,7 +129,7 @@ export function ProfessorsPage() {
           initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
           idNumber: u.ci,
           email: u.email,
-          sedePnfId: u.sedePnfId,
+          sedePnfId: u.sedePnfId ?? undefined,
           subjects,
           status: 'Activo',
         }
@@ -129,13 +143,14 @@ export function ProfessorsPage() {
     fetchData()
   }, [fetchData])
 
-  const handleCreate = async (data: any) => {
+  const handleCreate = async (data: UserFormData) => {
     await api.post('/users', { ...data, role: 'DOCENTE' })
     await fetchData()
   }
 
-  const handleEdit = async (data: any) => {
-    const payload: any = {}
+  const handleEdit = async (data: UserFormData) => {
+    if (!editingUser) return
+    const payload: Partial<UserFormData> = {}
     if (data.nombres) payload.nombres = data.nombres
     if (data.apellidos) payload.apellidos = data.apellidos
     if (data.email) payload.email = data.email

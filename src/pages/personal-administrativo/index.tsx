@@ -10,7 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { PageHeader } from "@/components/ui/page-header"
-import { AdminUserFormModal } from "@/components/forms/admin-user-form-modal"
+import { AdminUserFormModal, type AdminUserFormData } from "@/components/forms/admin-user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Sede, type SedePnf } from "@/types"
@@ -118,14 +118,14 @@ export function PersonalAdministrativoPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const handleCreate = async (form: Record<string, any>) => {
+  const handleCreate = async (form: AdminUserFormData) => {
     await api.post('/users', form)
     await fetchData()
   }
 
-  const handleEdit = async (form: Record<string, any>) => {
+  const handleEdit = async (form: AdminUserFormData) => {
     if (!editing) return
-    const payload: Record<string, any> = {}
+    const payload: Partial<AdminUserFormData> = {}
     if (form.nombres) payload.nombres = form.nombres
     if (form.apellidos) payload.apellidos = form.apellidos
     if (form.email) payload.email = form.email
