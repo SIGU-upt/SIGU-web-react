@@ -36,7 +36,7 @@ export function PersonalAdministrativoPage() {
   const [deleting, setDeleting] = useState<User | null>(null)
   const [resettingDevice, setResettingDevice] = useState<User | null>(null)
   const [sedeFilter, setSedeFilter] = useState("")
-  const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
+  const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
 
   const allowedRoles: Role[] = user?.role === Role.SUPERADMIN
     ? [Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]
@@ -63,13 +63,20 @@ export function PersonalAdministrativoPage() {
     ? sedes.map((s) => ({ id: s.id, label: s.nombre }))
     : undefined
 
-  // Opciones de PNF: para superadmin se limitan a la sede elegida; para rector, el
-  // servidor ya devuelve solo las sede-PNF de su propia sede.
+  // Opciones de PNF: filtro global por pnfId (deduplicado, por eso ya hay un
+  // filtro de sede aparte) — para superadmin se limitan a la sede elegida;
+  // para rector, el servidor ya devuelve solo las sede-PNF de su propia sede.
   const pnfOptions =
     isSuperadmin || isRector
-      ? sedePnfs
-          .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
-          .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
+      ? Array.from(
+          new Map(
+            sedePnfs
+              .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
+              .map((sp) => [sp.pnfId, sp.pnf?.nombre ?? sp.pnfId]),
+          ).entries(),
+        )
+          .map(([id, label]) => ({ id, label }))
+          .sort((a, b) => a.label.localeCompare(b.label))
       : undefined
 
   const handleSedeFilterChange = (value: string) => {
@@ -91,7 +98,7 @@ export function PersonalAdministrativoPage() {
       const extraParams: Record<string, string> = {}
       if (debouncedSearch) extraParams.q = debouncedSearch
       if (isSuperadmin && sedeFilter) extraParams.sedeId = sedeFilter
-      if (pnfFilter) extraParams.sedePnfId = pnfFilter
+      if (pnfFilter) extraParams.pnfId = pnfFilter
       const [usersResults, sedesRes, sedePnfRes] = await Promise.all([
         Promise.all(allowedRoles.map((role) => api.get('/users', {
           params: { role, limit: 200, ...extraParams },

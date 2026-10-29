@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { type UnidadCurricular, type User, Role } from "@/types"
 import api from "@/config/api"
@@ -98,7 +99,9 @@ export function ClaseFormModal({
       : { role: 'DOCENTE', sedePnfId, limit: 200 }
     api.get('/users', { params }).then((res) => {
       const list = res.data.data ?? res.data
-      setDocenteOptions(Array.isArray(list) ? list : [])
+      const docentes = Array.isArray(list) ? list : []
+      docentes.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
+      setDocenteOptions(docentes)
     }).catch(() => setDocenteOptions([]))
   }, [open, trayectoId, sedePnfId, mostrarOtrosPnf, puedeVerOtrosPnf])
 
@@ -162,19 +165,17 @@ export function ClaseFormModal({
               name="docenteId"
               rules={{ required: 'Requerido' }}
               render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="docenteId" className="w-full">
-                    <SelectValue placeholder="Seleccione un docente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {docenteOptions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.nombreCompleto} — {d.ci}
-                        {d.sedePnfId !== sedePnfId && ' (otro PNF)'}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  id="docenteId"
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  placeholder="Seleccione un docente"
+                  searchPlaceholder="Buscar docente..."
+                  options={docenteOptions.map((d) => ({
+                    value: d.id,
+                    label: `${d.nombreCompleto} — ${d.ci}${d.sedePnfId !== sedePnfId ? ' (otro PNF)' : ''}`,
+                  }))}
+                />
               )}
             />
             {errors.docenteId && <p className="text-xs text-destructive">{errors.docenteId.message}</p>}
