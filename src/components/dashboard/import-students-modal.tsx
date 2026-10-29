@@ -66,7 +66,7 @@ export function ImportStudentsModal({ onImport }: ImportStudentsModalProps) {
   return (
     <Dialog onOpenChange={(open) => !open && setStatus("idle")}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 dark:border-primary/60 dark:hover:bg-primary/15 shadow-sm">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
           Carga Masiva (Excel)
         </Button>

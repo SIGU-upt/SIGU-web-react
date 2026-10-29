@@ -99,7 +99,7 @@ export function ImportModal<TResult = ImportResult>({
   return (
     <Dialog onOpenChange={(open) => { if (!open) { setStatus("idle"); setResult(null); setFile(null) } }}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm">
+        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 dark:border-primary/60 dark:hover:bg-primary/15 shadow-sm">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
           {triggerLabel}
         </Button>
