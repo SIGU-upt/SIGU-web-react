@@ -14,7 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/ui/page-header"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import { EntityFormModal, type EntityField } from "@/components/forms/entity-form-modal"
+import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User } from "@/types"
@@ -119,11 +119,11 @@ export function PnfDetallePage() {
 
   useEffect(() => { fetchAlumnos() }, [fetchAlumnos])
 
-  const handleCreateTrayecto = async (data: Record<string, any>) => {
+  const handleCreateTrayecto = async (data: FormValues) => {
     await api.post('/trayectos', { ...data, pnfId: id })
     await fetchData()
   }
-  const handleEditTrayecto = async (data: Record<string, any>) => {
+  const handleEditTrayecto = async (data: FormValues) => {
     if (!editingTrayecto) return
     await api.patch(`/trayectos/${editingTrayecto.id}`, data)
     await fetchData()
@@ -134,12 +134,12 @@ export function PnfDetallePage() {
     await fetchData()
   }
 
-  const handleCreateTramo = async (data: Record<string, any>) => {
+  const handleCreateTramo = async (data: FormValues) => {
     if (!tramoTrayectoId) return
     await api.post('/tramos', { ...data, trayectoId: tramoTrayectoId })
     await fetchData()
   }
-  const handleEditTramo = async (data: Record<string, any>) => {
+  const handleEditTramo = async (data: FormValues) => {
     if (!editingTramo) return
     await api.patch(`/tramos/${editingTramo.id}`, data)
     await fetchData()

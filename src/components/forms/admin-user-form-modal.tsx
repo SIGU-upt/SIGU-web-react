@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CedulaInput } from "@/components/ui/cedula-input"
 import { Role, type Sede, type SedePnf } from "@/types"
-import { PasswordRequirements, passwordMeetsRequirements, generateStrongPassword } from "@/components/forms/password-requirements"
+import { PasswordRequirements } from "@/components/forms/password-requirements"
+import { passwordMeetsRequirements, generateStrongPassword } from "@/lib/password"
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
@@ -21,7 +22,7 @@ const ROLE_LABELS: Record<string, string> = {
   [Role.AUDITOR]: 'Auditor',
 }
 
-interface AdminUserFormData {
+export interface AdminUserFormData {
   nombres: string
   apellidos: string
   ci: string
