@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Shield,
   CalendarOff,
+  AlertTriangle,
 } from "lucide-react"
 import { Role } from "@/types"
 
@@ -37,6 +38,7 @@ export const navigation: NavItem[] = [
   { id: "secciones", name: "Secciones", icon: Layers, path: "/secciones", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: "clases-suspendidas", name: "Clases Suspendidas", icon: CalendarOff, path: "/clases-suspendidas", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: "cohortes", name: "Cohortes", icon: GraduationCap, path: "/cohortes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: "inconsistencias", name: "Inconsistencias", icon: AlertTriangle, path: "/inconsistencias", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR] },
   { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR, Role.DOCENTE] },
   { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR] },
