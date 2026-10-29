@@ -367,13 +367,13 @@ export function SeccionDetallePage() {
         icon={<Layers className="h-5 w-5" />}
         actions={canEdit && (
           <>
-            <Button variant="outline" onClick={() => setIndividualModalOpen(true)} disabled={clases.length === 0}>
+            <Button variant="outline" onClick={() => setIndividualModalOpen(true)} disabled={clases.length === 0} data-tour="seccion-inscribir-individual">
               <UserPlus className="mr-2 h-4 w-4" /> Inscribir alumnos
             </Button>
-            <Button variant="outline" onClick={() => setConfirmingInscripcionMasiva(true)} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0}>
+            <Button variant="outline" onClick={() => setConfirmingInscripcionMasiva(true)} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0} data-tour="seccion-inscribir-cohorte">
               <Users className="mr-2 h-4 w-4" /> {inscribiendo ? 'Inscribiendo...' : 'Inscribir cohorte completa'}
             </Button>
-            <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
+            <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }} data-tour="seccion-agregar-clase">
               <Plus className="mr-2 h-4 w-4" /> Agregar Clase
             </Button>
           </>
@@ -439,7 +439,7 @@ export function SeccionDetallePage() {
         </Card>
       )}
 
-      <Card className="shadow-md">
+      <Card className="shadow-md" data-tour="seccion-cohorte">
         <CardHeader className="pb-4">
           <h2 className="text-lg font-semibold">Alumnos de esta cohorte ({cohorte.length})</h2>
           <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección. La columna Estado indica si ya están inscritos en las clases (pertenecer a la cohorte no es lo mismo que estar inscrito).</p>
@@ -642,6 +642,7 @@ export function SeccionDetallePage() {
         onSubmit={handleInscribirIndividual}
         clases={clasesDelTrayecto}
         sedePnfId={seccion.sedePnfId}
+        trayectoNumero={seccion.trayecto?.numero}
       />
 
       <ConfirmDeleteModal

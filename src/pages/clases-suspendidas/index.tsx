@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { PageHeader } from "@/components/ui/page-header"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -34,8 +35,16 @@ export function ClasesSuspendidasPage() {
   const canAnular = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
   useEffect(() => {
-    api.get('/secciones').then((res) => setSecciones(res.data.data ?? res.data)).catch(() => setSecciones([]))
-    api.get('/users', { params: { role: 'DOCENTE', limit: 200 } }).then((res) => setDocentes(res.data.data ?? res.data)).catch(() => setDocentes([]))
+    api.get('/secciones').then((res) => {
+      const list: Seccion[] = res.data.data ?? res.data
+      list.sort((a, b) => a.codigo.localeCompare(b.codigo))
+      setSecciones(list)
+    }).catch(() => setSecciones([]))
+    api.get('/users', { params: { role: 'DOCENTE', limit: 200 } }).then((res) => {
+      const list: User[] = res.data.data ?? res.data
+      list.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
+      setDocentes(list)
+    }).catch(() => setDocentes([]))
   }, [])
 
   const fetchData = useCallback(async () => {
@@ -85,13 +94,18 @@ export function ClasesSuspendidasPage() {
                 {secciones.map((s) => <SelectItem key={s.id} value={s.id}>{s.codigo}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={docenteId || "__all__"} onValueChange={(v) => { setDocenteId(v === "__all__" ? "" : v); setPage(1) }}>
-              <SelectTrigger className="w-52"><SelectValue placeholder="Docente" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos los docentes</SelectItem>
-                {docentes.map((d) => <SelectItem key={d.id} value={d.id}>{d.nombreCompleto}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="w-52">
+              <SearchableSelect
+                value={docenteId || "__all__"}
+                onValueChange={(v) => { setDocenteId(v === "__all__" ? "" : v); setPage(1) }}
+                placeholder="Docente"
+                searchPlaceholder="Buscar docente..."
+                options={[
+                  { value: "__all__", label: "Todos los docentes" },
+                  ...docentes.map((d) => ({ value: d.id, label: d.nombreCompleto })),
+                ]}
+              />
+            </div>
             {hayFiltros && (
               <Button variant="ghost" size="sm" onClick={limpiarFiltros}>Limpiar</Button>
             )}
