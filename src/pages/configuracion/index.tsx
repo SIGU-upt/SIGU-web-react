@@ -16,7 +16,8 @@ import { PageHeader } from "@/components/ui/page-header"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico } from "@/types"
+import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico, type GenerarEstructuraResultado, type GenerarPeriodosResultado } from "@/types"
+import { avisarEstructuraGenerada, avisarPeriodosGenerados } from "@/lib/generacion"
 import api from "@/config/api"
 
 // Fila genérica de la tabla: la forma exacta depende de la pestaña (sede, PNF, período o sede-PNF).
@@ -216,10 +217,8 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
     if (!multipleForm.nombre || !multipleForm.fechaInicio || !multipleForm.fechaFin || multipleSedePnfIds.length === 0) return
     setGeneratingMultiple(true)
     try {
-      const res = await api.post('/periodos/generar', { ...multipleForm, sedePnfIds: multipleSedePnfIds })
-      const creadas = res.data?.creadas?.length ?? 0
-      const omitidos = res.data?.omitidos ?? []
-      toast.success(`Período creado en ${creadas} sede-PNF${omitidos.length ? `, ${omitidos.length} omitida(s)` : ''}.`)
+      const res = await api.post<GenerarPeriodosResultado>('/periodos/generar', { ...multipleForm, sedePnfIds: multipleSedePnfIds })
+      avisarPeriodosGenerados(res.data)
       setMultipleOpen(false)
       await fetchData()
     } finally {
@@ -231,13 +230,11 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
     if (!generatingFor) return
     setGenerating(true)
     try {
-      const res = await api.post(`/pnfs/${generatingFor.id}/generar-estructura`, {
+      const res = await api.post<GenerarEstructuraResultado>(`/pnfs/${generatingFor.id}/generar-estructura`, {
         numeroTrayectos: genNumeroTrayectos,
         requierePiu: genRequierePiu,
       })
-      const creadas = res.data?.creadas?.length ?? 0
-      const omitidos = res.data?.omitidos ?? []
-      toast.success(`Estructura generada: ${creadas} elemento(s) creado(s)${omitidos.length ? `, ${omitidos.length} ya existían` : ''}.`)
+      avisarEstructuraGenerada(res.data)
       setGeneratingFor(null)
     } finally {
       setGenerating(false)

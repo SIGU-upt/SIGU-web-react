@@ -182,6 +182,19 @@ export interface SecurityLog {
   user?: User | null
 }
 
+// Respuesta de POST /pnfs/:id/generar-estructura: conteos de lo que se creó.
+export interface GenerarEstructuraResultado {
+  pnfId: string
+  trayectosCreados: number
+  tramosCreados: number
+}
+
+// Respuesta de POST /periodos/generar: un período por sede-PNF; las que fallan van en omitidos.
+export interface GenerarPeriodosResultado {
+  creados: { sedePnfId: string; periodoId: string }[]
+  omitidos: { sedePnfId: string; motivo: string }[]
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {
