@@ -90,7 +90,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 shadow-sm" onClick={exportPensum}>
+            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 dark:border-primary/60 dark:hover:bg-primary/15 shadow-sm" onClick={exportPensum}>
               <Download className="mr-2 h-4 w-4" />
               Exportar Pensum
             </Button>
