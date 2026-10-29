@@ -16,13 +16,14 @@ export function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
+      className="text-muted-foreground"
       aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       {mounted && isDark ? (
-        <Sun className="h-5 w-5 text-muted-foreground" />
+        <Sun className="h-5 w-5" />
       ) : (
-        <Moon className="h-5 w-5 text-muted-foreground" />
+        <Moon className="h-5 w-5" />
       )}
     </Button>
   )
