@@ -273,7 +273,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted/50 dark:bg-muted">
                 {config.columns.map((c) => <TableHead key={c} className="font-semibold">{c}</TableHead>)}
                 <TableHead className="text-right font-semibold">Acciones</TableHead>
               </TableRow>
@@ -286,7 +286,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
                 return (
                 <Fragment key={item.id}>
                 {showGroupHeader && (
-                  <TableRow key={`group-${groupLabel}`} className="bg-muted/30 hover:bg-muted/30">
+                  <TableRow key={`group-${groupLabel}`} className="bg-muted/30 dark:bg-muted/70 hover:bg-muted/30 dark:hover:bg-muted/70">
                     <TableCell colSpan={config.columns.length + 1} className="py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                       {groupLabel}
                     </TableCell>

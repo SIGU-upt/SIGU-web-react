@@ -84,7 +84,7 @@ export function SecurityLogsPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-muted/50 dark:bg-muted">
                   <TableHead className="font-semibold">Fecha</TableHead>
                   <TableHead className="font-semibold">Usuario</TableHead>
                   <TableHead className="font-semibold">Acción</TableHead>

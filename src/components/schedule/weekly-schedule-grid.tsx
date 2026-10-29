@@ -47,7 +47,7 @@ export function WeeklyScheduleGrid({ entries, emptyMessage = "No hay clases con 
         </thead>
         <tbody>
           {horas.map((hora, i) => (
-            <tr key={hora} className={i % 2 === 0 ? "bg-card" : "bg-muted/30"}>
+            <tr key={hora} className={i % 2 === 0 ? "bg-card" : "bg-muted/30 dark:bg-muted/70"}>
               <td className="px-3 py-2.5 align-top text-xs font-medium text-muted-foreground tabular-nums border-t border-border">
                 {hora.slice(0, 5)}
               </td>
