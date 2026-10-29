@@ -105,7 +105,7 @@ export function CohortesPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-muted/50 dark:bg-muted">
                   <TableHead className="w-8" />
                   <TableHead className="font-semibold">Sede / PNF</TableHead>
                   <TableHead className="font-semibold">Trayecto</TableHead>
@@ -134,7 +134,7 @@ export function CohortesPage() {
                     </TableRow>
                     {expandedKey === g.clave && (
                       <TableRow key={`${g.clave}-detalle`}>
-                        <TableCell colSpan={5} className="bg-muted/20 p-0">
+                        <TableCell colSpan={5} className="bg-muted/20 dark:bg-muted/70 p-0">
                           <div className="p-4">
                             <Table>
                               <TableHeader>

@@ -217,7 +217,7 @@ export function PersonalAdministrativoPage() {
             <>
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-muted/50">
+                  <TableRow className="bg-muted/50 dark:bg-muted">
                     <TableHead className="font-semibold">Nombre</TableHead>
                     <TableHead className="font-semibold">Cédula</TableHead>
                     <TableHead className="font-semibold">Rol</TableHead>
