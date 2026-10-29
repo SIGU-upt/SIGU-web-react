@@ -193,6 +193,27 @@ export interface InscripcionInconsistencia {
   detalle: string
 }
 
+// Resultado de POST /unidades-curriculares/replicar: una oferta por trayecto elegido.
+export interface ReplicarUcResultado {
+  ucCatalogoId: string
+  nombre: string
+  creadas: { trayectoId: string; unidadCurricularId: string }[]
+  omitidos: { trayectoId: string; motivo: string }[]
+}
+
+// Respuesta de POST /pnfs/:id/generar-estructura: conteos de lo que se creó.
+export interface GenerarEstructuraResultado {
+  pnfId: string
+  trayectosCreados: number
+  tramosCreados: number
+}
+
+// Respuesta de POST /periodos/generar: un período por sede-PNF; las que fallan van en omitidos.
+export interface GenerarPeriodosResultado {
+  creados: { sedePnfId: string; periodoId: string }[]
+  omitidos: { sedePnfId: string; motivo: string }[]
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {

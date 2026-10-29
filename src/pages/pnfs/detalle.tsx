@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import { toast } from "sonner"
 import { ArrowLeft, BookOpen, Plus, MoreVertical, Wand2, Layers, Users, GraduationCap } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,7 +16,8 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User } from "@/types"
+import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, type GenerarEstructuraResultado } from "@/types"
+import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
 
 const trayectoFields: EntityField[] = [
@@ -154,13 +154,11 @@ export function PnfDetallePage() {
     if (!id) return
     setGenerating(true)
     try {
-      const res = await api.post(`/pnfs/${id}/generar-estructura`, {
+      const res = await api.post<GenerarEstructuraResultado>(`/pnfs/${id}/generar-estructura`, {
         numeroTrayectos: genNumeroTrayectos,
         requierePiu: genRequierePiu,
       })
-      const creadas = res.data?.creadas?.length ?? 0
-      const omitidos = res.data?.omitidos ?? []
-      toast.success(`Estructura generada: ${creadas} elemento(s) creado(s)${omitidos.length ? `, ${omitidos.length} ya existían` : ''}.`)
+      avisarEstructuraGenerada(res.data)
       setGeneratingEstructura(false)
       await fetchData()
     } finally {
