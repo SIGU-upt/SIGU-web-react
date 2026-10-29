@@ -23,14 +23,14 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
       case "presente":
       case "present":
       case "regular":
-        return "bg-success hover:bg-success/90 text-white"
+        return "bg-success hover:bg-success/90 text-success-foreground"
       case "inactive":
       case "inactivo":
       case "inactiva":
       case "ausente":
       case "absent":
       case "irregular":
-        return "bg-destructive hover:bg-destructive/90 text-white"
+        return "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
       case "justificado":
       case "justified":
         return "bg-accent text-accent-foreground hover:bg-accent/90"

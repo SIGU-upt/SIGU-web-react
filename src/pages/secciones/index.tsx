@@ -223,7 +223,7 @@ export function SeccionesPage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
+                <TableRow className="bg-muted">
                   <TableHead className="font-semibold">Código</TableHead>
                   <TableHead className="font-semibold">Trayecto</TableHead>
                   <TableHead className="font-semibold">Turno</TableHead>
@@ -233,7 +233,7 @@ export function SeccionesPage() {
               <TableBody>
                 {grupos.map((grupo) => (
                   <Fragment key={`${grupo.sedeId}-${grupo.pnfId}`}>
-                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableRow className="bg-muted/70 hover:bg-muted/70">
                       <TableCell colSpan={4} className="py-2 text-xs font-semibold uppercase tracking-wide text-primary">
                         {grupo.sedeNombre} · {grupo.pnfNombre}
                         <span className="ml-2 font-normal normal-case text-muted-foreground">

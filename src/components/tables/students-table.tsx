@@ -121,9 +121,9 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-border/50 bg-muted/20 -mx-6 px-6">
+        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60 dark:text-primary" />
             <Input
               placeholder="Buscar por nombre, cédula o correo..."
               value={searchQuery}
@@ -174,7 +174,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
         <div className="rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50">
+              <TableRow className="bg-muted">
                 <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
                 <TableHead className="font-semibold text-foreground">Documento</TableHead>
                 <TableHead className="font-semibold text-foreground">Carrera</TableHead>
@@ -192,7 +192,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                 </TableRow>
               ) : data.length > 0 ? (
                 data.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/30">
+                  <TableRow key={item.id} className="hover:bg-muted/70">
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
