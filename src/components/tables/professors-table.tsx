@@ -86,7 +86,7 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
               Gestión de personal académico y asignación de carga horaria
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3" data-tour="docentes-acciones">
             <Button variant="outline" onClick={onExport}>
               <Download className="mr-2 h-4 w-4" />
               Exportar
@@ -110,7 +110,7 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6">
+        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6" data-tour="docentes-filtros">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60 dark:text-primary" />
             <Input

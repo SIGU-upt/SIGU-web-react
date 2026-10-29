@@ -58,7 +58,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
   const crumbs = useBreadcrumbs(location.pathname)
-  const { startTour } = useOnboardingTour()
+  const { startTour, startViewTour, hasViewTour } = useOnboardingTour()
 
   const initials = user
     ? (user.nombres?.charAt(0) ?? '') + (user.apellidos?.charAt(0) ?? '')
@@ -100,16 +100,25 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
         </Breadcrumb>
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground"
-            aria-label="Ayuda: repasar el recorrido"
-            data-tour="help-button"
-            onClick={startTour}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground"
+                aria-label="Ayuda: repasar el recorrido"
+                data-tour="help-button"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={startTour}>Recorrido general</DropdownMenuItem>
+              {hasViewTour && (
+                <DropdownMenuItem onClick={startViewTour}>Recorrido de esta pantalla</DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <ThemeToggle />
 
