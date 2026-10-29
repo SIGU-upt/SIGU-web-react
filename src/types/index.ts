@@ -136,26 +136,12 @@ export interface Inscripcion {
   clase?: Clase
 }
 
-// ADR-025 (Propuesta B): el grupo real de ingreso — "cohorte 2026-I de Informática".
-export interface Cohorte {
-  id: string
-  nombre: string
-  sedePnfId: string
-  trayectoId: string
-  periodoIngresoId: string
-  cupo: number | null
-  sedePnf?: SedePnf
-  trayecto?: Trayecto
-  periodoIngreso?: PeriodoAcademico
-  miembrosActivos?: number
-  miembros?: AlumnoCohorte[]
-}
-
-// La matrícula individual de un alumno dentro de una Cohorte (grupo).
+// La matrícula de un alumno: sede-PNF × trayecto × período (28/10/2026: se
+// quitó el grupo "Cohorte" con nombre/cupo que existía aparte — no era una
+// necesidad real, solo hacía el modelo más confuso de explicar).
 export interface AlumnoCohorte {
   id: string
   alumnoId: string
-  cohorteId: string
   sedePnfId: string
   trayectoId: string
   periodoId: string
@@ -165,6 +151,7 @@ export interface AlumnoCohorte {
   alumno?: User
   trayecto?: Trayecto
   periodo?: PeriodoAcademico
+  sedePnf?: SedePnf
 }
 
 export interface Asistencia {

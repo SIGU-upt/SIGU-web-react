@@ -1,27 +1,39 @@
-import { Fragment, useState, useCallback, useEffect } from "react"
+import { Fragment, useState, useCallback, useEffect, useMemo } from "react"
 import { GraduationCap, ChevronDown, ChevronRight, UserMinus, CalendarClock } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/ui/page-header"
-import { CohorteGrupoFormModal, type CohorteGrupoFormData } from "@/components/forms/cohorte-grupo-form-modal"
 import { RetirarCohorteModal } from "@/components/forms/retirar-cohorte-modal"
 import { AsistenteCierrePeriodoModal } from "@/components/forms/asistente-cierre-periodo-modal"
 import { useAuth } from "@/contexts/AuthContext"
-import { Role, type Cohorte, type AlumnoCohorte } from "@/types"
+import { Role, type AlumnoCohorte } from "@/types"
 import api from "@/config/api"
 import { toast } from "sonner"
 
+// 28/10/2026: esta pantalla mostraba "cohortes" como grupos con nombre y
+// cupo propios (entidad `Cohorte`, aparte de la matrícula). Se quitó esa
+// capa — no era una necesidad real de la universidad y hacía el modelo
+// difícil de explicar — así que ahora agrupa las matrículas reales
+// (sede-PNF × trayecto × período) solo para mostrarlas, sin nombre ni cupo.
+interface Grupo {
+  clave: string
+  sedePnfId: string
+  trayectoId: string
+  periodoId: string
+  sedeNombre: string
+  pnfNombre: string
+  trayectoNombre: string
+  periodoNombre: string
+  miembros: AlumnoCohorte[]
+}
+
 export function CohortesPage() {
   const { user } = useAuth()
-  const [data, setData] = useState<Cohorte[]>([])
+  const [matriculas, setMatriculas] = useState<AlumnoCohorte[]>([])
   const [loading, setLoading] = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [editing, setEditing] = useState<Cohorte | null>(null)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [miembros, setMiembros] = useState<AlumnoCohorte[]>([])
-  const [loadingMiembros, setLoadingMiembros] = useState(false)
+  const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [retirando, setRetirando] = useState<AlumnoCohorte | null>(null)
   const [cerrandoPeriodo, setCerrandoPeriodo] = useState(false)
 
@@ -30,11 +42,11 @@ export function CohortesPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await api.get('/cohortes-grupos')
+      const res = await api.get('/matriculas', { params: { limit: 500 } })
       const list = res.data.data ?? res.data
-      setData(Array.isArray(list) ? list : [])
+      setMatriculas(Array.isArray(list) ? list : [])
     } catch {
-      setData([])
+      setMatriculas([])
     } finally {
       setLoading(false)
     }
@@ -42,42 +54,34 @@ export function CohortesPage() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  const toggleExpand = async (cohorte: Cohorte) => {
-    if (expandedId === cohorte.id) {
-      setExpandedId(null)
-      return
+  const grupos = useMemo<Grupo[]>(() => {
+    const porClave = new Map<string, Grupo>()
+    for (const m of matriculas) {
+      const clave = `${m.sedePnfId}|${m.trayectoId}|${m.periodoId}`
+      let g = porClave.get(clave)
+      if (!g) {
+        g = {
+          clave,
+          sedePnfId: m.sedePnfId,
+          trayectoId: m.trayectoId,
+          periodoId: m.periodoId,
+          sedeNombre: m.sedePnf?.sede?.nombre ?? '—',
+          pnfNombre: m.sedePnf?.pnf?.nombre ?? '—',
+          trayectoNombre: m.trayecto?.nombre ?? '—',
+          periodoNombre: m.periodo?.nombre ?? '—',
+          miembros: [],
+        }
+        porClave.set(clave, g)
+      }
+      g.miembros.push(m)
     }
-    setExpandedId(cohorte.id)
-    setLoadingMiembros(true)
-    try {
-      const res = await api.get(`/cohortes-grupos/${cohorte.id}`)
-      setMiembros(res.data.miembros ?? [])
-    } catch {
-      setMiembros([])
-    } finally {
-      setLoadingMiembros(false)
-    }
-  }
-
-  const handleCreate = async (formData: CohorteGrupoFormData) => {
-    await api.post('/cohortes-grupos', formData)
-    await fetchData()
-  }
-
-  const handleUpdate = async (formData: CohorteGrupoFormData) => {
-    if (!editing) return
-    await api.patch(`/cohortes-grupos/${editing.id}`, { nombre: formData.nombre, cupo: formData.cupo })
-    await fetchData()
-  }
+    return Array.from(porClave.values()).sort((a, b) => b.miembros.length - a.miembros.length)
+  }, [matriculas])
 
   const handleRetirar = async (retiroData: { motivo: string; fecha?: string }) => {
     if (!retirando) return
     await api.patch(`/matriculas/${retirando.id}/retirar`, retiroData)
-    toast.success('Alumno retirado de la cohorte')
-    if (expandedId) {
-      const res = await api.get(`/cohortes-grupos/${expandedId}`)
-      setMiembros(res.data.miembros ?? [])
-    }
+    toast.success('Alumno retirado')
     await fetchData()
   }
 
@@ -85,16 +89,13 @@ export function CohortesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Cohortes"
-        subtitle="Grupos de ingreso — nombre, cupo y miembros"
+        subtitle="Matrículas agrupadas por sede-PNF, trayecto y período"
         icon={<GraduationCap className="h-5 w-5" />}
         actions={canGestionar ? (
-          <>
-            <Button variant="outline" onClick={() => setCerrandoPeriodo(true)}>
-              <CalendarClock className="mr-2 h-4 w-4" />
-              Cierre de Período
-            </Button>
-            <Button onClick={() => setCreating(true)}>Nueva Cohorte</Button>
-          </>
+          <Button variant="outline" onClick={() => setCerrandoPeriodo(true)}>
+            <CalendarClock className="mr-2 h-4 w-4" />
+            Cierre de Período
+          </Button>
         ) : undefined}
       />
       <Card className="shadow-md">
@@ -106,94 +107,71 @@ export function CohortesPage() {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="w-8" />
-                  <TableHead className="font-semibold">Nombre</TableHead>
                   <TableHead className="font-semibold">Sede / PNF</TableHead>
-                  <TableHead className="font-semibold">Trayecto de ingreso</TableHead>
-                  <TableHead className="font-semibold">Período de ingreso</TableHead>
-                  <TableHead className="font-semibold">Miembros</TableHead>
-                  {canGestionar && <TableHead className="font-semibold text-right">Acciones</TableHead>}
+                  <TableHead className="font-semibold">Trayecto</TableHead>
+                  <TableHead className="font-semibold">Período</TableHead>
+                  <TableHead className="font-semibold">Alumnos</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.length === 0 && (
+                {grupos.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canGestionar ? 7 : 6} className="text-center py-8 text-muted-foreground">
-                      No hay cohortes registradas todavía.
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      No hay matrículas registradas todavía.
                     </TableCell>
                   </TableRow>
                 )}
-                {data.map((c) => (
-                  <Fragment key={c.id}>
-                    <TableRow className="cursor-pointer" onClick={() => toggleExpand(c)}>
+                {grupos.map((g) => (
+                  <Fragment key={g.clave}>
+                    <TableRow className="cursor-pointer" onClick={() => setExpandedKey(expandedKey === g.clave ? null : g.clave)}>
                       <TableCell>
-                        {expandedId === c.id ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        {expandedKey === g.clave ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
-                      <TableCell className="font-medium">{c.nombre}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {c.sedePnf?.sede?.nombre ?? '—'} · {c.sedePnf?.pnf?.nombre ?? '—'}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.trayecto?.nombre ?? '—'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{c.periodoIngreso?.nombre ?? '—'}</TableCell>
-                      <TableCell className="text-sm">
-                        {c.miembrosActivos ?? 0}{c.cupo != null ? ` / ${c.cupo}` : ''}
-                        {c.cupo != null && (c.miembrosActivos ?? 0) >= c.cupo && (
-                          <Badge variant="destructive" className="ml-2">Cupo lleno</Badge>
-                        )}
-                      </TableCell>
-                      {canGestionar && (
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditing(c) }}>Editar</Button>
-                        </TableCell>
-                      )}
+                      <TableCell className="font-medium">{g.sedeNombre} · {g.pnfNombre}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{g.trayectoNombre}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{g.periodoNombre}</TableCell>
+                      <TableCell className="text-sm">{g.miembros.filter((m) => m.activa).length} activos / {g.miembros.length} totales</TableCell>
                     </TableRow>
-                    {expandedId === c.id && (
-                      <TableRow key={`${c.id}-detalle`}>
-                        <TableCell colSpan={canGestionar ? 7 : 6} className="bg-muted/20 p-0">
+                    {expandedKey === g.clave && (
+                      <TableRow key={`${g.clave}-detalle`}>
+                        <TableCell colSpan={5} className="bg-muted/20 p-0">
                           <div className="p-4">
-                            {loadingMiembros ? (
-                              <div className="text-sm text-muted-foreground py-2">Cargando miembros...</div>
-                            ) : miembros.length === 0 ? (
-                              <div className="text-sm text-muted-foreground py-2">Esta cohorte todavía no tiene miembros.</div>
-                            ) : (
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Alumno</TableHead>
-                                    <TableHead>Cédula</TableHead>
-                                    <TableHead>Estado</TableHead>
-                                    <TableHead>Trayecto actual</TableHead>
-                                    {canGestionar && <TableHead className="text-right">Acciones</TableHead>}
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {miembros.map((m) => (
-                                    <TableRow key={m.id}>
-                                      <TableCell className="text-sm">{m.alumno?.nombreCompleto ?? m.alumnoId}</TableCell>
-                                      <TableCell className="text-sm text-muted-foreground">{m.alumno?.ci ?? '—'}</TableCell>
-                                      <TableCell className="text-sm">
-                                        {m.activa ? (
-                                          <Badge variant="secondary">Activa</Badge>
-                                        ) : m.motivoRetiro ? (
-                                          <Badge variant="outline">Retirada{m.fechaRetiro ? ` (${m.fechaRetiro})` : ''}</Badge>
-                                        ) : (
-                                          <Badge variant="outline">Inactiva (promovida)</Badge>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Alumno</TableHead>
+                                  <TableHead>Cédula</TableHead>
+                                  <TableHead>Estado</TableHead>
+                                  {canGestionar && <TableHead className="text-right">Acciones</TableHead>}
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {g.miembros.map((m) => (
+                                  <TableRow key={m.id}>
+                                    <TableCell className="text-sm">{m.alumno?.nombreCompleto ?? m.alumnoId}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">{m.alumno?.ci ?? '—'}</TableCell>
+                                    <TableCell className="text-sm">
+                                      {m.activa ? (
+                                        <Badge variant="secondary">Activa</Badge>
+                                      ) : m.motivoRetiro ? (
+                                        <Badge variant="outline">Retirada{m.fechaRetiro ? ` (${m.fechaRetiro})` : ''}</Badge>
+                                      ) : (
+                                        <Badge variant="outline">Inactiva (promovida)</Badge>
+                                      )}
+                                    </TableCell>
+                                    {canGestionar && (
+                                      <TableCell className="text-right">
+                                        {m.activa && (
+                                          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setRetirando(m)}>
+                                            <UserMinus className="mr-1 h-3.5 w-3.5" /> Retirar
+                                          </Button>
                                         )}
                                       </TableCell>
-                                      <TableCell className="text-sm text-muted-foreground">{m.trayecto?.nombre ?? '—'}</TableCell>
-                                      {canGestionar && (
-                                        <TableCell className="text-right">
-                                          {m.activa && (
-                                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setRetirando(m)}>
-                                              <UserMinus className="mr-1 h-3.5 w-3.5" /> Retirar
-                                            </Button>
-                                          )}
-                                        </TableCell>
-                                      )}
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            )}
+                                    )}
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -206,20 +184,6 @@ export function CohortesPage() {
         </CardContent>
       </Card>
 
-      <CohorteGrupoFormModal open={creating} onOpenChange={setCreating} onSubmit={handleCreate} />
-      <CohorteGrupoFormModal
-        open={!!editing}
-        onOpenChange={(v) => { if (!v) setEditing(null) }}
-        onSubmit={handleUpdate}
-        isEditing
-        initialData={editing ? {
-          nombre: editing.nombre,
-          sedePnfId: editing.sedePnfId,
-          trayectoId: editing.trayectoId,
-          periodoIngresoId: editing.periodoIngresoId,
-          cupo: editing.cupo ?? undefined,
-        } : undefined}
-      />
       <RetirarCohorteModal
         open={!!retirando}
         onOpenChange={(v) => { if (!v) setRetirando(null) }}
