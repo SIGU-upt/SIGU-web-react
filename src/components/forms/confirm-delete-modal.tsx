@@ -35,7 +35,7 @@ export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, descr
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleConfirm} disabled={loading} className="bg-destructive hover:bg-destructive/90">
+          <AlertDialogAction onClick={handleConfirm} disabled={loading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
             {loading ? (loadingLabel || 'Eliminando...') : (confirmLabel || 'Eliminar')}
           </AlertDialogAction>
         </AlertDialogFooter>

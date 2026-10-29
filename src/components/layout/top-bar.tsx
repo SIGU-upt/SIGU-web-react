@@ -102,19 +102,20 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
           <Button
             variant="ghost"
             size="icon"
+            className="text-muted-foreground"
             aria-label="Ayuda: repasar el recorrido"
             data-tour="help-button"
             onClick={startTour}
           >
-            <HelpCircle className="h-5 w-5 text-muted-foreground" />
+            <HelpCircle className="h-5 w-5" />
           </Button>
 
           <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative" aria-label="Notificaciones">
-                <Bell className="h-5 w-5 text-muted-foreground" />
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground" aria-label="Notificaciones">
+                <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-bold">
                     {unreadCount}
@@ -133,19 +134,19 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2 md:gap-3 px-1 md:px-3">
+              <Button variant="ghost" className="group flex items-center gap-2 md:gap-3 px-1 md:px-3">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-foreground group-hover:text-accent-foreground">
                     {user ? `${user.nombres} ${user.apellidos}` : 'Cargando...'}
                   </p>
-                  <p className="text-xs text-muted-foreground">{roleName}</p>
+                  <p className="text-xs text-muted-foreground group-hover:text-accent-foreground">{roleName}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
