@@ -19,6 +19,7 @@ import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
 import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
 import { CohortesPage } from '@/pages/cohortes'
+import { PerfilPage } from '@/pages/perfil'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -178,6 +179,14 @@ function AppRoutes() {
               allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
             >
               <CohortesPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <PerfilPage />
             </PrivateRoute>
           }
         />

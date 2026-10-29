@@ -1,11 +1,32 @@
 import { useCallback, useEffect } from "react"
-import { driver } from "driver.js"
+import { useLocation } from "react-router-dom"
+import { driver, type DriveStep } from "driver.js"
 import "driver.js/dist/driver.css"
 import { useAuth } from "@/contexts/AuthContext"
 import { stepsForRole } from "./tours"
+import { stepsForPath } from "./view-tours"
 
 function seenKey(userId: string) {
   return `sigu_tour_visto_${userId}`
+}
+
+// Filtra a los pasos cuyo elemento existe ahora mismo en el DOM — en mobile,
+// por ejemplo, el contenido de la sidebar vive en un Sheet cerrado por
+// defecto, y driver.js revienta si un paso apunta a un selector que no
+// matchea nada.
+function stepsPresentesEnElDom(steps: DriveStep[]) {
+  return steps.filter((step) => !step.element || document.querySelector(step.element as string))
+}
+
+function runTour(steps: DriveStep[]) {
+  if (steps.length === 0) return
+  driver({
+    showProgress: true,
+    steps,
+    nextBtnText: "Siguiente",
+    prevBtnText: "Atrás",
+    doneBtnText: "Listo",
+  }).drive()
 }
 
 /**
@@ -16,27 +37,22 @@ function seenKey(userId: string) {
  */
 export function useOnboardingTour() {
   const { user } = useAuth()
+  const location = useLocation()
 
   const startTour = useCallback(() => {
     if (!user) return
-    // En mobile el contenido de la sidebar vive dentro de un Sheet cerrado
-    // por defecto (no está en el DOM hasta que se abre) — driver.js no
-    // tolera un selector de paso que no matchea nada y revienta al intentar
-    // posicionar el popover. Se filtra a los pasos cuyo elemento sí existe
-    // ahora mismo; el botón de ayuda del top-bar siempre existe, así que un
-    // usuario en mobile igual puede repasar el tour abriendo la sidebar primero.
-    const steps = stepsForRole(user.role).filter(
-      (step) => !step.element || document.querySelector(step.element as string),
-    )
-    if (steps.length === 0) return
-    driver({
-      showProgress: true,
-      steps,
-      nextBtnText: "Siguiente",
-      prevBtnText: "Atrás",
-      doneBtnText: "Listo",
-    }).drive()
+    // El botón de ayuda del top-bar siempre existe, así que un usuario en
+    // mobile igual puede repasar el tour abriendo la sidebar primero.
+    runTour(stepsPresentesEnElDom(stepsForRole(user.role)))
   }, [user])
+
+  // Recorrido corto de la pantalla actual (ver view-tours.ts) — null si esta
+  // vista no tiene uno definido, lo que el top-bar usa para ocultar la opción.
+  const viewTourSteps = stepsForPath(location.pathname)
+  const startViewTour = useCallback(() => {
+    if (!viewTourSteps) return
+    runTour(stepsPresentesEnElDom(viewTourSteps))
+  }, [viewTourSteps])
 
   useEffect(() => {
     if (!user) return
@@ -66,5 +82,5 @@ export function useOnboardingTour() {
     return () => clearTimeout(id)
   }, [user, startTour])
 
-  return { startTour }
+  return { startTour, startViewTour, hasViewTour: viewTourSteps !== null }
 }
