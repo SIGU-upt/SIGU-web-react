@@ -303,7 +303,7 @@ export function ReportesPage() {
     <div className="space-y-6">
       <PageHeader title="Reportes" subtitle="Reportes de asistencia académica" icon={<FileBarChart className="h-5 w-5" />} />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        <TabsList data-tour="reportes-tabs">
           <TabsTrigger value="clase">Por Clase</TabsTrigger>
           <TabsTrigger value="alumno">Por Alumno</TabsTrigger>
           <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>

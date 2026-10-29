@@ -177,17 +177,17 @@ export function SeccionesPage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4 space-y-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 max-w-md" data-tour="secciones-buscar">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar por código..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
             {canEdit && (
-              <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
+              <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }} data-tour="secciones-crear">
                 <Plus className="mr-2 h-4 w-4" /> Nueva Sección
               </Button>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/50">
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border/50" data-tour="secciones-filtros">
             {canSeeSedeFilter && (
               <Select value={sedeFilter || "__todas"} onValueChange={(v) => handleSedeFilterChange(v === "__todas" ? "" : v)}>
                 <SelectTrigger className="w-[200px]"><SelectValue placeholder="Todas las sedes" /></SelectTrigger>
@@ -225,7 +225,7 @@ export function SeccionesPage() {
           ) : data.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">No se encontraron secciones.</div>
           ) : (
-            <Table>
+            <Table data-tour="secciones-tabla">
               <TableHeader>
                 <TableRow className="bg-muted">
                   <TableHead className="font-semibold">Código</TableHead>

@@ -92,13 +92,13 @@ export function CohortesPage() {
         subtitle="Matrículas agrupadas por sede-PNF, trayecto y período"
         icon={<GraduationCap className="h-5 w-5" />}
         actions={canGestionar ? (
-          <Button variant="outline" onClick={() => setCerrandoPeriodo(true)}>
+          <Button variant="outline" onClick={() => setCerrandoPeriodo(true)} data-tour="cohortes-cierre-periodo">
             <CalendarClock className="mr-2 h-4 w-4" />
             Cierre de Período
           </Button>
         ) : undefined}
       />
-      <Card className="shadow-md">
+      <Card className="shadow-md" data-tour="cohortes-tabla">
         <CardContent className="pt-6">
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
