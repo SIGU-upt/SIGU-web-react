@@ -90,7 +90,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/5 dark:border-primary/60 dark:hover:bg-primary/15 shadow-sm" onClick={exportPensum}>
+            <Button variant="outline" className="border-primary/60 text-primary hover:bg-primary/5 dark:hover:bg-primary/15 shadow-sm" onClick={exportPensum}>
               <Download className="mr-2 h-4 w-4" />
               Exportar Pensum
             </Button>
@@ -103,7 +103,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/20 dark:bg-muted/70 -mx-6 px-6">
+        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60 dark:text-primary" />
             <Input
@@ -122,7 +122,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
         <div className="rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 dark:bg-muted">
+              <TableRow className="bg-muted">
                 <TableHead className="font-semibold text-foreground w-[120px]">Código</TableHead>
                 <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
                 <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
@@ -134,7 +134,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
             <TableBody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((item) => (
-                  <TableRow key={item.id} className="hover:bg-muted/30 dark:hover:bg-muted/70">
+                  <TableRow key={item.id} className="hover:bg-muted/70">
                     <TableCell className="font-mono text-xs font-bold text-primary">
                       {item.code}
                     </TableCell>

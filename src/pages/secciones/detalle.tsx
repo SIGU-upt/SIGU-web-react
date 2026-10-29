@@ -450,7 +450,7 @@ export function SeccionDetallePage() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50 dark:bg-muted">
+                <TableRow className="bg-muted">
                   <TableHead className="font-semibold">Alumno</TableHead>
                   <TableHead className="font-semibold">Cédula</TableHead>
                   <TableHead className="font-semibold">Estado</TableHead>
@@ -539,7 +539,7 @@ export function SeccionDetallePage() {
                         </div>
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-muted/50 dark:bg-muted">
+                            <TableRow className="bg-muted">
                               <TableHead className="font-semibold">Grupo</TableHead>
                               <TableHead className="font-semibold">Docente</TableHead>
                               <TableHead className="font-semibold">Día</TableHead>
