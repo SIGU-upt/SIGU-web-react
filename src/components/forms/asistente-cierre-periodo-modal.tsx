@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Role, type SedePnf, type Trayecto, type AlumnoCohorte } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { getErrorMessage } from "@/lib/errors"
 
 interface AsistenteCierrePeriodoModalProps {
   open: boolean
@@ -113,8 +114,8 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
       })
       const list = res.data.data ?? res.data
       setAlumnosAfectados(Array.isArray(list) ? list : [])
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'No se pudo calcular el impacto')
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo calcular el impacto'))
       setAlumnosAfectados([])
     } finally {
       setLoadingAfectados(false)
@@ -146,8 +147,8 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
       }
       setStep(3)
       onDone()
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'No se pudo completar el cierre de período')
+    } catch (err) {
+      setError(getErrorMessage(err, 'No se pudo completar el cierre de período'))
     } finally {
       setLoading(false)
     }

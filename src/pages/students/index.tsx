@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "sonner"
 import { StudentsTable } from "@/components/tables/students-table"
-import { UserFormModal } from "@/components/forms/user-form-modal"
+import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
@@ -9,14 +9,30 @@ import { getErrorStatus } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Trayecto, type SedePnf } from "@/types"
 
+// Fila de la tabla de estudiantes. Conserva nombres y apellidos por separado para editar.
+interface StudentRow {
+  id: string
+  name: string
+  nombres: string
+  apellidos: string
+  initials: string
+  idNumber: string
+  email: string
+  sedePnfId?: string
+  trayectoActualId: string
+  career: string
+  semester: number
+  status: string
+}
+
 export function StudentsPage() {
   const { user } = useAuth()
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<StudentRow[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
-  const [deletingUser, setDeletingUser] = useState<any>(null)
-  const [resettingDeviceUser, setResettingDeviceUser] = useState<any>(null)
+  const [editingUser, setEditingUser] = useState<StudentRow | null>(null)
+  const [deletingUser, setDeletingUser] = useState<StudentRow | null>(null)
+  const [resettingDeviceUser, setResettingDeviceUser] = useState<StudentRow | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [trayectoFilter, setTrayectoFilter] = useState("")
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
@@ -87,7 +103,7 @@ export function StudentsPage() {
       if (trayectoFilter) params.trayectoNumero = trayectoFilter
       const res = await api.get('/users', { params })
       const list = res.data.data ?? res.data
-      setUsers((Array.isArray(list) ? list : []).map((u: User & { cohorteActiva?: any }) => ({
+      setUsers((Array.isArray(list) ? list : []).map((u: User): StudentRow => ({
         id: u.id,
         name: u.nombreCompleto,
         // Se conservan por separado para editar: `name` puede partirse mal en
@@ -98,7 +114,7 @@ export function StudentsPage() {
         initials: (u.nombres?.charAt(0) ?? '') + (u.apellidos?.charAt(0) ?? ''),
         idNumber: u.ci,
         email: u.email,
-        sedePnfId: u.sedePnfId,
+        sedePnfId: u.sedePnfId ?? undefined,
         // ADR-025: la cohorte activa manda; el atributo directo es respaldo.
         trayectoActualId: u.trayectoActualId ?? u.cohorteActiva?.trayecto?.id ?? '',
         career: u.sedePnf?.pnf?.nombre ?? '—',
@@ -132,7 +148,7 @@ export function StudentsPage() {
     setPage(1)
   }
 
-  const handleCreate = async (data: any) => {
+  const handleCreate = async (data: UserFormData) => {
     const { trayectoId, ...userData } = data
     // Asignación inicial directa (solo en creación; ADR-025 la retira de PATCH).
     // El POST /cohortes de abajo es el que de verdad matricula al alumno y
@@ -162,8 +178,9 @@ export function StudentsPage() {
     await fetchData()
   }
 
-  const handleEdit = async (data: any) => {
-    const payload: any = {}
+  const handleEdit = async (data: UserFormData) => {
+    if (!editingUser) return
+    const payload: Partial<UserFormData> = {}
     if (data.nombres) payload.nombres = data.nombres
     if (data.apellidos) payload.apellidos = data.apellidos
     if (data.email) payload.email = data.email

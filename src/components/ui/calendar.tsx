@@ -6,7 +6,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker'
+import { DayButton, DayPicker, getDefaultClassNames, type RootProps } from 'react-day-picker'
 
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
@@ -125,7 +125,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }: any) => {
+        Root: ({ className, rootRef, ...props }: RootProps & { rootRef?: React.Ref<HTMLDivElement> }) => {
           return (
             <div
               data-slot="calendar"

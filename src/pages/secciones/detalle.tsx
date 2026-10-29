@@ -12,13 +12,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/ui/page-header"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { ClaseFormModal } from "@/components/forms/clase-form-modal"
+import { ClaseFormModal, type ClaseFormData } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { useAuth } from "@/contexts/AuthContext"
-import { getErrorMessage } from "@/lib/errors"
+import { getErrorMessage, getErrorStatus } from "@/lib/errors"
 import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
@@ -150,9 +150,9 @@ export function SeccionDetallePage() {
         const periodo: PeriodoAcademico = periodoRes.data
         setPeriodoActivo(periodo)
         periodo.advertencias?.forEach((a) => toast.warning(a))
-      } catch (periodoErr: any) {
+      } catch (periodoErr) {
         setPeriodoActivo(null)
-        if (periodoErr?.response?.status !== 404) {
+        if (getErrorStatus(periodoErr) !== 404) {
           toast.error('No se pudo cargar el período académico activo.')
         }
       }
@@ -238,12 +238,12 @@ export function SeccionDetallePage() {
     [clases],
   )
 
-  const handleCreate = async (form: Record<string, any>) => {
+  const handleCreate = async (form: ClaseFormData) => {
     await api.post('/clases', { ...form, seccionId: id })
     await refreshClases()
   }
 
-  const handleEdit = async (form: Record<string, any>) => {
+  const handleEdit = async (form: ClaseFormData) => {
     if (!editing) return
     await api.patch(`/clases/${editing.id}`, form)
     await refreshClases()

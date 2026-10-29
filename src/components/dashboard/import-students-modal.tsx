@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
 import * as XLSX from "xlsx"
 
 interface ImportStudentsModalProps {
-  onImport: (data: any[]) => void
+  onImport: (data: Record<string, unknown>[]) => void
 }
 
 export function ImportStudentsModal({ onImport }: ImportStudentsModalProps) {
@@ -41,7 +41,7 @@ export function ImportStudentsModal({ onImport }: ImportStudentsModalProps) {
         const workbook = XLSX.read(data, { type: "binary" })
         const sheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
-        const json = XLSX.utils.sheet_to_json(worksheet)
+        const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet)
 
         if (json.length > 0) {
           onImport(json)

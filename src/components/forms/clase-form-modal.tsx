@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const
 
-interface ClaseFormData {
+export interface ClaseFormData {
   ucId: string
   docenteId: string
   nombreGrupo: string
@@ -34,6 +34,16 @@ interface ClaseFormModalProps {
   initialData?: Partial<ClaseFormData>
   isEditing?: boolean
 }
+
+const DEFAULT_VALUES: ClaseFormData = {
+  ucId: '', docenteId: '', nombreGrupo: '', diaSemana: '', horaInicio: '', horaFin: '', aula: '',
+}
+
+// El backend devuelve las columnas TIME como "HH:mm:ss" (con segundos). El
+// input type="time" no vuelve a normalizarlas si el usuario no lo toca, así
+// que al editar sin modificar la hora se reenviaba "19:01:00" y el backend
+// lo rechazaba (@Matches exige exactamente HH:mm).
+const normalizeTime = (t?: string) => (t ? t.slice(0, 5) : '')
 
 export function ClaseFormModal({
   open,
@@ -56,25 +66,15 @@ export function ClaseFormModal({
   // a su PNF) y SUPERADMIN (sin acotar).
   const puedeVerOtrosPnf = user?.role === Role.RECTOR || user?.role === Role.SUPERADMIN
 
-  const defaultValues: ClaseFormData = {
-    ucId: '', docenteId: '', nombreGrupo: '', diaSemana: '', horaInicio: '', horaFin: '', aula: '',
-  }
-
   const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<ClaseFormData>({
-    defaultValues: { ...defaultValues, ...initialData },
+    defaultValues: { ...DEFAULT_VALUES, ...initialData },
   })
   const horaInicio = watch('horaInicio')
-
-  // El backend devuelve las columnas TIME como "HH:mm:ss" (con segundos). El
-  // input type="time" no vuelve a normalizarlas si el usuario no lo toca, así
-  // que al editar sin modificar la hora se reenviaba "19:01:00" y el backend
-  // lo rechazaba (@Matches exige exactamente HH:mm).
-  const normalizeTime = (t?: string) => (t ? t.slice(0, 5) : '')
 
   useEffect(() => {
     if (open) {
       reset({
-        ...defaultValues,
+        ...DEFAULT_VALUES,
         ...initialData,
         horaInicio: normalizeTime(initialData?.horaInicio),
         horaFin: normalizeTime(initialData?.horaFin),

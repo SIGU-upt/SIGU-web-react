@@ -41,15 +41,15 @@ interface Professor {
   status: string
 }
 
-interface ProfessorsTableProps {
-  data: Professor[]
+interface ProfessorsTableProps<T extends Professor> {
+  data: T[]
   loading: boolean
   onImport: (file: File) => Promise<ImportResult>
   onExport: () => void
   onCreate: () => void
-  onEdit: (item: Professor) => void
-  onDelete: (item: Professor) => void
-  onResetDevice: (item: Professor) => void
+  onEdit: (item: T) => void
+  onDelete: (item: T) => void
+  onResetDevice: (item: T) => void
   canEdit: boolean
   canResetDevice: boolean
   canDelete: boolean
@@ -70,7 +70,7 @@ interface ProfessorsTableProps {
   onPageChange: (page: number) => void
 }
 
-export function ProfessorsTable({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps) {
+export function ProfessorsTable<T extends Professor>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps<T>) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
