@@ -203,6 +203,17 @@ export interface GenerarPeriodosResultado {
   omitidos: { sedePnfId: string; motivo: string }[]
 }
 
+// Alumno cuya inscripción viola una regla de matrícula (GET /inscripciones/inconsistencias).
+export type TipoInconsistencia = 'MULTIPLE_SECCION' | 'MULTIPLE_GRUPO_MISMA_UC'
+
+export interface InscripcionInconsistencia {
+  alumnoId: string
+  nombreCompleto: string
+  ci: string
+  tipo: TipoInconsistencia
+  detalle: string
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {
