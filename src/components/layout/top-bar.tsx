@@ -1,5 +1,5 @@
 import { Fragment } from "react"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Bell, ChevronDown, HelpCircle, LogOut, User } from "lucide-react"
 import { useOnboardingTour } from "@/components/onboarding/use-onboarding-tour"
 import { Button } from "@/components/ui/button"
@@ -55,6 +55,7 @@ function useBreadcrumbs(pathname: string) {
 
 export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const location = useLocation()
   const crumbs = useBreadcrumbs(location.pathname)
   const { startTour } = useOnboardingTour()
@@ -154,7 +155,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
                 {user?.ci ?? ''}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/perfil")}>
                 <User className="mr-2 h-4 w-4" />
                 Perfil
               </DropdownMenuItem>

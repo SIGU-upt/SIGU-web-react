@@ -37,7 +37,7 @@ export function SeccionesPage() {
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
-  const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
+  const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
   const [trayectoFilter, setTrayectoFilter] = useState("")
 
   const isSuperadmin = user?.role === Role.SUPERADMIN
@@ -65,11 +65,19 @@ export function SeccionesPage() {
   // Opciones de sede (solo superadmin): sedes únicas derivadas de las sede-PNF.
   const sedeOptions = Array.from(
     new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
-  const pnfOptionsForSede = sedePnfOptions.filter((sp) => !sedeFilter || sp.sedeId === sedeFilter)
-  const selectedPnfId = sedePnfOptions.find((sp) => sp.id === pnfFilter)?.pnfId
-  const visibleTrayectoOptions = selectedPnfId
-    ? trayectoOptions.filter((t) => t.pnfId === selectedPnfId)
+  ).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label))
+  // El PNF es un filtro global (por eso ya hay un filtro de sede aparte): se
+  // deduplica por pnfId sin importar en cuántas sedes exista, ordenado
+  // alfabéticamente, y el backend lo combina con sedeId si ambos están activos.
+  const pnfOptionsForSede = Array.from(
+    new Map(
+      sedePnfOptions
+        .filter((sp) => !sedeFilter || sp.sedeId === sedeFilter)
+        .map((sp) => [sp.pnfId, sp.pnf?.nombre ?? sp.pnfId]),
+    ).entries(),
+  ).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label))
+  const visibleTrayectoOptions = pnfFilter
+    ? trayectoOptions.filter((t) => t.pnfId === pnfFilter)
     : trayectoOptions
   // El trayecto se filtra por número, no por fila: un "Trayecto 1" de
   // Informática y uno de Administración son filas distintas en la base de
@@ -91,8 +99,8 @@ export function SeccionesPage() {
       const params: Record<string, string | number> = { limit: 200 }
       if (debouncedSearch) params.q = debouncedSearch
       if (canSeeSedeFilter && sedeFilter) params.sedeId = sedeFilter
-      if (pnfFilter) params.sedePnfId = pnfFilter
-      else if (user?.sedePnfId) params.sedePnfId = user.sedePnfId
+      if (pnfFilter) params.pnfId = pnfFilter
+      else if (!canSeeSedeFilter && user?.sedePnfId) params.sedePnfId = user.sedePnfId
       const res = await api.get('/secciones', { params })
       const list = res.data.data ?? res.data
       setData(Array.isArray(list) ? list : [])
@@ -194,12 +202,8 @@ export function SeccionesPage() {
                 <SelectTrigger className="w-[200px]"><SelectValue placeholder="Todos los PNF" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__todos">Todos los PNF</SelectItem>
-                  {/* Sin sede ya elegida, dos PNF iguales de sedes distintas son
-                      indistinguibles — se agrega la sede hasta que se elija una. */}
-                  {pnfOptionsForSede.map((sp) => (
-                    <SelectItem key={sp.id} value={sp.id}>
-                      {sedeFilter ? sp.pnf?.nombre : `${sp.pnf?.nombre} — ${sp.sede?.nombre ?? ''}`}
-                    </SelectItem>
+                  {pnfOptionsForSede.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
