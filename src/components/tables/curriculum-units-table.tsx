@@ -8,6 +8,7 @@ import {
   Download,
   Plus,
   Trash2,
+  CopyPlus,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -43,12 +44,13 @@ interface CurriculumUnitsTableProps<T extends CurriculumUnit> {
   data: T[]
   onCreate?: () => void
   onEdit?: (item: T) => void
+  onReplicate?: (item: T) => void
   onDelete?: (item: T) => void
   canEdit?: boolean
   canDelete?: boolean
 }
 
-export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate, onEdit, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps<T>) {
+export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate, onEdit, onReplicate, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
@@ -166,6 +168,12 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
                               <Edit className="mr-2 h-4 w-4" />
                               Editar U.C
                             </DropdownMenuItem>
+                            {onReplicate && (
+                              <DropdownMenuItem onClick={() => onReplicate(item)}>
+                                <CopyPlus className="mr-2 h-4 w-4" />
+                                Ofrecer en otros trayectos
+                              </DropdownMenuItem>
+                            )}
                             {canDelete && (
                               <DropdownMenuItem className="text-destructive" onClick={() => onDelete?.(item)}>
                                 <Trash2 className="mr-2 h-4 w-4" />

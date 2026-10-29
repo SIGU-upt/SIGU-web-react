@@ -182,6 +182,14 @@ export interface SecurityLog {
   user?: User | null
 }
 
+// Resultado de POST /unidades-curriculares/replicar: una oferta por trayecto elegido.
+export interface ReplicarUcResultado {
+  ucCatalogoId: string
+  nombre: string
+  creadas: { trayectoId: string; unidadCurricularId: string }[]
+  omitidos: { trayectoId: string; motivo: string }[]
+}
+
 export interface PaginatedResponse<T> {
   data: T[]
   meta: {
