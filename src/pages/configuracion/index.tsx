@@ -95,9 +95,6 @@ const entityConfigs: Record<string, EntityConfig> = {
   sedePnf: {
     title: 'Sede-PNF', icon: <Building className="h-5 w-5" />, endpoint: '/sede-pnf',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
-    // El backend (SedePnfService.findAll) no admite un filtro de texto 'q';
-    // enviarlo produce un 400 "Filtro 'q' no permitido". Se filtra en el cliente.
-    searchable: false,
     fields: [
       { name: 'sedeId', label: 'Sede', required: true, type: 'select' as const, optionsEndpoint: '/sedes', optionLabel: (s: Sede) => s.nombre, optionValue: (s: Sede) => s.id },
       { name: 'pnfId', label: 'PNF', required: true, type: 'select' as const, optionsEndpoint: '/pnfs', optionLabel: (p: Pnf) => p.nombre, optionValue: (p: Pnf) => p.id },
