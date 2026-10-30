@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { toast } from "sonner"
-import { ArrowLeft, Layers, Plus, Users, UserPlus, CalendarOff, MoreVertical } from "lucide-react"
+import { ArrowLeft, Layers, Plus, Users, UserPlus, CalendarOff, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -424,7 +424,7 @@ export function SeccionDetallePage() {
 
       {resultado && (
         <Card className="border-primary/30">
-          <CardContent className="pt-6 space-y-2">
+          <CardContent className="space-y-2">
             <p className="text-sm">
               Alumnos encontrados: <span className="font-semibold">{resultado.alumnosEncontrados}</span> — Procesados: <span className="font-semibold">{resultado.procesados}</span> — Inscritos: <span className="font-semibold">{resultado.inscritos}</span> — Ya inscritos: <span className="font-semibold">{resultado.yaInscritas}</span>
             </p>
@@ -590,13 +590,19 @@ export function SeccionDetallePage() {
                                         <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => { setEditing(c); setModalOpen(true) }}>Editar</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setEditing(c); setModalOpen(true) }}>
+                                          <Pencil className="mr-2 h-4 w-4" />
+                                          Editar
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={() => { setSuspendingClase(c); setSuspendFecha(""); setSuspendMotivo("") }}>
                                           <CalendarOff className="mr-2 h-4 w-4" />
                                           Suspender clase
                                         </DropdownMenuItem>
                                         {canDeleteClase && (
-                                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(c)}>Eliminar</DropdownMenuItem>
+                                          <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(c)}>
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Eliminar
+                                          </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>

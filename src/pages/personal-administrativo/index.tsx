@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Shield, Search, Plus, SmartphoneNfc, MoreVertical } from "lucide-react"
+import { Shield, Search, Plus, SmartphoneNfc, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -155,9 +155,13 @@ export function PersonalAdministrativoPage() {
   }
 
   const sedeNombre = (id: string | null) => sedes.find((s) => s.id === id)?.nombre ?? '—'
+  // Un rector ya sabe a qué sede pertenece (todas las filas que ve son de la
+  // suya): repetirla en cada fila es ruido, así que solo se agrega para
+  // superadmin, que sí mira varias sedes a la vez.
   const sedePnfLabel = (id: string | null) => {
     const sp = sedePnfs.find((s) => s.id === id)
-    return sp ? `${sp.pnf?.nombre ?? ''} — ${sp.sede?.nombre ?? ''}` : '—'
+    if (!sp) return '—'
+    return isRector ? sp.pnf?.nombre ?? '—' : `${sp.pnf?.nombre ?? ''} — ${sp.sede?.nombre ?? ''}`
   }
 
   const perPage = 10
@@ -228,7 +232,7 @@ export function PersonalAdministrativoPage() {
                     <TableHead className="font-semibold">Nombre</TableHead>
                     <TableHead className="font-semibold">Cédula</TableHead>
                     <TableHead className="font-semibold">Rol</TableHead>
-                    <TableHead className="font-semibold">Sede/PNF</TableHead>
+                    <TableHead className="font-semibold">{isRector ? 'PNF' : 'Sede/PNF'}</TableHead>
                     <TableHead className="font-semibold text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -249,7 +253,10 @@ export function PersonalAdministrativoPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {canEdit && (
-                                <DropdownMenuItem onClick={() => { setEditing(u); setModalOpen(true) }}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setEditing(u); setModalOpen(true) }}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
                               )}
                               {canResetDevice && (
                                 <DropdownMenuItem onClick={() => setResettingDevice(u)}>
@@ -258,7 +265,10 @@ export function PersonalAdministrativoPage() {
                                 </DropdownMenuItem>
                               )}
                               {canDelete && (
-                                <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(u)}>Eliminar</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(u)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Eliminar
+                                </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>

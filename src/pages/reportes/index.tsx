@@ -78,6 +78,10 @@ export function ReportesPage() {
   // le niega "Por Trayecto" y "Alumnos en Riesgo" (roster y riesgo de toda la
   // jurisdicción) y la lista general de usuarios.
   const esDocente = user?.role === Role.DOCENTE
+  // Un coordinador solo tiene una sede-PNF propia: el backend ya lo acota, así
+  // que los selects de sede/PNF nunca tendrían más de una opción — mostrarlos
+  // es un paso extra sin decisión real (comentario de Vercel en /reportes).
+  const esCoordinador = user?.role === Role.COORDINADOR
   const tabsPermitidos = esDocente ? ["clase", "alumno"] : ["clase", "alumno", "trayecto", "riesgo"]
   const tabInicial = searchParams.get('tab')
   const [tab, setTab] = useState(tabInicial && tabsPermitidos.includes(tabInicial) ? tabInicial : "clase")
@@ -115,6 +119,17 @@ export function ReportesPage() {
     }).catch(() => setSedePnfOptions([]))
   }, [])
 
+  // El coordinador solo recibe su propia sede-PNF en /sede-pnf: se preselecciona
+  // directo en vez de obligarlo a elegir entre sede y PNF cuando no hay opción real.
+  useEffect(() => {
+    if (!esCoordinador || sedePnfOptions.length === 0) return
+    const propia = sedePnfOptions[0]
+    setSedeReportFilter(propia.sedeId)
+    setSedePnfReportFilter(propia.id)
+    setRiesgoSedeFilter(propia.sedeId)
+    setRiesgoSedePnfFilter(propia.id)
+  }, [esCoordinador, sedePnfOptions])
+
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedAlumnoSearch(alumnoSearch), 300)
     return () => clearTimeout(timer)
@@ -135,11 +150,9 @@ export function ReportesPage() {
   ).map(([id, label]) => ({ id, label }))
   const reportPnfOptions = sedePnfOptions
     .filter((sp) => !sedeReportFilter || sp.sedeId === sedeReportFilter)
-    .map((sp) => ({
-      id: sp.id,
-      // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles.
-      label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
-    }))
+    // Esta lista solo se muestra una vez elegida la sede (el select está
+    // disabled hasta entonces): repetirla en cada opción era ruido.
+    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
   const reportSelectedPnfId = sedePnfOptions.find((sp) => sp.id === sedePnfReportFilter)?.pnfId
   const reportTrayectoOptions = reportSelectedPnfId
     ? trayectoOptions.filter((t) => t.pnfId === reportSelectedPnfId)
@@ -284,10 +297,7 @@ export function ReportesPage() {
 
   const riesgoPnfOptions = sedePnfOptions
     .filter((sp) => !riesgoSedeFilter || sp.sedeId === riesgoSedeFilter)
-    .map((sp) => ({
-      id: sp.id,
-      label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
-    }))
+    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
 
   const exportAlumnoReport = async () => {
     if (!alumnoReport?.clases?.length || !alumnoId) return
@@ -508,22 +518,26 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Reporte de Asistencia por Trayecto</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Select value={sedeReportFilter} onValueChange={(v) => { setSedeReportFilter(v); setSedePnfReportFilter(""); setTrayectoId("") }}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
-                  <SelectContent>
-                    {reportSedeOptions.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={sedePnfReportFilter} onValueChange={(v) => { setSedePnfReportFilter(v); setTrayectoId("") }} disabled={!sedeReportFilter}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedeReportFilter ? "Seleccione un PNF" : "Elija primero una sede"} /></SelectTrigger>
-                  <SelectContent>
-                    {reportPnfOptions.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {!esCoordinador && (
+                  <>
+                    <Select value={sedeReportFilter} onValueChange={(v) => { setSedeReportFilter(v); setSedePnfReportFilter(""); setTrayectoId("") }}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
+                      <SelectContent>
+                        {reportSedeOptions.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={sedePnfReportFilter} onValueChange={(v) => { setSedePnfReportFilter(v); setTrayectoId("") }} disabled={!sedeReportFilter}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedeReportFilter ? "Seleccione un PNF" : "Elija primero una sede"} /></SelectTrigger>
+                      <SelectContent>
+                        {reportPnfOptions.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
                 <Select value={trayectoId} onValueChange={setTrayectoId} disabled={!sedePnfReportFilter}>
                   <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedePnfReportFilter ? "Seleccione un trayecto" : "Elija primero un PNF"} /></SelectTrigger>
                   <SelectContent>
@@ -576,22 +590,26 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Alumnos por Debajo del Umbral de Asistencia</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <Select value={riesgoSedeFilter} onValueChange={(v) => { setRiesgoSedeFilter(v); setRiesgoSedePnfFilter("") }}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Todas las sedes" /></SelectTrigger>
-                  <SelectContent>
-                    {reportSedeOptions.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={riesgoSedePnfFilter} onValueChange={setRiesgoSedePnfFilter} disabled={!riesgoSedeFilter}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder={riesgoSedeFilter ? "Todos los PNF" : "Elija primero una sede"} /></SelectTrigger>
-                  <SelectContent>
-                    {riesgoPnfOptions.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {!esCoordinador && (
+                  <>
+                    <Select value={riesgoSedeFilter} onValueChange={(v) => { setRiesgoSedeFilter(v); setRiesgoSedePnfFilter("") }}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Todas las sedes" /></SelectTrigger>
+                      <SelectContent>
+                        {reportSedeOptions.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={riesgoSedePnfFilter} onValueChange={setRiesgoSedePnfFilter} disabled={!riesgoSedeFilter}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder={riesgoSedeFilter ? "Todos los PNF" : "Elija primero una sede"} /></SelectTrigger>
+                      <SelectContent>
+                        {riesgoPnfOptions.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
                 <Button onClick={fetchRiesgoReport} disabled={loading}>
                   <AlertTriangle className="mr-2 h-4 w-4" />Consultar
                 </Button>

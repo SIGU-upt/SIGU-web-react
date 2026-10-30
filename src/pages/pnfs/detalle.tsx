@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import { ArrowLeft, BookOpen, Plus, MoreVertical, Wand2, Layers, Users, GraduationCap } from "lucide-react"
+import { ArrowLeft, BookOpen, Plus, MoreVertical, Wand2, Layers, Users, GraduationCap, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -266,9 +266,13 @@ export function PnfDetallePage() {
                                         <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={() => { setTramoTrayectoId(t.id); setEditingTramo(tr); setTramoModalOpen(true) }}>Editar</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => { setTramoTrayectoId(t.id); setEditingTramo(tr); setTramoModalOpen(true) }}>
+                                          <Pencil className="mr-2 h-4 w-4" />Editar
+                                        </DropdownMenuItem>
                                         {canDelete && (
-                                          <DropdownMenuItem className="text-destructive" onClick={() => setDeletingTramo(tr)}>Eliminar</DropdownMenuItem>
+                                          <DropdownMenuItem className="text-destructive" onClick={() => setDeletingTramo(tr)}>
+                                            <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                          </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>

@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type Trayecto, type Tramo, type SedePnf } from "@/types"
+import { Role, type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
+import { useAuth } from "@/contexts/AuthContext"
 import { requiredTextRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
@@ -16,6 +17,16 @@ interface UCFormData {
   trayectoId: string
   tramoId?: string
   tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
+  // Si se eligió una materia ya existente del catálogo (ver buscador debajo
+  // de Nombre), se manda esto en vez de nombre/tipo — así dos coordinadores
+  // de sedes distintas no terminan creando dos entradas para "Matemática I".
+  ucCatalogoIdSeleccionado?: string
+}
+
+interface CatalogoMatch {
+  id: string
+  nombre: string
+  codigo: string
 }
 
 interface UCFormModalProps {
@@ -31,6 +42,11 @@ interface UCFormModalProps {
 const SIN_TRAMO = "__anual__"
 
 export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditing, ucCatalogoId }: UCFormModalProps) {
+  const { user: currentUser } = useAuth()
+  // Un coordinador solo gestiona un PNF propio: elegir sede y PNF no tiene
+  // ninguna decisión real que tomar, solo sirve para llegar al trayecto
+  // (comentario de Vercel en /unidades).
+  const esCoordinador = currentUser?.role === Role.COORDINADOR
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
@@ -39,20 +55,59 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [selectedSedeId, setSelectedSedeId] = useState("")
   const [selectedPnfId, setSelectedPnfId] = useState("")
+  const [catalogoMatches, setCatalogoMatches] = useState<CatalogoMatch[]>([])
+  const [catalogoSeleccionado, setCatalogoSeleccionado] = useState<CatalogoMatch | null>(null)
 
   const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UCFormData>({
     defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData },
   })
   const trayectoId = watch('trayectoId')
+  const nombreValue = watch('nombre')
 
   useEffect(() => {
     if (open) {
       reset({ nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData })
       setSelectedSedeId("")
       setSelectedPnfId("")
+      setCatalogoMatches([])
+      setCatalogoSeleccionado(null)
       setError(null)
     }
   }, [open, initialData, reset])
+
+  // Busca en el catálogo compartido (ADR-023) mientras se escribe el nombre,
+  // para ofrecer reusar una materia ya existente en vez de crear un duplicado
+  // con otro código — dos coordinadores de sedes distintas creando "Matemática
+  // I" por separado hoy generan dos entradas de catálogo sin relación entre sí
+  // (comentario de Vercel en /unidades).
+  useEffect(() => {
+    if (!open || isEditing || catalogoSeleccionado) {
+      setCatalogoMatches([])
+      return
+    }
+    const termino = nombreValue?.trim()
+    if (!termino || termino.length < 3) {
+      setCatalogoMatches([])
+      return
+    }
+    const timer = setTimeout(() => {
+      api.get('/uc-catalogo', { params: { q: termino, limit: 5 } }).then((res) => {
+        const list = res.data.data ?? res.data
+        setCatalogoMatches(Array.isArray(list) ? list : [])
+      }).catch(() => setCatalogoMatches([]))
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [open, isEditing, nombreValue, catalogoSeleccionado])
+
+  const elegirCatalogo = (match: CatalogoMatch) => {
+    setCatalogoSeleccionado(match)
+    setValue('nombre', match.nombre)
+    setCatalogoMatches([])
+  }
+  const descartarCatalogo = () => {
+    setCatalogoSeleccionado(null)
+    setValue('nombre', '')
+  }
 
   useEffect(() => {
     if (!open) return
@@ -76,6 +131,15 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     const sp = sedePnfOptions.find((s) => s.pnfId === t.pnfId)
     if (sp) setSelectedSedeId(sp.sedeId)
   }, [open, initialData?.trayectoId, trayectoOptions, sedePnfOptions])
+
+  // Para un coordinador, "su PNF" es la única opción posible: se preselecciona
+  // directo (igual que ya editando) en vez de obligarlo a elegir sede y PNF.
+  useEffect(() => {
+    if (!open || !esCoordinador || initialData?.trayectoId || sedePnfOptions.length === 0) return
+    const propia = sedePnfOptions[0]
+    setSelectedSedeId(propia.sedeId)
+    setSelectedPnfId(propia.pnfId)
+  }, [open, esCoordinador, initialData?.trayectoId, sedePnfOptions])
 
   useEffect(() => {
     if (!open || !isEditing || !ucCatalogoId) {
@@ -131,7 +195,11 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     setLoading(true)
     setError(null)
     try {
-      await onSubmit({ ...data, tramoId: data.tramoId === SIN_TRAMO ? undefined : data.tramoId })
+      await onSubmit({
+        ...data,
+        tramoId: data.tramoId === SIN_TRAMO ? undefined : data.tramoId,
+        ucCatalogoIdSeleccionado: catalogoSeleccionado?.id,
+      })
       onOpenChange(false)
     } catch (err) {
       setError(getErrorMessage(err, 'Error al guardar'))
@@ -149,39 +217,65 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
-            <Input id="nombre" {...register('nombre', requiredTextRule)} />
+            <Input id="nombre" {...register('nombre', requiredTextRule)} disabled={!!catalogoSeleccionado} />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
             {isEditing && ofertasCount != null && ofertasCount > 1 && (
               <p className="text-xs text-muted-foreground">Esta materia se dicta en {ofertasCount} trayectos; el cambio de nombre aplicará a todos.</p>
             )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="sedeId">Sede (opcional, para acotar el PNF)</Label>
-            <Select value={selectedSedeId || "__all__"} onValueChange={(v) => handleSedeChange(v === "__all__" ? "" : v)}>
-              <SelectTrigger id="sedeId" className="w-full">
-                <SelectValue placeholder="Todas las sedes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas las sedes</SelectItem>
-                {sedeOptions.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+            {catalogoSeleccionado ? (
+              <p className="text-xs text-muted-foreground">
+                Usando la materia ya existente del catálogo ({catalogoSeleccionado.codigo}).{' '}
+                <button type="button" className="underline" onClick={descartarCatalogo}>Crear una nueva en su lugar</button>
+              </p>
+            ) : catalogoMatches.length > 0 && (
+              <div className="rounded-md border border-border bg-popover text-sm shadow-sm">
+                <p className="px-3 py-1.5 text-xs text-muted-foreground border-b border-border">
+                  Ya existe en el catálogo — use la misma en vez de crear otra:
+                </p>
+                {catalogoMatches.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left hover:bg-accent"
+                    onClick={() => elegirCatalogo(m)}
+                  >
+                    {m.nombre} <span className="text-xs text-muted-foreground">({m.codigo})</span>
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="pnfId">PNF</Label>
-            <Select value={selectedPnfId} onValueChange={handlePnfChange}>
-              <SelectTrigger id="pnfId" className="w-full">
-                <SelectValue placeholder="Seleccione un PNF" />
-              </SelectTrigger>
-              <SelectContent>
-                {pnfOptions.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {!esCoordinador && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="sedeId">Sede (opcional, para acotar el PNF)</Label>
+                <Select value={selectedSedeId || "__all__"} onValueChange={(v) => handleSedeChange(v === "__all__" ? "" : v)}>
+                  <SelectTrigger id="sedeId" className="w-full">
+                    <SelectValue placeholder="Todas las sedes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">Todas las sedes</SelectItem>
+                    {sedeOptions.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pnfId">PNF</Label>
+                <Select value={selectedPnfId} onValueChange={handlePnfChange}>
+                  <SelectTrigger id="pnfId" className="w-full">
+                    <SelectValue placeholder="Seleccione un PNF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pnfOptions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <Label htmlFor="trayectoId">Trayecto</Label>
             <Controller

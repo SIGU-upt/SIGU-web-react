@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
-import { Layers, Search, Plus, MoreVertical, Building2 } from "lucide-react"
+import { Layers, Search, Plus, MoreVertical, Building2, Eye, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -257,10 +257,19 @@ export function SeccionesPage() {
                                 <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Acciones de la sección ${s.codigo}`}><MoreVertical className="h-4 w-4" /></Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => navigate(`/secciones/${s.id}`)}>Ver Clases</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setEditing(s); setModalOpen(true) }}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate(`/secciones/${s.id}`)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  Ver Clases
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setEditing(s); setModalOpen(true) }}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Editar
+                                </DropdownMenuItem>
                                 {canDelete && (
-                                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(s)}>Eliminar</DropdownMenuItem>
+                                  <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(s)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                  </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
