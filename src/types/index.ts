@@ -182,6 +182,17 @@ export interface SecurityLog {
   user?: User | null
 }
 
+// Alumno cuya inscripción viola una regla de matrícula (GET /inscripciones/inconsistencias).
+export type TipoInconsistencia = 'MULTIPLE_SECCION' | 'MULTIPLE_GRUPO_MISMA_UC'
+
+export interface InscripcionInconsistencia {
+  alumnoId: string
+  nombreCompleto: string
+  ci: string
+  tipo: TipoInconsistencia
+  detalle: string
+}
+
 // Resultado de POST /unidades-curriculares/replicar: una oferta por trayecto elegido.
 export interface ReplicarUcResultado {
   ucCatalogoId: string
