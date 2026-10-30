@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { openFileInNewTab } from "@/lib/export"
+import { EvidenciaModal } from "@/components/dashboard/evidencia-modal"
 import api from "@/config/api"
 
 // Registro de asistencia tal como lo devuelve GET /attendance (con sus relaciones).
@@ -66,6 +66,7 @@ export function AttendanceTable() {
   const [searchQuery, setSearchQuery] = useState("")
   const [data, setData] = useState<AttendanceRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [evidencia, setEvidencia] = useState<{ id: string; descripcion: string } | null>(null)
 
   useEffect(() => {
     // La búsqueda va al servidor (antes filtraba en el navegador sobre estas
@@ -167,7 +168,7 @@ export function AttendanceTable() {
                               </Link>
                             </DropdownMenuItem>
                             {item.tieneEvidencia && (
-                              <DropdownMenuItem onClick={() => openFileInNewTab(`/attendance/${item.id}/evidencia`)}>
+                              <DropdownMenuItem onClick={() => setEvidencia({ id: item.id, descripcion: `${item.student} · ${item.subject} · ${item.date}` })}>
                                 <Paperclip className="mr-2 h-4 w-4" />
                                 Ver evidencia
                               </DropdownMenuItem>
@@ -189,6 +190,7 @@ export function AttendanceTable() {
           </div>
         )}
       </CardContent>
+      <EvidenciaModal asistenciaId={evidencia?.id ?? null} descripcion={evidencia?.descripcion} onClose={() => setEvidencia(null)} />
     </Card>
   )
 }
