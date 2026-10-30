@@ -32,7 +32,7 @@ export function ProfessorsPage() {
   const [resettingDeviceUser, setResettingDeviceUser] = useState<ProfessorRow | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
-  const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
+  const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -65,18 +65,20 @@ export function ProfessorsPage() {
         .map(([id, label]) => ({ id, label }))
     : undefined
 
-  // Opciones de PNF: para superadmin/auditor se limitan a la sede elegida; para
-  // rector, el servidor ya devuelve solo las sede-PNF de su propia sede.
+  // Opciones de PNF: filtro global por pnfId (deduplicado — ya hay un filtro
+  // de sede aparte) — para superadmin/auditor se limitan a la sede elegida;
+  // para rector, el servidor ya devuelve solo las sede-PNF de su propia sede.
   const pnfOptions =
     isUnscoped || isRector
-      ? sedePnfOptions
-          .filter((sp) => !isUnscoped || !sedeFilter || sp.sedeId === sedeFilter)
-          .map((sp) => ({
-            id: sp.id,
-            // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles
-            // en el select (ej. "Informatica" en Socopó y en Barinas).
-            label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
-          }))
+      ? Array.from(
+          new Map(
+            sedePnfOptions
+              .filter((sp) => !isUnscoped || !sedeFilter || sp.sedeId === sedeFilter)
+              .map((sp) => [sp.pnfId, sp.pnf?.nombre ?? sp.pnfId]),
+          ).entries(),
+        )
+          .map(([id, label]) => ({ id, label }))
+          .sort((a, b) => a.label.localeCompare(b.label))
       : undefined
 
   const handleSedeFilterChange = (value: string) => {
@@ -95,7 +97,7 @@ export function ProfessorsPage() {
       const params: Record<string, string | number> = { role: 'DOCENTE', page, limit: 20 }
       if (debouncedSearch) params.q = debouncedSearch
       if (isUnscoped && sedeFilter) params.sedeId = sedeFilter
-      if (pnfFilter) params.sedePnfId = pnfFilter
+      if (pnfFilter) params.pnfId = pnfFilter
       const res = await api.get('/users', { params })
       const list: User[] = res.data.data ?? res.data
       const docentes = Array.isArray(list) ? list : []
@@ -105,7 +107,7 @@ export function ProfessorsPage() {
       // por docenteId en el cliente.
       const clasesParams: Record<string, string | number> = { limit: 200 }
       if (isUnscoped && sedeFilter) clasesParams.sedeId = sedeFilter
-      if (pnfFilter) clasesParams.sedePnfId = pnfFilter
+      if (pnfFilter) clasesParams.pnfId = pnfFilter
       const clasesRes = await api.get('/clases', { params: clasesParams }).catch(() => ({ data: [] }))
       const todasLasClases = clasesRes.data.data ?? clasesRes.data
       const clasesPorDocenteId = new Map<string, Clase[]>()
@@ -186,7 +188,7 @@ export function ProfessorsPage() {
     const params: Record<string, string> = { role: 'DOCENTE' }
     if (debouncedSearch) params.q = debouncedSearch
     if (isUnscoped && sedeFilter) params.sedeId = sedeFilter
-    if (pnfFilter) params.sedePnfId = pnfFilter
+    if (pnfFilter) params.pnfId = pnfFilter
     await downloadExportedFile('/export/usuarios', params, 'docentes.xlsx')
   }
 

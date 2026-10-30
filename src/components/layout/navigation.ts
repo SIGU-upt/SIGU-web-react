@@ -50,4 +50,4 @@ export const routeLabels: Record<string, string> = navigation.reduce((acc, item)
   if (item.path) acc[item.path] = item.name
   item.children?.forEach((child) => { acc[child.path] = child.name })
   return acc
-}, {} as Record<string, string>)
+}, { "/perfil": "Perfil" } as Record<string, string>)

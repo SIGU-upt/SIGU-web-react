@@ -20,6 +20,7 @@ import { SecurityLogsPage } from '@/pages/security-logs'
 import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
 import { CohortesPage } from '@/pages/cohortes'
 import { InconsistenciasPage } from '@/pages/inconsistencias'
+import { PerfilPage } from '@/pages/perfil'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -187,6 +188,14 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR]}>
               <InconsistenciasPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <PerfilPage />
             </PrivateRoute>
           }
         />

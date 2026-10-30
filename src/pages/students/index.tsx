@@ -37,7 +37,7 @@ export function StudentsPage() {
   const [trayectoFilter, setTrayectoFilter] = useState("")
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
-  const [pnfFilter, setPnfFilter] = useState("") // guarda un sedePnfId
+  const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
   const [search, setSearch] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -71,26 +71,26 @@ export function StudentsPage() {
         .map(([id, label]) => ({ id, label }))
     : undefined
 
-  // Opciones de PNF: para superadmin se limitan a la sede elegida; para rector, el
-  // servidor ya devuelve solo las sede-PNF de su propia sede (R-3). El valor de
-  // cada opción es el sedePnfId (lo que consume el backend).
+  // Opciones de PNF: filtro global por pnfId (deduplicado — ya hay un filtro
+  // de sede aparte) — para superadmin se limitan a la sede elegida; para
+  // rector, el servidor ya devuelve solo las sede-PNF de su propia sede (R-3).
   const pnfOptions =
     isSuperadmin || isRector
-      ? sedePnfOptions
-          .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
-          .map((sp) => ({
-            id: sp.id,
-            // Sin la sede, dos PNF iguales de sedes distintas son indistinguibles
-            // en el select (ej. "Informatica" en Socopó y en Barinas).
-            label: sp.pnf?.nombre ? `${sp.pnf.nombre} — ${sp.sede?.nombre ?? ''}` : sp.id,
-          }))
+      ? Array.from(
+          new Map(
+            sedePnfOptions
+              .filter((sp) => !isSuperadmin || !sedeFilter || sp.sedeId === sedeFilter)
+              .map((sp) => [sp.pnfId, sp.pnf?.nombre ?? sp.pnfId]),
+          ).entries(),
+        )
+          .map(([id, label]) => ({ id, label }))
+          .sort((a, b) => a.label.localeCompare(b.label))
       : undefined
 
   // El trayecto se limita al PNF elegido (evita la lista ambigua con trayectos
   // repetidos de todos los PNF). Sin PNF elegido se muestran todos.
-  const selectedPnfId = sedePnfOptions.find((sp) => sp.id === pnfFilter)?.pnfId
-  const visibleTrayectoOptions = selectedPnfId
-    ? trayectoOptions.filter((t) => t.pnfId === selectedPnfId)
+  const visibleTrayectoOptions = pnfFilter
+    ? trayectoOptions.filter((t) => t.pnfId === pnfFilter)
     : trayectoOptions
 
   const fetchData = useCallback(async () => {
@@ -99,7 +99,7 @@ export function StudentsPage() {
       const params: Record<string, string | number> = { role: 'ALUMNO', page, limit: 20 }
       if (debouncedSearch) params.q = debouncedSearch
       if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
-      if (pnfFilter) params.sedePnfId = pnfFilter
+      if (pnfFilter) params.pnfId = pnfFilter
       if (trayectoFilter) params.trayectoNumero = trayectoFilter
       const res = await api.get('/users', { params })
       const list = res.data.data ?? res.data
@@ -230,7 +230,7 @@ export function StudentsPage() {
     const params: Record<string, string> = { role: 'ALUMNO' }
     if (debouncedSearch) params.q = debouncedSearch
     if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
-    if (pnfFilter) params.sedePnfId = pnfFilter
+    if (pnfFilter) params.pnfId = pnfFilter
     if (trayectoFilter) params.trayectoNumero = trayectoFilter
     await downloadExportedFile('/export/usuarios', params, 'estudiantes.xlsx')
   }

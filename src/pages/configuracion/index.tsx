@@ -452,7 +452,7 @@ export function ConfiguracionPage() {
     <div className="space-y-6">
       <PageHeader title="Configuración" subtitle="Gestión de la estructura académica" icon={<Settings className="h-5 w-5" />} />
       <Tabs defaultValue={defaultTab}>
-        <TabsList className="flex-wrap">
+        <TabsList className="flex-wrap" data-tour="config-tabs">
           {showSedeTabs && <TabsTrigger value="sedes"><Building className="mr-2 h-4 w-4" />Sedes</TabsTrigger>}
           <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>
           {showSedeTabs && <TabsTrigger value="sedePnf"><Building className="mr-2 h-4 w-4" />Sede-PNF</TabsTrigger>}
