@@ -31,6 +31,11 @@ interface InscripcionIndividualModalProps {
   onSubmit: (data: { alumnoId: string; claseIds: string[] }) => Promise<BatchResult>
   clases: Clase[]
   sedePnfId: string
+  // Número del trayecto de esta Sección: acota la búsqueda de alumnos a este
+  // trayecto y al inmediato superior (repitiendo una materia que se les quedó
+  // pendiente), nunca a un trayecto lejano (ej. uno de 4to para una sección
+  // de 1ro). Opcional por compatibilidad si la Sección no trajo su trayecto.
+  trayectoNumero?: number
 }
 
 export function InscripcionIndividualModal({
@@ -39,6 +44,7 @@ export function InscripcionIndividualModal({
   onSubmit,
   clases,
   sedePnfId,
+  trayectoNumero,
 }: InscripcionIndividualModalProps) {
   const [alumnos, setAlumnos] = useState<User[]>([])
   const [search, setSearch] = useState("")
@@ -66,11 +72,34 @@ export function InscripcionIndividualModal({
 
   useEffect(() => {
     if (!open) return
-    api.get('/users', { params: { role: 'ALUMNO', sedePnfId, limit: 20, ...(debouncedSearch ? { q: debouncedSearch } : {}) } }).then((res) => {
-      const list = res.data.data ?? res.data
-      setAlumnos(Array.isArray(list) ? list : [])
-    }).catch(() => setAlumnos([]))
-  }, [open, sedePnfId, debouncedSearch])
+    const baseParams = { role: 'ALUMNO', sedePnfId, limit: 20, ...(debouncedSearch ? { q: debouncedSearch } : {}) }
+    // Sin trayectoNumero (Sección sin su trayecto cargado) se mantiene la
+    // búsqueda sin acotar, como antes — mejor mostrar de más que de menos.
+    if (trayectoNumero === undefined) {
+      api.get('/users', { params: baseParams }).then((res) => {
+        const list = res.data.data ?? res.data
+        setAlumnos(Array.isArray(list) ? list : [])
+      }).catch(() => setAlumnos([]))
+      return
+    }
+    const numeros = [trayectoNumero, trayectoNumero + 1].filter((n) => n <= 4)
+    Promise.all(numeros.map((n) => api.get('/users', { params: { ...baseParams, trayectoNumero: n } })))
+      .then((responses) => {
+        const vistos = new Set<string>()
+        const combinados: User[] = []
+        for (const res of responses) {
+          const list: User[] = res.data.data ?? res.data
+          for (const a of Array.isArray(list) ? list : []) {
+            if (vistos.has(a.id)) continue
+            vistos.add(a.id)
+            combinados.push(a)
+          }
+        }
+        combinados.sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
+        setAlumnos(combinados)
+      })
+      .catch(() => setAlumnos([]))
+  }, [open, sedePnfId, debouncedSearch, trayectoNumero])
 
   const gruposPorMateria = useMemo(() => {
     const map = new Map<string, Clase[]>()
