@@ -136,7 +136,7 @@ export function SedeDetallePage() {
             <div className="flex flex-wrap gap-2">
               {secciones.map((s) => (
                 <Link key={s.id} to={`/secciones/${s.id}`}>
-                  <Badge variant="outline" className="cursor-pointer hover:bg-accent">{s.codigo}</Badge>
+                  <Badge variant="outline" className="cursor-pointer hover:bg-muted/70">{s.codigo}</Badge>
                 </Link>
               ))}
             </div>

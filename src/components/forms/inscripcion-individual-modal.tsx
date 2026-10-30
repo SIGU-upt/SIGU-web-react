@@ -178,7 +178,7 @@ export function InscripcionIndividualModal({
               {alumnos.map((a) => {
                 const trayecto = a.trayectoActual?.nombre ?? a.matriculaActiva?.trayecto?.nombre
                 return (
-                  <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent cursor-pointer">
+                  <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/70 cursor-pointer">
                     <Checkbox checked={selectedAlumnoIds.includes(a.id)} onCheckedChange={() => toggleAlumno(a.id)} />
                     <span>{a.nombreCompleto} — {a.ci}{trayecto ? ` · ${trayecto}` : ''}</span>
                   </label>
@@ -197,7 +197,7 @@ export function InscripcionIndividualModal({
                     {grupo.length > 1 && <Badge variant="secondary" className="ml-2">{grupo.length} grupos</Badge>}
                   </p>
                   {grupo.map((c) => (
-                    <label key={c.id} className={cn("flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer hover:bg-accent")}>
+                    <label key={c.id} className={cn("flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer hover:bg-muted/70")}>
                       <Checkbox checked={selectedClaseIds.includes(c.id)} onCheckedChange={() => toggleClase(c.id, grupo)} />
                       <span>{c.nombreGrupo} — {c.docente?.nombreCompleto ?? 'Sin docente'} {c.diaSemana ? `(${c.diaSemana} ${c.horaInicio ?? ''}-${c.horaFin ?? ''})` : ''}</span>
                     </label>
