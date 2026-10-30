@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getErrorMessage } from "@/lib/errors"
+import { comprimirImagenAJpeg } from "@/lib/imagen"
 
 const TIPOS_ACEPTADOS = "image/jpeg,image/png,image/webp,application/pdf"
 const TAMANO_MAXIMO = 5 * 1024 * 1024
@@ -21,6 +22,7 @@ export function JustificarAsistenciaModal({ open, onOpenChange, onConfirm, alumn
   const [motivo, setMotivo] = useState("")
   const [evidencia, setEvidencia] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
+  const [procesando, setProcesando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -28,15 +30,21 @@ export function JustificarAsistenciaModal({ open, onOpenChange, onConfirm, alumn
     if (open) { setMotivo(""); setEvidencia(null); setError(null) }
   }, [open])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (file.size > TAMANO_MAXIMO) {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target
+    const original = input.files?.[0]
+    if (!original) return
+    // El límite de 5 MB aplica al archivo que se elige, antes de reducirlo.
+    if (original.size > TAMANO_MAXIMO) {
       setError('El archivo no puede superar los 5 MB')
-      e.target.value = ""
+      input.value = ""
       return
     }
     setError(null)
+    // Las fotos se reducen a JPG antes de subirlas para que ocupen menos en la base de datos.
+    setProcesando(true)
+    const file = await comprimirImagenAJpeg(original)
+    setProcesando(false)
     setEvidencia(file)
   }
 
@@ -77,12 +85,12 @@ export function JustificarAsistenciaModal({ open, onOpenChange, onConfirm, alumn
                 </Button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+              <Button type="button" variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={procesando}>
                 <Paperclip className="mr-2 h-4 w-4" />
-                Adjuntar foto o documento
+                {procesando ? 'Preparando imagen...' : 'Adjuntar foto o documento'}
               </Button>
             )}
-            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP o PDF — máximo 5 MB.</p>
+            <p className="text-xs text-muted-foreground">JPG, PNG, WEBP o PDF — máximo 5 MB. Las fotos se reducen a JPG al adjuntarlas.</p>
           </div>
           {error && <FormError>{error}</FormError>}
         </div>
@@ -90,7 +98,7 @@ export function JustificarAsistenciaModal({ open, onOpenChange, onConfirm, alumn
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar
           </Button>
-          <Button type="button" onClick={handleConfirm} disabled={loading}>
+          <Button type="button" onClick={handleConfirm} disabled={loading || procesando}>
             {loading ? 'Justificando...' : 'Justificar'}
           </Button>
         </DialogFooter>
