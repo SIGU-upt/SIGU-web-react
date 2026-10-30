@@ -260,7 +260,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
             <div className="rounded-md border p-4 space-y-2 text-sm">
               <p>Se creará el período <span className="font-medium">{nombrePeriodo}</span> ({fechaInicio} a {fechaFin}) para <span className="font-medium">{sedePnfLabelText}</span>.</p>
               <p>
-                Se promoverán los alumnos con cohorte activa en{' '}
+                Se promoverán los alumnos con matrícula activa en{' '}
                 <span className="font-medium">{trayectoOrigenNombre}</span> hacia{' '}
                 <span className="font-medium">{trayectoDestinoNombre}</span>, matriculándolos en el período nuevo.
               </p>
@@ -272,11 +272,11 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary">{alumnosAfectados.length} alumno{alumnosAfectados.length === 1 ? '' : 's'}</Badge>
-                  <span className="text-sm text-muted-foreground">con cohorte activa en este trayecto</span>
+                  <span className="text-sm text-muted-foreground">con matrícula activa en este trayecto</span>
                 </div>
                 {alumnosAfectados.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    No hay ningún alumno con cohorte activa en este trayecto — el período se creará igual, pero no habrá nada que promover.
+                    No hay ningún alumno con matrícula activa en este trayecto — el período se creará igual, pero no habrá nada que promover.
                   </p>
                 ) : (
                   <div className="max-h-40 overflow-y-auto rounded-md border p-2 text-sm text-muted-foreground">

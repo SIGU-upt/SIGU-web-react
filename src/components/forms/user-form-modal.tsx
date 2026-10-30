@@ -212,7 +212,7 @@ export function UserFormModal({
           {showTrayectoField && (
             <div className="space-y-2">
               <Label htmlFor="trayectoId">Trayecto actual</Label>
-              <p className="text-xs text-muted-foreground">Opcional: si el alumno ya viene cursando un trayecto (ej. ingresa a 4to año), selecciónelo aquí para registrar su cohorte oficial.</p>
+              <p className="text-xs text-muted-foreground">Opcional: si el alumno ya viene cursando un trayecto (ej. ingresa a 4to año), selecciónelo aquí para registrar su matrícula oficial.</p>
               <Controller
                 control={control}
                 name="trayectoId"

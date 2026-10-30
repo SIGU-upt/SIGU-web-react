@@ -49,7 +49,7 @@ export function SeccionDetallePage() {
   // Se usa solo para calcular ambigüedad (ver gruposPorMateriaTrayecto) — la
   // lista de Clases de esta pantalla sigue mostrando solo `clases`.
   const [clasesDelTrayecto, setClasesDelTrayecto] = useState<Clase[]>([])
-  const [cohorte, setCohorte] = useState<AlumnoCohorte[]>([])
+  const [matricula, setMatricula] = useState<AlumnoCohorte[]>([])
   const [inscripcionesPorClase, setInscripcionesPorClase] = useState<Record<string, Inscripcion[]>>({})
   const [suspensionesPorClase, setSuspensionesPorClase] = useState<Record<string, ClaseSuspendida[]>>({})
   const [periodoActivo, setPeriodoActivo] = useState<PeriodoAcademico | null>(null)
@@ -101,7 +101,7 @@ export function SeccionDetallePage() {
   }, [])
 
   // Re-carga solo la lista de clases de la sección (y sus inscripciones/
-  // suspensiones), sin volver a pedir sección/cohorte/período — usada tras
+  // suspensiones), sin volver a pedir sección/matrícula/período — usada tras
   // crear, editar o eliminar una clase, que son las únicas mutaciones que
   // cambian la lista de clases en sí.
   const refreshClases = useCallback(async () => {
@@ -132,14 +132,14 @@ export function SeccionDetallePage() {
       const clasesArr = Array.isArray(clasesList) ? clasesList : []
       setClases(clasesArr)
 
-      const [cohorteRes, trayectoRes] = await Promise.all([
+      const [matriculaRes, trayectoRes] = await Promise.all([
         api.get('/matriculas', { params: { sedePnfId: seccionData.sedePnfId, trayectoId: seccionData.trayectoId, activa: true } }),
         api.get('/clases', { params: { trayectoId: seccionData.trayectoId, sedePnfId: seccionData.sedePnfId } }),
         fetchInscripcionesYSuspensiones(clasesArr),
       ])
 
-      const cohorteList = cohorteRes.data.data ?? cohorteRes.data
-      setCohorte(Array.isArray(cohorteList) ? cohorteList : [])
+      const matriculaList = matriculaRes.data.data ?? matriculaRes.data
+      setMatricula(Array.isArray(matriculaList) ? matriculaList : [])
       const trayectoList: Clase[] = trayectoRes.data.data ?? trayectoRes.data
       setClasesDelTrayecto(Array.isArray(trayectoList) ? trayectoList : [])
 
@@ -160,7 +160,7 @@ export function SeccionDetallePage() {
       setSeccion(null)
       setClases([])
       setClasesDelTrayecto([])
-      setCohorte([])
+      setMatricula([])
       setPeriodoActivo(null)
     } finally {
       setLoading(false)
@@ -199,11 +199,11 @@ export function SeccionDetallePage() {
     [gruposPorMateriaTrayecto],
   )
   // Sin esto había que sumar a mano la columna "Inscritos" de cada grupo de
-  // cada materia para saber cuántos de la cohorte ya están matriculados.
+  // cada materia para saber cuántos de la matrícula ya están matriculados.
   const nadaQueInscribirMasivamente = claseIdsSinAmbiguedad.length === 0 && gruposPorMateria.length > 0
 
   // Cuenta en cuántas clases de la sección está inscrito cada alumno, para mostrar
-  // el estado de inscripción en la tabla de la cohorte (antes no había forma de saber
+  // el estado de inscripción en la tabla de la matrícula (antes no había forma de saber
   // si un alumno estaba o no inscrito con solo mirar la tabla).
   const clasesInscritasPorAlumno = useMemo(() => {
     const map = new Map<string, number>()
@@ -216,10 +216,10 @@ export function SeccionDetallePage() {
   }, [inscripcionesPorClase])
 
   const inscritosCount = useMemo(
-    () => cohorte.filter((ac) => (clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0) > 0).length,
-    [cohorte, clasesInscritasPorAlumno],
+    () => matricula.filter((ac) => (clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0) > 0).length,
+    [matricula, clasesInscritasPorAlumno],
   )
-  const sinInscribirCount = cohorte.length - inscritosCount
+  const sinInscribirCount = matricula.length - inscritosCount
 
   const scheduleEntries = useMemo<ScheduleGridEntry[]>(
     () =>
@@ -271,7 +271,7 @@ export function SeccionDetallePage() {
     return res.data
   }
 
-  const handleInscribirCohorte = async () => {
+  const handleInscribirMatricula = async () => {
     if (!seccion || !periodoActivo || claseIdsSinAmbiguedad.length === 0) return
     setInscribiendo(true)
     setResultado(null)
@@ -285,7 +285,7 @@ export function SeccionDetallePage() {
       setResultado(res.data)
       await fetchInscripcionesYSuspensiones(clases)
     } catch (err) {
-      toast.error(getErrorMessage(err, 'No se pudo inscribir la cohorte.'))
+      toast.error(getErrorMessage(err, 'No se pudo inscribir la matrícula.'))
     } finally {
       setInscribiendo(false)
     }
@@ -336,7 +336,7 @@ export function SeccionDetallePage() {
   }
 
   const alumnoNombre = (alumnoId: string) => {
-    const ac = cohorte.find((a) => a.alumnoId === alumnoId)
+    const ac = matricula.find((a) => a.alumnoId === alumnoId)
     return ac?.alumno?.nombreCompleto ?? alumnoId
   }
 
@@ -370,8 +370,8 @@ export function SeccionDetallePage() {
             <Button variant="outline" onClick={() => setIndividualModalOpen(true)} disabled={clases.length === 0} data-tour="seccion-inscribir-individual">
               <UserPlus className="mr-2 h-4 w-4" /> Inscribir alumnos
             </Button>
-            <Button variant="outline" onClick={() => setConfirmingInscripcionMasiva(true)} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0} data-tour="seccion-inscribir-cohorte">
-              <Users className="mr-2 h-4 w-4" /> {inscribiendo ? 'Inscribiendo...' : 'Inscribir cohorte completa'}
+            <Button variant="outline" onClick={() => setConfirmingInscripcionMasiva(true)} disabled={inscribiendo || !periodoActivo || claseIdsSinAmbiguedad.length === 0} data-tour="seccion-inscribir-matricula">
+              <Users className="mr-2 h-4 w-4" /> {inscribiendo ? 'Inscribiendo...' : 'Inscribir matrícula completa'}
             </Button>
             <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }} data-tour="seccion-agregar-clase">
               <Plus className="mr-2 h-4 w-4" /> Agregar Clase
@@ -382,8 +382,8 @@ export function SeccionDetallePage() {
 
       <div className="grid grid-cols-3 divide-x divide-border rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 text-center">
-          <p className="text-2xl font-bold tabular-nums">{cohorte.length}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">En cohorte</p>
+          <p className="text-2xl font-bold tabular-nums">{matricula.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">En matrícula</p>
         </div>
         <div className="px-4 py-3 text-center">
           <p className="text-2xl font-bold tabular-nums text-success">{inscritosCount}</p>
@@ -396,7 +396,7 @@ export function SeccionDetallePage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Una Sección es una etiqueta administrativa (todo el trayecto de este PNF-sede) — los alumnos no se inscriben en la Sección directamente, se matriculan en cada Clase. "Inscribir cohorte completa" matricula automáticamente a los alumnos de esta cohorte en las materias que tienen un solo grupo; usa "Inscribir alumnos" para materias con varios grupos (por cupo) o para alumnos con materias pendientes de otro trayecto.
+        Una Sección es una etiqueta administrativa (todo el trayecto de este PNF-sede) — los alumnos no se inscriben en la Sección directamente, se matriculan en cada Clase. "Inscribir matrícula completa" matricula automáticamente a los alumnos de esta matrícula en las materias que tienen un solo grupo; usa "Inscribir alumnos" para materias con varios grupos (por cupo) o para alumnos con materias pendientes de otro trayecto.
       </p>
 
       {canEdit && !periodoActivo && (
@@ -407,7 +407,7 @@ export function SeccionDetallePage() {
 
       {canEdit && periodoActivo && nadaQueInscribirMasivamente && (
         <div className="rounded-md bg-muted border border-border p-3 text-sm text-muted-foreground">
-          "Inscribir cohorte completa" está deshabilitado porque ninguna materia de esta sección tiene un solo grupo — todas necesitan elegir grupo a mano. Use "Inscribir alumnos" para matricularlos.
+          "Inscribir matrícula completa" está deshabilitado porque ninguna materia de esta sección tiene un solo grupo — todas necesitan elegir grupo a mano. Use "Inscribir alumnos" para matricularlos.
         </div>
       )}
 
@@ -439,14 +439,14 @@ export function SeccionDetallePage() {
         </Card>
       )}
 
-      <Card className="shadow-md" data-tour="seccion-cohorte">
+      <Card className="shadow-md" data-tour="seccion-matricula">
         <CardHeader className="pb-4">
-          <h2 className="text-lg font-semibold">Alumnos de esta cohorte ({cohorte.length})</h2>
-          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección. La columna Estado indica si ya están inscritos en las clases (pertenecer a la cohorte no es lo mismo que estar inscrito).</p>
+          <h2 className="text-lg font-semibold">Alumnos de esta matrícula ({matricula.length})</h2>
+          <p className="text-xs text-muted-foreground">Alumnos cuyo trayecto oficial actual coincide con esta sección. La columna Estado indica si ya están inscritos en las clases (pertenecer a esta matrícula no es lo mismo que estar inscrito).</p>
         </CardHeader>
         <CardContent>
-          {cohorte.length === 0 ? (
-            <p className="text-center py-6 text-sm text-muted-foreground">Ningún alumno tiene esta cohorte como trayecto oficial activo.</p>
+          {matricula.length === 0 ? (
+            <p className="text-center py-6 text-sm text-muted-foreground">Ningún alumno tiene esta matrícula como trayecto oficial activo.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -457,7 +457,7 @@ export function SeccionDetallePage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cohorte.map((ac) => {
+                {matricula.map((ac) => {
                   const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
                   return (
                     <TableRow key={ac.id}>
@@ -686,7 +686,7 @@ export function SeccionDetallePage() {
             <DialogTitle>Confirmar inscripción masiva</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Se va a intentar inscribir a <span className="font-semibold text-foreground">{cohorte.length}</span> alumno(s) de la cohorte en <span className="font-semibold text-foreground">{claseIdsSinAmbiguedad.length}</span> clase(s) sin ambigüedad de grupo (considerando todo el trayecto, no solo esta Sección).
+            Se va a intentar inscribir a <span className="font-semibold text-foreground">{matricula.length}</span> alumno(s) de la matrícula en <span className="font-semibold text-foreground">{claseIdsSinAmbiguedad.length}</span> clase(s) sin ambigüedad de grupo (considerando todo el trayecto, no solo esta Sección).
           </p>
           {materiasConSubgrupos.length > 0 && (
             <p className="text-sm text-muted-foreground">
@@ -696,7 +696,7 @@ export function SeccionDetallePage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmingInscripcionMasiva(false)} disabled={inscribiendo}>Cancelar</Button>
             <Button
-              onClick={() => { setConfirmingInscripcionMasiva(false); handleInscribirCohorte() }}
+              onClick={() => { setConfirmingInscripcionMasiva(false); handleInscribirMatricula() }}
               disabled={inscribiendo}
             >
               {inscribiendo ? 'Inscribiendo...' : 'Confirmar e inscribir'}

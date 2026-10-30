@@ -520,7 +520,7 @@ export function ReportesPage() {
               {error && <div className="text-sm text-destructive">{error}</div>}
               {trayectoReport && (
                 trayectoReport.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No hay alumnos con cohorte activa en este trayecto.</p>
+                  <p className="text-muted-foreground text-sm">No hay alumnos con matrícula activa en este trayecto.</p>
                 ) : (
                   <Table>
                     <TableHeader>

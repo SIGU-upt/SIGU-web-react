@@ -7,14 +7,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { getErrorMessage } from "@/lib/errors"
 
-interface RetirarCohorteModalProps {
+interface RetirarMatriculaModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: (data: { motivo: string; fecha?: string }) => Promise<void>
   alumnoNombre?: string
 }
 
-export function RetirarCohorteModal({ open, onOpenChange, onConfirm, alumnoNombre }: RetirarCohorteModalProps) {
+export function RetirarMatriculaModal({ open, onOpenChange, onConfirm, alumnoNombre }: RetirarMatriculaModalProps) {
   const [motivo, setMotivo] = useState("")
   const [fecha, setFecha] = useState("")
   const [loading, setLoading] = useState(false)
@@ -42,7 +42,7 @@ export function RetirarCohorteModal({ open, onOpenChange, onConfirm, alumnoNombr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
-          <DialogTitle>Retirar {alumnoNombre ? `a ${alumnoNombre}` : 'alumno'} de la cohorte</DialogTitle>
+          <DialogTitle>Retirar {alumnoNombre ? `a ${alumnoNombre}` : 'alumno'} de la matrícula</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

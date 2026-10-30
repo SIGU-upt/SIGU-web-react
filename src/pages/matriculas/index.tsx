@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/ui/page-header"
-import { RetirarCohorteModal } from "@/components/forms/retirar-cohorte-modal"
+import { RetirarMatriculaModal } from "@/components/forms/retirar-matricula-modal"
 import { AsistenteCierrePeriodoModal } from "@/components/forms/asistente-cierre-periodo-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type AlumnoCohorte } from "@/types"
@@ -17,6 +17,9 @@ import { toast } from "sonner"
 // capa — no era una necesidad real de la universidad y hacía el modelo
 // difícil de explicar — así que ahora agrupa las matrículas reales
 // (sede-PNF × trayecto × período) solo para mostrarlas, sin nombre ni cupo.
+// El tipo `AlumnoCohorte` (types/index.ts) conserva ese nombre porque
+// coincide con la entidad/tabla real del backend; lo que cambió es el
+// nombre que ve el usuario, aquí y en el resto de la UI.
 interface Grupo {
   clave: string
   sedePnfId: string
@@ -29,7 +32,7 @@ interface Grupo {
   miembros: AlumnoCohorte[]
 }
 
-export function CohortesPage() {
+export function MatriculasPage() {
   const { user } = useAuth()
   const [matriculas, setMatriculas] = useState<AlumnoCohorte[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,17 +104,17 @@ export function CohortesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cohortes"
+        title="Matrículas"
         subtitle="Matrículas agrupadas por sede-PNF, trayecto y período"
         icon={<GraduationCap className="h-5 w-5" />}
         actions={canGestionar ? (
-          <Button variant="outline" onClick={() => setCerrandoPeriodo(true)} data-tour="cohortes-cierre-periodo">
+          <Button variant="outline" onClick={() => setCerrandoPeriodo(true)} data-tour="matriculas-cierre-periodo">
             <CalendarClock className="mr-2 h-4 w-4" />
             Cierre de Período
           </Button>
         ) : undefined}
       />
-      <Card className="shadow-md" data-tour="cohortes-tabla">
+      <Card className="shadow-md" data-tour="matriculas-tabla">
         <CardContent className="pt-6">
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
@@ -197,7 +200,7 @@ export function CohortesPage() {
         </CardContent>
       </Card>
 
-      <RetirarCohorteModal
+      <RetirarMatriculaModal
         open={!!retirando}
         onOpenChange={(v) => { if (!v) setRetirando(null) }}
         onConfirm={handleRetirar}
