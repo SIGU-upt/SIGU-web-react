@@ -39,12 +39,25 @@ export function CohortesPage() {
 
   const canGestionar = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
+  // El backend limita `limit` a 200 por página (pagination.dto.ts) — un
+  // `limit: 500` directo lo rechaza con 400 y esta pantalla (sin paginación
+  // propia, agrupa TODAS las matrículas) se quedaba mostrando "No hay
+  // matrículas registradas todavía" aunque sí las había. Se trae página por
+  // página hasta agotarlas.
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await api.get('/matriculas', { params: { limit: 500 } })
-      const list = res.data.data ?? res.data
-      setMatriculas(Array.isArray(list) ? list : [])
+      const todas: AlumnoCohorte[] = []
+      let page = 1
+      let totalPages = 1
+      do {
+        const res = await api.get('/matriculas', { params: { page, limit: 200 } })
+        const list: AlumnoCohorte[] = res.data.data ?? res.data
+        todas.push(...(Array.isArray(list) ? list : []))
+        totalPages = res.data.meta?.totalPages ?? 1
+        page += 1
+      } while (page <= totalPages)
+      setMatriculas(todas)
     } catch {
       setMatriculas([])
     } finally {
