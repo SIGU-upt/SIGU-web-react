@@ -176,9 +176,19 @@ const TOURS: Record<Role, DriveStep[]> = {
     VIEW_TOUR_HINT_STEP,
     HELP_BUTTON_STEP,
   ],
-  // DOCENTE y ALUMNO usan la aplicación móvil, no el panel web — no deberían
-  // llegar aquí, pero se deja un recorrido mínimo por si acceden por error.
-  [Role.DOCENTE]: [DASHBOARD_STEP, HELP_BUTTON_STEP],
+  // DOCENTE entra al panel solo para Reportes (sin Dashboard en el menú).
+  [Role.DOCENTE]: [
+    {
+      element: '[data-tour="nav-reportes"]',
+      popover: {
+        title: "Reportes",
+        description: "Consulte la asistencia de sus propias clases y el historial de los alumnos inscritos en ellas. Puede descargar el Excel de cada reporte y justificar inasistencias.",
+      },
+    },
+    HELP_BUTTON_STEP,
+  ],
+  // ALUMNO usa la aplicación móvil, no el panel web — no debería llegar aquí,
+  // pero se deja un recorrido mínimo por si accede por error.
   [Role.ALUMNO]: [DASHBOARD_STEP, HELP_BUTTON_STEP],
   [Role.VIGILANTE]: [DASHBOARD_STEP, HELP_BUTTON_STEP],
 }
