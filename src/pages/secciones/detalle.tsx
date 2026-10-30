@@ -516,7 +516,9 @@ export function SeccionDetallePage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {gruposPorMateria.length === 0 && (
-            <p className="text-center py-8 text-muted-foreground">Esta sección aún no tiene clases.</p>
+            <p className="text-center py-8 text-muted-foreground">
+              Esta sección aún no tiene clases. Use "Agregar Clase" (arriba) o "Importar horario" para cargarlas.
+            </p>
           )}
           {gruposPorMateria.length > 0 && (
             <Tabs defaultValue="lista">

@@ -17,6 +17,17 @@ import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
 import { hoyLocal } from "@/lib/fecha"
 
+const DIA_SEMANA_LABEL: Record<string, string> = {
+  LUNES: 'lunes', MARTES: 'martes', MIERCOLES: 'miércoles', JUEVES: 'jueves',
+  VIERNES: 'viernes', SABADO: 'sábado', DOMINGO: 'domingo',
+}
+const INDICE_A_DIA_SEMANA = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
+
+/** Día de la semana (mismo enum que el backend) de una fecha "YYYY-MM-DD", sin pasar por zona horaria. */
+function diaSemanaDe(fecha: string): string {
+  return INDICE_A_DIA_SEMANA[new Date(`${fecha}T00:00:00Z`).getUTCDay()]
+}
+
 interface AlumnoEnRiesgo {
   alumnoId: string
   nombreCompleto: string
@@ -176,6 +187,14 @@ export function ReportesPage() {
     }).catch(() => setClaseOptions([]))
       .finally(() => setClaseOptionsLoading(false))
   }, [claseTrayectoId])
+
+  // La clase solo dicta un día fijo de la semana — pedir el reporte de una
+  // fecha distinta siempre da "sin alumnos" (o la fecha de otra clase), así
+  // que se avisa antes de consultar en vez de dejar que parezca un error
+  // (comentario de Vercel en /reportes).
+  const claseSeleccionada = claseOptions.find((c) => c.id === classId)
+  const fechaNoCoincideDia =
+    !!claseSeleccionada?.diaSemana && diaSemanaDe(fecha) !== claseSeleccionada.diaSemana
 
   const fetchTrayectoReport = async () => {
     if (!trayectoId) return
@@ -351,7 +370,7 @@ export function ReportesPage() {
                   </SelectContent>
                 </Select>
                 <Input type="date" value={fecha} max={hoy} onChange={(e) => setFecha(e.target.value)} className="max-w-[180px]" />
-                <Button onClick={fetchClassReport} disabled={loading || !classId}>
+                <Button onClick={fetchClassReport} disabled={loading || !classId || fechaNoCoincideDia}>
                   <Search className="mr-2 h-4 w-4" />Consultar
                 </Button>
                 {(classReport?.alumnos?.length ?? 0) > 0 && (
@@ -360,6 +379,11 @@ export function ReportesPage() {
                   </Button>
                 )}
               </div>
+              {fechaNoCoincideDia && claseSeleccionada?.diaSemana && (
+                <p className="text-sm text-destructive">
+                  Esta clase es los {DIA_SEMANA_LABEL[claseSeleccionada.diaSemana] ?? claseSeleccionada.diaSemana.toLowerCase()}; elija una fecha en ese día.
+                </p>
+              )}
               {claseTrayectoId && !claseOptionsLoading && claseOptions.length === 0 && (
                 <p className="text-sm text-muted-foreground">Este trayecto no tiene clases registradas.</p>
               )}
