@@ -4,6 +4,7 @@ import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
 import { crearEstudiante } from "@/lib/estudiantes"
 import { getErrorStatus } from "@/lib/errors"
@@ -34,6 +35,7 @@ export function StudentsPage() {
   const [editingUser, setEditingUser] = useState<StudentRow | null>(null)
   const [deletingUser, setDeletingUser] = useState<StudentRow | null>(null)
   const [resettingDeviceUser, setResettingDeviceUser] = useState<StudentRow | null>(null)
+  const [resettingPasswordUser, setResettingPasswordUser] = useState<StudentRow | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [trayectoFilter, setTrayectoFilter] = useState("")
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
@@ -233,6 +235,7 @@ export function StudentsPage() {
         onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
         onDelete={(item) => setDeletingUser(item)}
         onResetDevice={(item) => setResettingDeviceUser(item)}
+        onResetPassword={(item) => setResettingPasswordUser(item)}
         canEdit={canEdit}
         canResetDevice={canResetDevice}
         canDelete={canDelete}
@@ -278,6 +281,11 @@ export function StudentsPage() {
         description={`Esto permitirá que ${resettingDeviceUser?.name} vuelva a iniciar sesión desde un nuevo dispositivo. ¿Desea continuar?`}
         confirmLabel="Reiniciar"
         loadingLabel="Reiniciando..."
+      />
+
+      <ResetPasswordModal
+        usuario={resettingPasswordUser ? { id: resettingPasswordUser.id, nombre: resettingPasswordUser.name } : null}
+        onClose={() => setResettingPasswordUser(null)}
       />
     </div>
   )
