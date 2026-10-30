@@ -45,6 +45,19 @@ const TEMPLATE_EXAMPLES: Record<string, string> = {
   email: 'juan.perez@uptjfr.edu.ve',
   trayecto: '1',
   clasesIds: '',
+  // Código del PNF (Configuración → PNF). Solo es obligatoria para rector o
+  // superadministrador, que no tienen una sede-PNF propia que el servidor
+  // pueda usar por defecto — si se omite, esa fila falla con un error claro.
+  sedePnf: '',
+  // Plantilla de "Importar horario" (ver secciones/detalle.tsx).
+  seccion: 'A',
+  materia: 'PROG-I',
+  docenteCi: 'V12345678',
+  grupo: '1',
+  dia: 'LUNES',
+  horaInicio: '08:00',
+  horaFin: '10:00',
+  aula: '',
 }
 
 interface ImportModalProps<TResult = ImportResult> {

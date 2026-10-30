@@ -493,6 +493,8 @@ export function SeccionDetallePage() {
               triggerLabel="Importar horario"
               title="Importar horario desde Excel"
               description="Columnas: seccion, materia, docenteCi, grupo, dia, horaInicio, horaFin, aula. Solo se aceptan filas de esta sección; cada fila se valida como si se creara la clase una por una (horario coherente y sin solapamiento), y las filas con error no se crean y quedan en el reporte."
+              templateHeaders={["seccion", "materia", "docenteCi", "grupo", "dia", "horaInicio", "horaFin", "aula"]}
+              templateFilename="plantilla-horario.csv"
               buttonLabel="Importar"
               renderResult={(result: { creadas: number; errores: { fila: number; motivo: string }[] }) => (
                 <div className="text-sm space-y-1 ml-7">
