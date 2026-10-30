@@ -24,7 +24,7 @@ import { PerfilPage } from '@/pages/perfil'
 import { Role } from '@/types'
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
     return (
@@ -57,9 +57,7 @@ function AppRoutes() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              {/* El dashboard agrega cifras de toda la jurisdicción (GET /dashboard, vetado
-                  a DOCENTE): su pantalla de inicio en el panel es Reportes. */}
-              {user?.role === Role.DOCENTE ? <Navigate to="/reportes" replace /> : <DashboardPage />}
+              <DashboardPage />
             </PrivateRoute>
           }
         />

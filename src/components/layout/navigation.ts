@@ -22,7 +22,7 @@ export interface NavItem {
 }
 
 export const navigation: NavItem[] = [
-  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: Object.values(Role).filter((r) => r !== Role.DOCENTE) },
+  { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: Object.values(Role) },
   {
     id: "usuarios",
     name: "Usuarios",
