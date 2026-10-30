@@ -8,11 +8,13 @@ import { toast } from "sonner"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
 import { getErrorMessage } from "@/lib/errors"
+import { hoyLocal } from "@/lib/fecha"
 
 const FRASE_CONFIRMACION = "RESTAURAR TODO"
 
+// El día según la hora de Venezuela: en UTC, de noche el nombre del archivo saldría con la fecha de mañana.
 function hoyISO() {
-  return new Date().toISOString().slice(0, 10)
+  return hoyLocal()
 }
 
 export function RespaldoTab() {

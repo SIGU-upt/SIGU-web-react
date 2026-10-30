@@ -212,6 +212,8 @@ export interface GenerarEstructuraResultado {
 export interface GenerarPeriodosResultado {
   creados: { sedePnfId: string; periodoId: string }[]
   omitidos: { sedePnfId: string; motivo: string }[]
+  // Avisos no bloqueantes sobre el rango (p. ej. un período activo que empieza en el futuro y deja los reportes en cero).
+  advertencias?: string[]
 }
 
 export interface PaginatedResponse<T> {

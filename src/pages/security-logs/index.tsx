@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader } from "@/components/ui/page-header"
 import { type SecurityLog } from "@/types"
 import api from "@/config/api"
+import { hoyLocal } from "@/lib/fecha"
 
 const ACCIONES = [
   'LOGIN_CLIENTE_INVALIDO',
@@ -70,9 +71,9 @@ export function SecurityLogsPage() {
                 {ACCIONES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input type="date" value={fechaDesde} onChange={(e) => setFechaDesde(e.target.value)} className="max-w-[160px]" />
+            <Input type="date" value={fechaDesde} max={hoyLocal()} onChange={(e) => setFechaDesde(e.target.value)} className="max-w-[160px]" />
             <span className="text-sm text-muted-foreground">a</span>
-            <Input type="date" value={fechaHasta} onChange={(e) => setFechaHasta(e.target.value)} className="max-w-[160px]" />
+            <Input type="date" value={fechaHasta} max={hoyLocal()} onChange={(e) => setFechaHasta(e.target.value)} className="max-w-[160px]" />
             {(accion || fechaDesde || fechaHasta) && (
               <Button variant="ghost" size="sm" onClick={() => { setAccion(""); setFechaDesde(""); setFechaHasta("") }}>Limpiar</Button>
             )}
