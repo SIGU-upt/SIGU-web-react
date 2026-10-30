@@ -186,7 +186,7 @@ export function PersonalAdministrativoPage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-3 flex-1">
+            <div className="flex flex-wrap items-center gap-3 flex-1" data-tour="personal-filtros">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -215,7 +215,7 @@ export function PersonalAdministrativoPage() {
               )}
             </div>
             {canEdit && (
-              <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
+              <Button className="bg-primary" data-tour="personal-nuevo" onClick={() => { setEditing(null); setModalOpen(true) }}>
                 <Plus className="mr-2 h-4 w-4" /> Nuevo
               </Button>
             )}
