@@ -5,6 +5,7 @@ import { UserFormModal, type UserFormData } from "@/components/forms/user-form-m
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
+import { crearEstudiante } from "@/lib/estudiantes"
 import { getErrorStatus } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Trayecto, type SedePnf } from "@/types"
@@ -149,32 +150,7 @@ export function StudentsPage() {
   }
 
   const handleCreate = async (data: UserFormData) => {
-    const { trayectoId, ...userData } = data
-    // Asignación inicial directa (solo en creación; ADR-025 la retira de PATCH).
-    // El POST /matriculas de abajo es el que de verdad matricula al alumno y
-    // sincroniza este mismo campo del lado del servidor.
-    const res = await api.post('/users', { ...userData, role: 'ALUMNO', trayectoActualId: trayectoId || undefined })
-    const sedePnfId = data.sedePnfId ?? user?.sedePnfId
-    if (trayectoId && sedePnfId) {
-      try {
-        const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
-        const periodo = periodoRes.data
-        await api.post('/matriculas', {
-          alumnoId: res.data.id,
-          sedePnfId,
-          trayectoId,
-          periodoId: periodo.id,
-        })
-      } catch (err) {
-        if (getErrorStatus(err) === 404) {
-          // El trayecto ya quedó asignado al alumno; lo que falta es la
-          // matrícula en un período, que necesita un período activo.
-          toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
-        } else {
-          toast.warning('El estudiante se creó con su trayecto asignado, pero no fue posible matricularlo en el período. Puede hacerlo luego.')
-        }
-      }
-    }
+    await crearEstudiante(data, user?.sedePnfId)
     await fetchData()
   }
 
