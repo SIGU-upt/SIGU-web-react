@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { crearEstudiante } from "@/lib/estudiantes"
+import { DashboardDocente } from "@/pages/dashboard/docente"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { Role } from "@/types"
@@ -20,7 +21,13 @@ interface DashboardData {
   sedeNombre: string
 }
 
+// El docente tiene su propio panel (GET /dashboard le devuelve solo cifras propias, no las de la jurisdicción).
 export function DashboardPage() {
+  const { user } = useAuth()
+  return user?.role === Role.DOCENTE ? <DashboardDocente /> : <DashboardAdministrativo />
+}
+
+function DashboardAdministrativo() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)

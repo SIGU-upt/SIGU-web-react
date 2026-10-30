@@ -176,8 +176,15 @@ const TOURS: Record<Role, DriveStep[]> = {
     VIEW_TOUR_HINT_STEP,
     HELP_BUTTON_STEP,
   ],
-  // DOCENTE entra al panel solo para Reportes (sin Dashboard en el menú).
+  // DOCENTE entra al panel para ver su resumen y sus Reportes.
   [Role.DOCENTE]: [
+    {
+      element: '[data-tour="nav-dashboard"]',
+      popover: {
+        title: "Dashboard",
+        description: "Aquí ve el resumen de sus clases: alumnos inscritos, clases de hoy, alumnos en riesgo, inasistencias por justificar y su horario de la semana.",
+      },
+    },
     {
       element: '[data-tour="nav-reportes"]',
       popover: {
