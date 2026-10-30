@@ -176,7 +176,7 @@ export function InscripcionIndividualModal({
                 <p className="p-3 text-sm text-muted-foreground">No se encontraron alumnos.</p>
               )}
               {alumnos.map((a) => {
-                const trayecto = a.trayectoActual?.nombre ?? a.cohorteActiva?.trayecto?.nombre
+                const trayecto = a.trayectoActual?.nombre ?? a.matriculaActiva?.trayecto?.nombre
                 return (
                   <label key={a.id} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent cursor-pointer">
                     <Checkbox checked={selectedAlumnoIds.includes(a.id)} onCheckedChange={() => toggleAlumno(a.id)} />

@@ -26,17 +26,17 @@ const VIEW_TOURS: { prefix: string; steps: DriveStep[] }[] = [
         },
       },
       {
-        element: '[data-tour="seccion-inscribir-cohorte"]',
+        element: '[data-tour="seccion-inscribir-matricula"]',
         popover: {
-          title: "Inscribir cohorte completa",
-          description: "Matricula de una vez a todos los alumnos de esta cohorte en las materias que tienen un solo grupo. Las materias con varios grupos quedan afuera: use \"Inscribir alumnos\" para esas.",
+          title: "Inscribir matrícula completa",
+          description: "Matricula de una vez a todos los alumnos de esta matrícula en las materias que tienen un solo grupo. Las materias con varios grupos quedan afuera: use \"Inscribir alumnos\" para esas.",
         },
       },
       {
-        element: '[data-tour="seccion-cohorte"]',
+        element: '[data-tour="seccion-matricula"]',
         popover: {
-          title: "Alumnos de esta cohorte",
-          description: "Son los alumnos cuyo trayecto oficial actual coincide con esta Sección. La columna Estado indica si ya están inscritos en las clases, no si pertenecen a la cohorte (eso es distinto).",
+          title: "Alumnos de esta matrícula",
+          description: "Son los alumnos cuyo trayecto oficial actual coincide con esta Sección. La columna Estado indica si ya están inscritos en las clases, no si pertenecen a esta matrícula (eso es distinto).",
         },
       },
     ],
@@ -130,17 +130,17 @@ const VIEW_TOURS: { prefix: string; steps: DriveStep[] }[] = [
     ],
   },
   {
-    prefix: "/cohortes",
+    prefix: "/matriculas",
     steps: [
       {
-        element: '[data-tour="cohortes-cierre-periodo"]',
+        element: '[data-tour="matriculas-cierre-periodo"]',
         popover: {
           title: "Cierre de Período",
           description: "Asistente para promover en bloque a los alumnos de un período al trayecto siguiente, cuando el período académico termina.",
         },
       },
       {
-        element: '[data-tour="cohortes-tabla"]',
+        element: '[data-tour="matriculas-tabla"]',
         popover: {
           title: "Matrículas agrupadas",
           description: "Las matrículas reales de cada alumno (sede-PNF × trayecto × período), agrupadas solo para visualizarlas. Expanda un grupo para ver y, si corresponde, retirar alumnos individuales.",

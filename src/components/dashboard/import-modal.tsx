@@ -10,7 +10,7 @@ import { getErrorMessage } from "@/lib/errors"
 export interface ImportResult {
   creados: number
   actualizados: number
-  cohortesAsignadas: number
+  matriculasAsignadas: number
   inscripcionesCreadas: number
   errores: { fila: number; ci: string; motivo: string }[]
 }
@@ -20,7 +20,7 @@ function defaultRenderResult(result: ImportResult) {
     <div className="text-sm space-y-1 ml-7">
       <p>Creados: {result.creados}</p>
       <p>Actualizados: {result.actualizados}</p>
-      <p>Cohortes asignadas: {result.cohortesAsignadas}</p>
+      <p>Matrículas asignadas: {result.matriculasAsignadas}</p>
       <p>Inscripciones creadas: {result.inscripcionesCreadas}</p>
       {result.errores.length > 0 && <p className="text-destructive">Errores: {result.errores.length}</p>}
     </div>

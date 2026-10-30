@@ -24,7 +24,7 @@ export interface User {
   fechaNacimiento: string | null
   createdAt: string
   updatedAt: string
-  cohorteActiva?: {
+  matriculaActiva?: {
     id: string
     trayecto: { id: string; numero: number; nombre: string }
     periodo: { id: string; nombre: string }

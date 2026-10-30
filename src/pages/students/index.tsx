@@ -115,10 +115,10 @@ export function StudentsPage() {
         idNumber: u.ci,
         email: u.email,
         sedePnfId: u.sedePnfId ?? undefined,
-        // ADR-025: la cohorte activa manda; el atributo directo es respaldo.
-        trayectoActualId: u.trayectoActualId ?? u.cohorteActiva?.trayecto?.id ?? '',
+        // ADR-025: la matrícula activa manda; el atributo directo es respaldo.
+        trayectoActualId: u.trayectoActualId ?? u.matriculaActiva?.trayecto?.id ?? '',
         career: u.sedePnf?.pnf?.nombre ?? '—',
-        semester: u.trayectoActual?.numero ?? u.cohorteActiva?.trayecto?.numero ?? 0,
+        semester: u.trayectoActual?.numero ?? u.matriculaActiva?.trayecto?.numero ?? 0,
         status: 'Regular',
       })))
       if (res.data.meta) setMeta(res.data.meta)
@@ -151,7 +151,7 @@ export function StudentsPage() {
   const handleCreate = async (data: UserFormData) => {
     const { trayectoId, ...userData } = data
     // Asignación inicial directa (solo en creación; ADR-025 la retira de PATCH).
-    // El POST /cohortes de abajo es el que de verdad matricula al alumno y
+    // El POST /matriculas de abajo es el que de verdad matricula al alumno y
     // sincroniza este mismo campo del lado del servidor.
     const res = await api.post('/users', { ...userData, role: 'ALUMNO', trayectoActualId: trayectoId || undefined })
     const sedePnfId = data.sedePnfId ?? user?.sedePnfId
@@ -168,7 +168,7 @@ export function StudentsPage() {
       } catch (err) {
         if (getErrorStatus(err) === 404) {
           // El trayecto ya quedó asignado al alumno; lo que falta es la
-          // matrícula en un período (cohorte), que necesita un período activo.
+          // matrícula en un período, que necesita un período activo.
           toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
         } else {
           toast.warning('El estudiante se creó con su trayecto asignado, pero no fue posible matricularlo en el período. Puede hacerlo luego.')
@@ -187,8 +187,8 @@ export function StudentsPage() {
     if (data.sedePnfId) payload.sedePnfId = data.sedePnfId
     await api.patch(`/users/${editingUser.id}`, payload)
 
-    // ADR-025: el trayecto ya no se edita por PATCH /users (la cohorte activa
-    // manda). Si cambió, se matricula en una cohorte nueva — misma mecánica
+    // ADR-025: el trayecto ya no se edita por PATCH /users (la matrícula activa
+    // manda). Si cambió, se crea una matrícula nueva — misma mecánica
     // que handleCreate — que sincroniza trayectoActualId del lado del servidor.
     if (data.trayectoId && data.trayectoId !== editingUser.trayectoActualId) {
       const sedePnfId = data.sedePnfId ?? editingUser.sedePnfId

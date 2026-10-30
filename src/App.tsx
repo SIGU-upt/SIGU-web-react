@@ -18,7 +18,7 @@ import { SedeDetallePage } from '@/pages/sedes/detalle'
 import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
 import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
-import { CohortesPage } from '@/pages/cohortes'
+import { MatriculasPage } from '@/pages/matriculas'
 import { InconsistenciasPage } from '@/pages/inconsistencias'
 import { PerfilPage } from '@/pages/perfil'
 import { Role } from '@/types'
@@ -174,12 +174,12 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/cohortes"
+          path="/matriculas"
           element={
             <PrivateRoute
               allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]}
             >
-              <CohortesPage />
+              <MatriculasPage />
             </PrivateRoute>
           }
         />

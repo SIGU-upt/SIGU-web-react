@@ -50,13 +50,13 @@ const TOURS: Record<Role, DriveStep[]> = {
       element: '[data-tour="nav-secciones"]',
       popover: {
         title: "Secciones y clases",
-        description: "Las Secciones agrupan Clases por trayecto dentro de una sede-PNF; dentro de cada una se crean las Clases (materia, docente, horario) y se matricula a los alumnos, uno por uno o por cohorte completa.",
+        description: "Las Secciones agrupan Clases por trayecto dentro de una sede-PNF; dentro de cada una se crean las Clases (materia, docente, horario) y se matricula a los alumnos, uno por uno o con toda la matrícula completa.",
       },
     },
     {
-      element: '[data-tour="nav-cohortes"]',
+      element: '[data-tour="nav-matriculas"]',
       popover: {
-        title: "Cohortes",
+        title: "Matrículas",
         description: "Muestra las matrículas reales agrupadas por sede-PNF, trayecto y período, solo para visualizarlas. Desde aquí también se corre el asistente de Cierre de Período, que promueve a los alumnos en bloque al trayecto siguiente.",
       },
     },
@@ -123,7 +123,7 @@ const TOURS: Record<Role, DriveStep[]> = {
       element: '[data-tour="nav-secciones"]',
       popover: {
         title: "Secciones y clases",
-        description: "Aquí crea las secciones, las clases con su horario, y matricula alumnos — individualmente, por cohorte completa, o con una carga masiva desde Excel. Es la pantalla donde pasará más tiempo.",
+        description: "Aquí crea las secciones, las clases con su horario, y matricula alumnos — individualmente, con toda la matrícula completa, o con una carga masiva desde Excel. Es la pantalla donde pasará más tiempo.",
       },
     },
     {
@@ -134,9 +134,9 @@ const TOURS: Record<Role, DriveStep[]> = {
       },
     },
     {
-      element: '[data-tour="nav-cohortes"]',
+      element: '[data-tour="nav-matriculas"]',
       popover: {
-        title: "Cohortes",
+        title: "Matrículas",
         description: "Vea las matrículas de sus alumnos agrupadas por trayecto y período. Desde el botón \"Cierre de Período\" los promueve al trayecto siguiente en bloque cuando el período termina.",
       },
     },
