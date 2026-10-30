@@ -24,7 +24,7 @@ import { PerfilPage } from '@/pages/perfil'
 import { Role } from '@/types'
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
 
   if (isLoading) {
     return (
@@ -57,7 +57,9 @@ function AppRoutes() {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <DashboardPage />
+              {/* El dashboard agrega cifras de toda la jurisdicción (GET /dashboard, vetado
+                  a DOCENTE): su pantalla de inicio en el panel es Reportes. */}
+              {user?.role === Role.DOCENTE ? <Navigate to="/reportes" replace /> : <DashboardPage />}
             </PrivateRoute>
           }
         />
@@ -138,9 +140,7 @@ function AppRoutes() {
         <Route
           path="/pnfs/:id"
           element={
-            <PrivateRoute
-              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
-            >
+            <PrivateRoute allowedRoles={adminRoles}>
               <PnfDetallePage />
             </PrivateRoute>
           }
@@ -148,9 +148,7 @@ function AppRoutes() {
         <Route
           path="/sedes/:id"
           element={
-            <PrivateRoute
-              allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE, Role.AUDITOR]}
-            >
+            <PrivateRoute allowedRoles={adminRoles}>
               <SedeDetallePage />
             </PrivateRoute>
           }

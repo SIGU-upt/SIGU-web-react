@@ -7,7 +7,7 @@ interface Credential {
 }
 
 /** Login real por formulario (no inyectando el token) — así se prueba el flujo completo. */
-export async function login(page: Page, { ci, password }: Credential) {
+export async function login(page: Page, { ci, password }: Credential, destino = 'dashboard') {
   const [prefix, digits] = ci.split('-')
   await page.goto('/login')
   await page.getByRole('combobox', { name: 'Nacionalidad' }).click()
@@ -15,10 +15,11 @@ export async function login(page: Page, { ci, password }: Credential) {
   await page.locator('#ci').fill(digits)
   await page.locator('#password').fill(password)
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click()
-  await page.waitForURL('**/dashboard', { timeout: 90_000 }) // Render free tier: cold start
+  // `destino`: a dónde cae el rol al entrar (el DOCENTE no tiene Dashboard y aterriza en Reportes).
+  await page.waitForURL(`**/${destino}`, { timeout: 90_000 }) // Render free tier: cold start
 }
 
-/** Intenta login esperando que lo RECHACE (para DOCENTE/ALUMNO, que solo entran por la app — ADR-020). */
+/** Intenta login esperando que lo RECHACE (para ALUMNO, que solo entra por la app — ADR-020). */
 export async function intentarLoginWeb(page: Page, { ci, password }: Credential) {
   const [prefix, digits] = ci.split('-')
   await page.goto('/login')

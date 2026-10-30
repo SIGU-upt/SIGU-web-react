@@ -71,7 +71,13 @@ export function ReportesPage() {
   const puedeJustificar = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.DOCENTE].includes(user.role) : false
   const [justificando, setJustificando] = useState<{ alumnoId: string; nombre: string; asistenciaId: string | null } | null>(null)
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState(searchParams.get('tab') || "clase")
+  // El docente solo ve sus propias clases y los alumnos inscritos en ellas: el API
+  // le niega "Por Trayecto" y "Alumnos en Riesgo" (roster y riesgo de toda la
+  // jurisdicción) y la lista general de usuarios.
+  const esDocente = user?.role === Role.DOCENTE
+  const tabsPermitidos = esDocente ? ["clase", "alumno"] : ["clase", "alumno", "trayecto", "riesgo"]
+  const tabInicial = searchParams.get('tab')
+  const [tab, setTab] = useState(tabInicial && tabsPermitidos.includes(tabInicial) ? tabInicial : "clase")
   const [claseTrayectoId, setClaseTrayectoId] = useState("")
   const [claseOptions, setClaseOptions] = useState<Clase[]>([])
   const [classId, setClassId] = useState("")
@@ -112,11 +118,12 @@ export function ReportesPage() {
   }, [alumnoSearch])
 
   useEffect(() => {
+    if (esDocente) return // GET /users no admite DOCENTE; llega al alumno desde el reporte de su clase
     api.get('/users', { params: { role: 'ALUMNO', limit: 20, ...(debouncedAlumnoSearch ? { q: debouncedAlumnoSearch } : {}) } }).then((res) => {
       const list = res.data.data ?? res.data
       setAlumnoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setAlumnoOptions([]))
-  }, [debouncedAlumnoSearch])
+  }, [debouncedAlumnoSearch, esDocente])
 
   // Cascada sede → PNF → trayecto para el reporte por trayecto, de modo que el
   // superadmin pueda acotar por sede/PNF (antes agregaba todas las sedes del PNF).
@@ -306,8 +313,8 @@ export function ReportesPage() {
         <TabsList data-tour="reportes-tabs">
           <TabsTrigger value="clase">Por Clase</TabsTrigger>
           <TabsTrigger value="alumno">Por Alumno</TabsTrigger>
-          <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>
-          <TabsTrigger value="riesgo">Alumnos en Riesgo</TabsTrigger>
+          {!esDocente && <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>}
+          {!esDocente && <TabsTrigger value="riesgo">Alumnos en Riesgo</TabsTrigger>}
         </TabsList>
         <TabsContent value="clase" className="space-y-4 mt-4">
           <Card>
@@ -367,7 +374,9 @@ export function ReportesPage() {
                       <TableBody>
                         {classReport.alumnos?.map((a) => (
                           <TableRow key={a.alumnoId}>
-                            <TableCell>{a.nombreCompleto}</TableCell>
+                            <TableCell>
+                              <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left">{a.nombreCompleto}</button>
+                            </TableCell>
                             <TableCell className="text-muted-foreground">{a.ci}</TableCell>
                             <TableCell><Badge className={estadoColor(a.estado)}>{a.estado}</Badge></TableCell>
                             {puedeJustificar && (
@@ -398,21 +407,31 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Reporte de Asistencia por Alumno</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder="Buscar alumno por nombre o cédula..." value={alumnoSearch} onChange={(e) => setAlumnoSearch(e.target.value)} className="pl-10" />
-                </div>
-                <Select value={alumnoId} onValueChange={setAlumnoId}>
-                  <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un alumno" /></SelectTrigger>
-                  <SelectContent>
-                    {alumnoOptions.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.nombreCompleto} ({a.ci})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={() => fetchAlumnoReport()} disabled={loading || !alumnoId}>
-                  <UserSearch className="mr-2 h-4 w-4" />Consultar
-                </Button>
+                {esDocente ? (
+                  !alumnoReport && (
+                    <p className="text-sm text-muted-foreground">
+                      Abra el historial de un alumno desde la pestaña «Por Clase»: haga clic en su nombre en el reporte de una de sus clases.
+                    </p>
+                  )
+                ) : (
+                  <>
+                    <div className="relative w-64">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input placeholder="Buscar alumno por nombre o cédula..." value={alumnoSearch} onChange={(e) => setAlumnoSearch(e.target.value)} className="pl-10" />
+                    </div>
+                    <Select value={alumnoId} onValueChange={setAlumnoId}>
+                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione un alumno" /></SelectTrigger>
+                      <SelectContent>
+                        {alumnoOptions.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.nombreCompleto} ({a.ci})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={() => fetchAlumnoReport()} disabled={loading || !alumnoId}>
+                      <UserSearch className="mr-2 h-4 w-4" />Consultar
+                    </Button>
+                  </>
+                )}
                 {(alumnoReport?.clases?.length ?? 0) > 0 && (
                   <Button variant="outline" onClick={exportAlumnoReport}>
                     <Download className="mr-2 h-4 w-4" />Descargar Excel
