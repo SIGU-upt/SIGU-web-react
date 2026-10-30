@@ -13,8 +13,12 @@ interface UcRow {
   code: string
   name: string
   trayecto: string
-  type: 'Obligatoria' | 'Electiva'
-  status: 'Activa' | 'Inactiva'
+  // Art. 24(b): la Práctica Profesional exige 80% de asistencia, no el 75%
+  // general — es la única clasificación real que existe hoy para una UC. No
+  // hay distinción "obligatoria/electiva" en el modelo (comentario de Vercel
+  // en /unidades: ese valor estaba siempre fijo en "Obligatoria", sin
+  // provenir de ningún dato real).
+  type: 'Regular' | 'Práctica Profesional'
   _raw: UnidadCurricular
 }
 
@@ -24,6 +28,7 @@ interface UcFormValues {
   trayectoId: string
   tramoId?: string
   tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
+  ucCatalogoIdSeleccionado?: string
 }
 
 export function CurriculumUnitsPage() {
@@ -47,8 +52,7 @@ export function CurriculumUnitsPage() {
         code: `UC-${uc.nombre.substring(0, 3).toUpperCase()}`,
         name: uc.nombre,
         trayecto: uc.trayecto?.nombre ?? '—',
-        type: 'Obligatoria' as const,
-        status: 'Activa' as const,
+        type: uc.catalogo?.tipo === 'PRACTICA_PROFESIONAL' ? 'Práctica Profesional' as const : 'Regular' as const,
         _raw: uc,
       })))
     } catch { setData([]) }
@@ -60,7 +64,10 @@ export function CurriculumUnitsPage() {
   }, [fetchData])
 
   const handleCreate = async (formData: UcFormValues) => {
-    await api.post('/unidades-curriculares', formData)
+    const { ucCatalogoIdSeleccionado, nombre, tipo, ...rest } = formData
+    await api.post('/unidades-curriculares', ucCatalogoIdSeleccionado
+      ? { ...rest, ucCatalogoId: ucCatalogoIdSeleccionado }
+      : { ...rest, nombre, tipo })
     await fetchData()
   }
 

@@ -229,26 +229,26 @@ export function AdminUserFormModal({
           )}
           {showSedePnfField && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="coordSedeId">Sede</Label>
-                {sedeLockedForRector && (
-                  <p className="text-xs text-muted-foreground">Los coordinadores que cree pertenecen a su misma sede.</p>
-                )}
-                <Select
-                  value={selectedCoordSedeId}
-                  onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}
-                  disabled={sedeLockedForRector}
-                >
-                  <SelectTrigger id="coordSedeId" className="w-full">
-                    <SelectValue placeholder="Seleccione una sede" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {coordSedeOptions.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {sedeLockedForRector ? (
+                <p className="text-xs text-muted-foreground">Los coordinadores que cree pertenecen a su misma sede.</p>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="coordSedeId">Sede</Label>
+                  <Select
+                    value={selectedCoordSedeId}
+                    onValueChange={(v) => { setSelectedCoordSedeId(v); setValue('sedePnfId', '') }}
+                  >
+                    <SelectTrigger id="coordSedeId" className="w-full">
+                      <SelectValue placeholder="Seleccione una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {coordSedeOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="sedePnfId">PNF</Label>
                 <Controller

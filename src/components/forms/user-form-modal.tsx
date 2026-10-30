@@ -59,6 +59,9 @@ export function UserFormModal({
   const sedePnfIdValue = watch('sedePnfId')
 
   const showPnfField = currentUser?.role === Role.SUPERADMIN || currentUser?.role === Role.RECTOR
+  // Un RECTOR solo tiene una sede propia (ya preseleccionada más abajo):
+  // mostrarle el selector es un paso extra sin ninguna decisión real que tomar.
+  const showSedeSelect = showPnfField && currentUser?.role !== Role.RECTOR
   const showTrayectoField = defaultRole === Role.ALUMNO
   const ciEditable = currentUser?.role === Role.SUPERADMIN
   const effectiveSedePnfId = showPnfField ? sedePnfIdValue : currentUser?.sedePnfId
@@ -170,19 +173,21 @@ export function UserFormModal({
           </div>
           {showPnfField && (
             <>
-              <div className="space-y-2">
-                <Label htmlFor="sedeId">Sede</Label>
-                <Select value={selectedSedeId} onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', '') }}>
-                  <SelectTrigger id="sedeId" className="w-full">
-                    <SelectValue placeholder="Seleccione una sede" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sedeOptions.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {showSedeSelect && (
+                <div className="space-y-2">
+                  <Label htmlFor="sedeId">Sede</Label>
+                  <Select value={selectedSedeId} onValueChange={(v) => { setSelectedSedeId(v); setValue('sedePnfId', '') }}>
+                    <SelectTrigger id="sedeId" className="w-full">
+                      <SelectValue placeholder="Seleccione una sede" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sedeOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="sedePnfId">PNF</Label>
                 {isEditing && (

@@ -99,19 +99,19 @@ export function InconsistenciasPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="shadow-md">
-          <CardContent className="pt-6">
+          <CardContent>
             <p className="text-2xl font-bold tabular-nums text-foreground">{alumnosAfectados}</p>
             <p className="text-sm text-muted-foreground">Alumnos afectados</p>
           </CardContent>
         </Card>
         <Card className="shadow-md">
-          <CardContent className="pt-6">
+          <CardContent>
             <p className="text-2xl font-bold tabular-nums text-foreground">{porTipo("MULTIPLE_SECCION")}</p>
             <p className="text-sm text-muted-foreground">Casos: {TIPO_LABEL.MULTIPLE_SECCION.toLowerCase()}</p>
           </CardContent>
         </Card>
         <Card className="shadow-md">
-          <CardContent className="pt-6">
+          <CardContent>
             <p className="text-2xl font-bold tabular-nums text-foreground">{porTipo("MULTIPLE_GRUPO_MISMA_UC")}</p>
             <p className="text-sm text-muted-foreground">Casos: {TIPO_LABEL.MULTIPLE_GRUPO_MISMA_UC.toLowerCase()}</p>
           </CardContent>

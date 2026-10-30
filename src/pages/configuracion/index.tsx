@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
-import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar, DatabaseBackup } from "lucide-react"
+import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar, DatabaseBackup, Pencil } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -303,7 +303,9 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
                           <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setEditing(item); setModalOpen(true) }}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { setEditing(item); setModalOpen(true) }}>
+                            <Pencil className="mr-2 h-4 w-4" />Editar
+                          </DropdownMenuItem>
                           {config.hasGenerarEstructura && (
                             <DropdownMenuItem onClick={() => { setGeneratingFor(item); setGenNumeroTrayectos(4); setGenRequierePiu(true) }}>
                               <Wand2 className="mr-2 h-4 w-4" />Generar estructura

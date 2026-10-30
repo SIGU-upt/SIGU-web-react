@@ -115,7 +115,7 @@ export function MatriculasPage() {
         ) : undefined}
       />
       <Card className="shadow-md" data-tour="matriculas-tabla">
-        <CardContent className="pt-6">
+        <CardContent>
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
           ) : (

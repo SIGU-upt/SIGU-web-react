@@ -17,6 +17,7 @@ export interface User {
   email: string
   role: Role
   sedeActualId: string | null
+  sedeActual?: Sede | null
   sedePnfId: string | null
   sedePnf?: SedePnf | null
   trayectoActualId?: string | null

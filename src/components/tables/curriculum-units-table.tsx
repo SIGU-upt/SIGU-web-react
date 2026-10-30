@@ -36,8 +36,7 @@ interface CurriculumUnit {
   code: string
   name: string
   trayecto: string
-  type: "Obligatoria" | "Electiva"
-  status: "Activa" | "Inactiva"
+  type: "Regular" | "Práctica Profesional"
 }
 
 interface CurriculumUnitsTableProps<T extends CurriculumUnit> {
@@ -73,7 +72,6 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
         'Unidad Curricular': item.name,
         Trayecto: item.trayecto,
         Tipo: item.type,
-        Estado: item.status,
       })),
     )
   }
@@ -129,7 +127,6 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
                 <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
                 <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
                 <TableHead className="font-semibold text-foreground">Tipo</TableHead>
-                <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -151,9 +148,6 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={item.type} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={item.status} />
                     </TableCell>
                     <TableCell className="text-right">
                       {canEdit ? (
@@ -190,7 +184,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground italic">
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
                     No se encontraron unidades curriculares.
                   </TableCell>
                 </TableRow>
