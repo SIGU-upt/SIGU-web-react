@@ -1,6 +1,6 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { User as UserIcon, KeyRound } from "lucide-react"
+import { User as UserIcon, KeyRound, Building2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,13 @@ export function PerfilPage() {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<PasswordFormData>()
   const newPassword = watch("newPassword")
   const [pendingPassword, setPendingPassword] = useState<PasswordFormData | null>(null)
+  const [rectoresDeMiSede, setRectoresDeMiSede] = useState<{ id: string; nombreCompleto: string; ci: string }[]>([])
+
+  useEffect(() => {
+    api.get('/users/mi-institucion').then((res) => {
+      setRectoresDeMiSede(Array.isArray(res.data) ? res.data : [])
+    }).catch(() => setRectoresDeMiSede([]))
+  }, [])
 
   if (!user) return null
 
@@ -95,6 +102,24 @@ export function PerfilPage() {
           )}
         </CardContent>
       </Card>
+
+      {rectoresDeMiSede.length > 0 && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Mi institución
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              {user.role === Role.RECTOR ? 'Otros rectores de su misma sede:' : 'Rector(es) de su sede:'}
+            </p>
+            {rectoresDeMiSede.map((r) => (
+              <p key={r.id} className="text-sm">{r.nombreCompleto} — {r.ci}</p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="shadow-md">
         <CardHeader>
