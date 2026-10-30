@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate, Link } from "react-router-dom"
-import { ArrowLeft, Building, BookOpen, Users, GraduationCap, Layers } from "lucide-react"
+import { ArrowLeft, Building, BookOpen, Users, GraduationCap, Layers, Plus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/ui/page-header"
 import { PaginationControls } from "@/components/ui/pagination-controls"
-import { type Sede, type SedePnf, type Seccion, type User } from "@/types"
+import { Role, type Sede, type SedePnf, type Seccion, type User } from "@/types"
+import { VincularPnfModal } from "@/components/forms/vincular-pnf-modal"
+import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 
 export function SedeDetallePage() {
@@ -23,6 +25,10 @@ export function SedeDetallePage() {
   const [alumnosPage, setAlumnosPage] = useState(1)
   const [alumnosLoading, setAlumnosLoading] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [vinculando, setVinculando] = useState(false)
+  const { user } = useAuth()
+  // POST /sede-pnf solo lo permite el API a SUPERADMIN y RECTOR.
+  const puedeVincular = user ? [Role.SUPERADMIN, Role.RECTOR].includes(user.role) : false
 
   const fetchData = useCallback(async () => {
     if (!id) return
@@ -96,8 +102,13 @@ export function SedeDetallePage() {
       <PageHeader title={sede.nombre} subtitle={sede.ubicacion} icon={<Building className="h-5 w-5" />} />
 
       <Card className="shadow-md">
-        <CardHeader className="pb-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
           <CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-5 w-5" /> PNF ofrecidos ({sedePnfs.length})</CardTitle>
+          {puedeVincular && (
+            <Button variant="outline" size="sm" onClick={() => setVinculando(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Vincular PNF
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {sedePnfs.length === 0 ? (
@@ -208,6 +219,15 @@ export function SedeDetallePage() {
           )}
         </CardContent>
       </Card>
+
+      <VincularPnfModal
+        open={vinculando}
+        onOpenChange={setVinculando}
+        sedeId={sede.id}
+        sedeNombre={sede.nombre}
+        pnfIdsVinculados={sedePnfs.map((sp) => sp.pnfId)}
+        onDone={fetchData}
+      />
     </div>
   )
 }
