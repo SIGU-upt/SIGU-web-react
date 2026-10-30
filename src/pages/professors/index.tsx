@@ -39,6 +39,13 @@ export function ProfessorsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
+  const [orderBy, setOrderBy] = useState<'apellidos' | 'ci' | 'email'>('apellidos')
+  const [orderDir, setOrderDir] = useState<'ASC' | 'DESC'>('ASC')
+  const toggleSort = (key: 'apellidos' | 'ci' | 'email') => {
+    setOrderDir((dir) => (orderBy === key ? (dir === 'ASC' ? 'DESC' : 'ASC') : 'ASC'))
+    setOrderBy(key)
+    setPage(1)
+  }
 
   // Igual que en Estudiantes: superadmin/auditor tienen alcance global (necesitan
   // sede + PNF para acotar), rector ya viene escopado a su sede por el backend
@@ -96,7 +103,7 @@ export function ProfessorsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string | number> = { role: 'DOCENTE', page, limit: 20 }
+      const params: Record<string, string | number> = { role: 'DOCENTE', page, limit: 20, orderBy, orderDir }
       if (debouncedSearch) params.q = debouncedSearch
       if (isUnscoped && sedeFilter) params.sedeId = sedeFilter
       if (pnfFilter) params.pnfId = pnfFilter
@@ -141,7 +148,7 @@ export function ProfessorsPage() {
       if (res.data.meta) setMeta(res.data.meta)
     } catch { setUsers([]) }
     finally { setLoading(false) }
-  }, [isUnscoped, sedeFilter, pnfFilter, page, debouncedSearch])
+  }, [isUnscoped, sedeFilter, pnfFilter, page, debouncedSearch, orderBy, orderDir])
 
   useEffect(() => {
     fetchData()
@@ -221,6 +228,9 @@ export function ProfessorsPage() {
         totalPages={meta.totalPages}
         totalItems={meta.total}
         onPageChange={setPage}
+        orderBy={orderBy}
+        orderDir={orderDir}
+        onToggleSort={toggleSort}
       />
 
       <UserFormModal

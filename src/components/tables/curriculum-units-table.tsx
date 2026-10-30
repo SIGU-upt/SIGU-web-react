@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSortableData } from "@/hooks/use-sortable-data"
 import { downloadCsv } from "@/lib/export-csv"
 
 interface CurriculumUnit {
@@ -59,9 +61,14 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
       item.code.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const { sorted, sort, toggleSort } = useSortableData<T, 'code' | 'name' | 'trayecto' | 'type'>(
+    filteredData,
+    (item, key) => item[key],
+  )
+
+  const totalPages = Math.ceil(sorted.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedData = sorted.slice(startIndex, startIndex + itemsPerPage)
 
   const exportPensum = () => {
     if (filteredData.length === 0) return
@@ -123,10 +130,10 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="font-semibold text-foreground w-[120px]">Código</TableHead>
-                <TableHead className="font-semibold text-foreground">Unidad Curricular</TableHead>
-                <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
-                <TableHead className="font-semibold text-foreground">Tipo</TableHead>
+                <SortableTableHead sortKey="code" sort={sort} onSort={toggleSort} className="font-semibold text-foreground w-[120px]">Código</SortableTableHead>
+                <SortableTableHead sortKey="name" sort={sort} onSort={toggleSort} className="font-semibold text-foreground">Unidad Curricular</SortableTableHead>
+                <SortableTableHead sortKey="trayecto" sort={sort} onSort={toggleSort} className="font-semibold text-foreground text-center">Trayecto</SortableTableHead>
+                <SortableTableHead sortKey="type" sort={sort} onSort={toggleSort} className="font-semibold text-foreground">Tipo</SortableTableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>

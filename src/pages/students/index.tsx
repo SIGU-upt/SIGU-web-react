@@ -45,6 +45,13 @@ export function StudentsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
+  const [orderBy, setOrderBy] = useState<'apellidos' | 'ci' | 'email'>('apellidos')
+  const [orderDir, setOrderDir] = useState<'ASC' | 'DESC'>('ASC')
+  const toggleSort = (key: 'apellidos' | 'ci' | 'email') => {
+    setOrderDir((dir) => (orderBy === key ? (dir === 'ASC' ? 'DESC' : 'ASC') : 'ASC'))
+    setOrderBy(key)
+    setPage(1)
+  }
 
   const isSuperadmin = user?.role === Role.SUPERADMIN
   const isRector = user?.role === Role.RECTOR
@@ -99,7 +106,7 @@ export function StudentsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string | number> = { role: 'ALUMNO', page, limit: 20 }
+      const params: Record<string, string | number> = { role: 'ALUMNO', page, limit: 20, orderBy, orderDir }
       if (debouncedSearch) params.q = debouncedSearch
       if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
       if (pnfFilter) params.pnfId = pnfFilter
@@ -127,7 +134,7 @@ export function StudentsPage() {
       if (res.data.meta) setMeta(res.data.meta)
     } catch { setUsers([]) }
     finally { setLoading(false) }
-  }, [isSuperadmin, sedeFilter, pnfFilter, trayectoFilter, page, debouncedSearch])
+  }, [isSuperadmin, sedeFilter, pnfFilter, trayectoFilter, page, debouncedSearch, orderBy, orderDir])
 
   useEffect(() => {
     fetchData()
@@ -254,6 +261,9 @@ export function StudentsPage() {
         totalPages={meta.totalPages}
         totalItems={meta.total}
         onPageChange={setPage}
+        orderBy={orderBy}
+        orderDir={orderDir}
+        onToggleSort={toggleSort}
       />
 
       <UserFormModal

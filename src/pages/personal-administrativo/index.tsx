@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/ui/pagination-controls"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import { useSortableData } from "@/hooks/use-sortable-data"
 import { PageHeader } from "@/components/ui/page-header"
 import { AdminUserFormModal, type AdminUserFormData } from "@/components/forms/admin-user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
@@ -166,10 +168,17 @@ export function PersonalAdministrativoPage() {
     return isRector ? sp.pnf?.nombre ?? '—' : `${sp.pnf?.nombre ?? ''} — ${sp.sede?.nombre ?? ''}`
   }
 
+  const { sorted, sort, toggleSort } = useSortableData<User, 'nombre' | 'ci' | 'rol' | 'sedePnf'>(data, (u, key) => {
+    if (key === 'nombre') return u.nombreCompleto
+    if (key === 'ci') return u.ci
+    if (key === 'rol') return ROLE_LABELS[u.role] ?? u.role
+    return u.role === Role.RECTOR ? sedeNombre(u.sedeActualId) : sedePnfLabel(u.sedePnfId)
+  })
+
   const perPage = 10
-  const totalPages = Math.ceil(data.length / perPage)
+  const totalPages = Math.ceil(sorted.length / perPage)
   const start = (page - 1) * perPage
-  const paginated = data.slice(start, start + perPage)
+  const paginated = sorted.slice(start, start + perPage)
 
   return (
     <div className="space-y-6">
@@ -231,10 +240,10 @@ export function PersonalAdministrativoPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted">
-                    <TableHead className="font-semibold">Nombre</TableHead>
-                    <TableHead className="font-semibold">Cédula</TableHead>
-                    <TableHead className="font-semibold">Rol</TableHead>
-                    <TableHead className="font-semibold">{isRector ? 'PNF' : 'Sede/PNF'}</TableHead>
+                    <SortableTableHead sortKey="nombre" sort={sort} onSort={toggleSort} className="font-semibold">Nombre</SortableTableHead>
+                    <SortableTableHead sortKey="ci" sort={sort} onSort={toggleSort} className="font-semibold">Cédula</SortableTableHead>
+                    <SortableTableHead sortKey="rol" sort={sort} onSort={toggleSort} className="font-semibold">Rol</SortableTableHead>
+                    <SortableTableHead sortKey="sedePnf" sort={sort} onSort={toggleSort} className="font-semibold">{isRector ? 'PNF' : 'Sede/PNF'}</SortableTableHead>
                     <TableHead className="font-semibold text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>

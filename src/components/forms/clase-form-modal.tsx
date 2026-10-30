@@ -66,8 +66,16 @@ export function ClaseFormModal({
   // cambiaría nada: solo tiene efecto real para RECTOR (acotado a su sede, no
   // a su PNF) y SUPERADMIN (sin acotar).
   const puedeVerOtrosPnf = user?.role === Role.RECTOR || user?.role === Role.SUPERADMIN
+  // Un coordinador no puede listar docentes de otros PNF (ni siquiera de su
+  // propia sede), pero sí puede resolver una cédula exacta — el backend tiene
+  // una excepción puntual para ese caso (comentario de Vercel en /docentes:
+  // "pedir que algún otro docente venga a dar clases a sus pnf").
+  const esCoordinador = user?.role === Role.COORDINADOR
+  const [cedulaBusqueda, setCedulaBusqueda] = useState("")
+  const [buscandoDocente, setBuscandoDocente] = useState(false)
+  const [errorBusquedaDocente, setErrorBusquedaDocente] = useState<string | null>(null)
 
-  const { register, handleSubmit, reset, watch, control, formState: { errors } } = useForm<ClaseFormData>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<ClaseFormData>({
     defaultValues: { ...DEFAULT_VALUES, ...initialData },
   })
   const horaInicio = watch('horaInicio')
@@ -82,8 +90,32 @@ export function ClaseFormModal({
       })
       setError(null)
       setMostrarOtrosPnf(false)
+      setCedulaBusqueda("")
+      setErrorBusquedaDocente(null)
     }
   }, [open, initialData, reset])
+
+  const buscarDocentePorCedula = async () => {
+    const ci = cedulaBusqueda.trim()
+    if (!ci) return
+    setBuscandoDocente(true)
+    setErrorBusquedaDocente(null)
+    try {
+      const res = await api.get('/users', { params: { ci, role: 'DOCENTE' } })
+      const list = res.data.data ?? res.data
+      const encontrado = Array.isArray(list) ? list[0] : undefined
+      if (!encontrado) {
+        setErrorBusquedaDocente('No se encontró un docente con esa cédula en su sede.')
+        return
+      }
+      setDocenteOptions((prev) => (prev.some((d) => d.id === encontrado.id) ? prev : [...prev, encontrado]))
+      setValue('docenteId', encontrado.id, { shouldValidate: true })
+    } catch (err) {
+      setErrorBusquedaDocente(getErrorMessage(err, 'No se pudo buscar la cédula'))
+    } finally {
+      setBuscandoDocente(false)
+    }
+  }
 
   useEffect(() => {
     if (!open) return
@@ -158,6 +190,22 @@ export function ClaseFormModal({
                 <Label htmlFor="mostrarOtrosPnf" className="text-xs font-normal text-muted-foreground">
                   Mostrar docentes de otros PNF
                 </Label>
+              </div>
+            )}
+            {esCoordinador && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Cédula de un docente de otro PNF de su sede"
+                    value={cedulaBusqueda}
+                    onChange={(e) => setCedulaBusqueda(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={buscarDocentePorCedula} disabled={buscandoDocente || !cedulaBusqueda.trim()}>
+                    {buscandoDocente ? 'Buscando...' : 'Buscar'}
+                  </Button>
+                </div>
+                {errorBusquedaDocente && <p className="text-xs text-destructive">{errorBusquedaDocente}</p>}
               </div>
             )}
             <Controller

@@ -31,6 +31,7 @@ import { ImportModal, type ImportResult } from "@/components/dashboard/import-mo
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
 
 interface Professor {
   id: string | number
@@ -70,9 +71,13 @@ interface ProfessorsTableProps<T extends Professor> {
   totalPages: number
   totalItems: number
   onPageChange: (page: number) => void
+  // Ordenamiento resuelto por el servidor (ver UsersService.findAll).
+  orderBy?: 'apellidos' | 'ci' | 'email'
+  orderDir?: 'ASC' | 'DESC'
+  onToggleSort?: (key: 'apellidos' | 'ci' | 'email') => void
 }
 
-export function ProfessorsTable<T extends Professor>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, onResetPassword, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps<T>) {
+export function ProfessorsTable<T extends Professor>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, onResetPassword, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange, orderBy, orderDir, onToggleSort }: ProfessorsTableProps<T>) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
@@ -155,8 +160,17 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="font-semibold text-foreground">Docente</TableHead>
-                <TableHead className="font-semibold text-foreground">Documento</TableHead>
+                {onToggleSort ? (
+                  <>
+                    <SortableTableHead sortKey="apellidos" sort={{ key: orderBy ?? null, direction: orderDir === 'DESC' ? 'desc' : 'asc' }} onSort={onToggleSort} className="font-semibold text-foreground">Docente</SortableTableHead>
+                    <SortableTableHead sortKey="ci" sort={{ key: orderBy ?? null, direction: orderDir === 'DESC' ? 'desc' : 'asc' }} onSort={onToggleSort} className="font-semibold text-foreground">Documento</SortableTableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="font-semibold text-foreground">Docente</TableHead>
+                    <TableHead className="font-semibold text-foreground">Documento</TableHead>
+                  </>
+                )}
                 <TableHead className="font-semibold text-foreground">U.Cs Asignadas</TableHead>
                 <TableHead className="font-semibold text-foreground">Estado</TableHead>
                 <TableHead className="font-semibold text-foreground text-right">Acciones</TableHead>
