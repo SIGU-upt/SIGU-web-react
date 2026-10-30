@@ -15,6 +15,15 @@ export const requiredTextRule = {
   setValueAs: (value: unknown) => (typeof value === 'string' ? value.trim() : value),
 };
 
+/**
+ * Nombres y apellidos de personas: solo letras de cualquier alfabeto, espacios, apóstrofes y guiones.
+ * Es la misma regla que aplica el API (@Matches con \p{L}); así el error sale antes de enviar.
+ */
+export const nameRule = {
+  ...requiredTextRule,
+  pattern: { value: /^[\p{L}'’\- ]+$/u, message: 'Solo letras, espacios, apóstrofes y guiones' },
+};
+
 /** Correo electrónico con formato válido. */
 export const emailRule = {
   required: 'Requerido',
