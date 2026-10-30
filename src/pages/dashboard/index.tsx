@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { crearEstudiante } from "@/lib/estudiantes"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { Role } from "@/types"
@@ -35,7 +36,10 @@ export function DashboardPage() {
   const canCreateUsers = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
 
   const handleCreateUser = async (data: UserFormData) => {
-    await api.post('/users', { ...data, role: newUserRole })
+    // El estudiante se crea igual que en Estudiantes (trayecto y matrícula incluidos).
+    // El docente no tiene campo de trayecto en el formulario.
+    if (newUserRole === Role.ALUMNO) await crearEstudiante(data, user?.sedePnfId)
+    else await api.post('/users', { ...data, role: newUserRole })
   }
 
   const roleLabels: Record<string, string> = {
