@@ -99,7 +99,7 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
                 title="Importar Docentes"
                 description="Seleccione un archivo .xlsx con la lista de docentes"
                 buttonLabel="Cargar Docentes"
-                templateHeaders={["ci", "nombres", "apellidos", "email"]}
+                templateHeaders={["ci", "nombres", "apellidos", "email", "sedePnf"]}
                 templateFilename="plantilla-docentes.csv"
               />
             )}

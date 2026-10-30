@@ -110,7 +110,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                 title="Importar Estudiantes"
                 description="Seleccione un archivo .xlsx con la lista de estudiantes"
                 buttonLabel="Cargar Estudiantes"
-                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "clasesIds"]}
+                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "sedePnf", "clasesIds"]}
                 templateFilename="plantilla-estudiantes.csv"
               />
             )}
