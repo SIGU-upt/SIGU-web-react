@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useNavigate } from "react-router-dom"
-import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar } from "lucide-react"
+import { Settings, Search, Plus, Trash2, Building, BookOpen, MoreVertical, Wand2, Calendar, DatabaseBackup } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { RespaldoTab } from "@/components/configuracion/respaldo-tab"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico, type GenerarEstructuraResultado, type GenerarPeriodosResultado } from "@/types"
 import { avisarEstructuraGenerada, avisarPeriodosGenerados } from "@/lib/generacion"
@@ -438,6 +439,7 @@ export function ConfiguracionPage() {
   const { user } = useAuth()
   const isCoordinador = user?.role === Role.COORDINADOR
   const isRector = user?.role === Role.RECTOR
+  const isSuperadmin = user?.role === Role.SUPERADMIN
   // Sedes y Sede-PNF son de alcance global (todas las sedes de la institución):
   // un coordinador o rector solo administra la suya, así que esas pestañas no
   // aportan y solo confunden. La pestaña PNFs sí se muestra a un coordinador
@@ -457,11 +459,13 @@ export function ConfiguracionPage() {
           <TabsTrigger value="pnfs"><BookOpen className="mr-2 h-4 w-4" />PNFs</TabsTrigger>
           {showSedeTabs && <TabsTrigger value="sedePnf"><Building className="mr-2 h-4 w-4" />Sede-PNF</TabsTrigger>}
           <TabsTrigger value="periodos"><Calendar className="mr-2 h-4 w-4" />Períodos</TabsTrigger>
+          {isSuperadmin && <TabsTrigger value="respaldo"><DatabaseBackup className="mr-2 h-4 w-4" />Respaldo</TabsTrigger>}
         </TabsList>
         {showSedeTabs && <TabsContent value="sedes" className="mt-4"><CrudTabWithModals config={entityConfigs.sedes} /></TabsContent>}
         <TabsContent value="pnfs" className="mt-4"><CrudTabWithModals config={entityConfigs.pnfs} /></TabsContent>
         {showSedeTabs && <TabsContent value="sedePnf" className="mt-4"><CrudTabWithModals config={entityConfigs.sedePnf} /></TabsContent>}
         <TabsContent value="periodos" className="mt-4"><CrudTabWithModals config={entityConfigs.periodos} /></TabsContent>
+        {isSuperadmin && <TabsContent value="respaldo" className="mt-4"><RespaldoTab /></TabsContent>}
       </Tabs>
     </div>
   )
