@@ -31,6 +31,7 @@ import { ImportModal, type ImportResult } from "@/components/dashboard/import-mo
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { type Trayecto } from "@/types"
 
 interface Student {
@@ -75,9 +76,13 @@ interface StudentsTableProps<T extends Student> {
   totalPages: number
   totalItems: number
   onPageChange: (page: number) => void
+  // Ordenamiento resuelto por el servidor (ver UsersService.findAll).
+  orderBy?: 'apellidos' | 'ci' | 'email'
+  orderDir?: 'ASC' | 'DESC'
+  onToggleSort?: (key: 'apellidos' | 'ci' | 'email') => void
 }
 
-export function StudentsTable<T extends Student>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, onResetPassword, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: StudentsTableProps<T>) {
+export function StudentsTable<T extends Student>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, onResetPassword, canEdit, canResetDevice, canDelete, trayectoOptions, trayectoFilter, onTrayectoFilterChange, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange, orderBy, orderDir, onToggleSort }: StudentsTableProps<T>) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
   // El trayecto se filtra por número, no por fila: "Trayecto 1" de PNF
@@ -177,8 +182,17 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
-                <TableHead className="font-semibold text-foreground">Documento</TableHead>
+                {onToggleSort ? (
+                  <>
+                    <SortableTableHead sortKey="apellidos" sort={{ key: orderBy ?? null, direction: orderDir === 'DESC' ? 'desc' : 'asc' }} onSort={onToggleSort} className="font-semibold text-foreground">Estudiante</SortableTableHead>
+                    <SortableTableHead sortKey="ci" sort={{ key: orderBy ?? null, direction: orderDir === 'DESC' ? 'desc' : 'asc' }} onSort={onToggleSort} className="font-semibold text-foreground">Documento</SortableTableHead>
+                  </>
+                ) : (
+                  <>
+                    <TableHead className="font-semibold text-foreground">Estudiante</TableHead>
+                    <TableHead className="font-semibold text-foreground">Documento</TableHead>
+                  </>
+                )}
                 <TableHead className="font-semibold text-foreground">Carrera</TableHead>
                 <TableHead className="font-semibold text-foreground text-center">Trayecto</TableHead>
                 <TableHead className="font-semibold text-foreground">Estado</TableHead>
