@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Shield, Search, Plus, SmartphoneNfc, MoreVertical, Pencil, Trash2 } from "lucide-react"
+import { Shield, Search, Plus, SmartphoneNfc, KeyRound, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Sede, type SedePnf } from "@/types"
 import api from "@/config/api"
+import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -35,6 +36,7 @@ export function PersonalAdministrativoPage() {
   const [editing, setEditing] = useState<User | null>(null)
   const [deleting, setDeleting] = useState<User | null>(null)
   const [resettingDevice, setResettingDevice] = useState<User | null>(null)
+  const [resettingPassword, setResettingPassword] = useState<User | null>(null)
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
 
@@ -186,7 +188,7 @@ export function PersonalAdministrativoPage() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex flex-wrap items-center gap-3 flex-1">
+            <div className="flex flex-wrap items-center gap-3 flex-1" data-tour="personal-filtros">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Buscar por nombre, cédula o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -215,7 +217,7 @@ export function PersonalAdministrativoPage() {
               )}
             </div>
             {canEdit && (
-              <Button className="bg-primary" onClick={() => { setEditing(null); setModalOpen(true) }}>
+              <Button className="bg-primary" data-tour="personal-nuevo" onClick={() => { setEditing(null); setModalOpen(true) }}>
                 <Plus className="mr-2 h-4 w-4" /> Nuevo
               </Button>
             )}
@@ -262,6 +264,12 @@ export function PersonalAdministrativoPage() {
                                 <DropdownMenuItem onClick={() => setResettingDevice(u)}>
                                   <SmartphoneNfc className="mr-2 h-4 w-4" />
                                   Reiniciar Dispositivo
+                                </DropdownMenuItem>
+                              )}
+                              {canResetDevice && (
+                                <DropdownMenuItem onClick={() => setResettingPassword(u)}>
+                                  <KeyRound className="mr-2 h-4 w-4" />
+                                  Generar contraseña temporal
                                 </DropdownMenuItem>
                               )}
                               {canDelete && (
@@ -319,6 +327,11 @@ export function PersonalAdministrativoPage() {
         description={`Esto permitirá que ${resettingDevice?.nombreCompleto} vuelva a iniciar sesión desde un nuevo dispositivo. ¿Desea continuar?`}
         confirmLabel="Reiniciar"
         loadingLabel="Reiniciando..."
+      />
+
+      <ResetPasswordModal
+        usuario={resettingPassword ? { id: resettingPassword.id, nombre: resettingPassword.nombreCompleto } : null}
+        onClose={() => setResettingPassword(null)}
       />
     </div>
   )

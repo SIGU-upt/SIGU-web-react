@@ -13,7 +13,7 @@ import { passwordMeetsRequirements, generateStrongPassword } from "@/lib/passwor
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
-import { requiredTextRule, emailRule, ciRule } from "@/lib/validators"
+import { nameRule, emailRule, ciRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
 export interface UserFormData {
@@ -140,12 +140,12 @@ export function UserFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nombres">Nombres</Label>
-              <Input id="nombres" {...register('nombres', requiredTextRule)} />
+              <Input id="nombres" {...register('nombres', nameRule)} />
               {errors.nombres && <p className="text-xs text-destructive">{errors.nombres.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="apellidos">Apellidos</Label>
-              <Input id="apellidos" {...register('apellidos', requiredTextRule)} />
+              <Input id="apellidos" {...register('apellidos', nameRule)} />
               {errors.apellidos && <p className="text-xs text-destructive">{errors.apellidos.message}</p>}
             </div>
           </div>

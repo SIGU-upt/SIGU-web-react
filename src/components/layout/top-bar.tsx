@@ -42,11 +42,15 @@ const roleLabels: Record<Role, string> = {
 // tramo genérico "Detalle" cuando hay un id de por medio (ej. /secciones/:id)
 // — no hay forma de saber el nombre real de la entidad sin otra llamada al
 // servidor, que queda fuera de alcance de un breadcrumb.
+// Las pantallas de detalle de Sede y PNF no tienen listado propio (/sedes y /pnfs no existen como rutas):
+// se llega a ellas desde Configuración, así que el primer tramo del rastro enlaza ahí.
+const LISTADO_DE_ORIGEN: Record<string, string> = { "/sedes": "/configuracion", "/pnfs": "/configuracion" }
+
 function useBreadcrumbs(pathname: string) {
   const segments = pathname.split("/").filter(Boolean)
   if (segments.length === 0) return []
   const basePath = `/${segments[0]}`
-  const crumbs = [{ label: routeLabels[basePath] ?? segments[0], path: basePath }]
+  const crumbs = [{ label: routeLabels[basePath] ?? segments[0], path: LISTADO_DE_ORIGEN[basePath] ?? basePath }]
   if (segments.length > 1) {
     crumbs.push({ label: "Detalle", path: pathname })
   }

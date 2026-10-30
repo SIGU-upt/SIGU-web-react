@@ -106,6 +106,25 @@ const VIEW_TOURS: { prefix: string; steps: DriveStep[] }[] = [
     ],
   },
   {
+    prefix: "/personal-administrativo",
+    steps: [
+      {
+        element: '[data-tour="personal-filtros"]',
+        popover: {
+          title: "Buscar y filtrar",
+          description: "Busque por nombre, cédula o correo, y acote por sede o PNF si su rol lo permite. Cada rol ve solo el personal que le corresponde gestionar.",
+        },
+      },
+      {
+        element: '[data-tour="personal-nuevo"]',
+        popover: {
+          title: "Crear personal",
+          description: "Agregue un rector, coordinador o auditor nuevo. Un rector solo puede crear coordinadores y auditores de su sede.",
+        },
+      },
+    ],
+  },
+  {
     prefix: "/configuracion",
     steps: [
       {

@@ -4,6 +4,7 @@ import { ProfessorsTable } from "@/components/tables/professors-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type SedePnf, type Clase } from "@/types"
@@ -30,6 +31,7 @@ export function ProfessorsPage() {
   const [editingUser, setEditingUser] = useState<ProfessorRow | null>(null)
   const [deletingUser, setDeletingUser] = useState<ProfessorRow | null>(null)
   const [resettingDeviceUser, setResettingDeviceUser] = useState<ProfessorRow | null>(null)
+  const [resettingPasswordUser, setResettingPasswordUser] = useState<ProfessorRow | null>(null)
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
@@ -203,6 +205,7 @@ export function ProfessorsPage() {
         onEdit={(item) => { setEditingUser(item); setModalOpen(true) }}
         onDelete={(item) => setDeletingUser(item)}
         onResetDevice={(item) => setResettingDeviceUser(item)}
+        onResetPassword={(item) => setResettingPasswordUser(item)}
         canEdit={canEdit}
         canResetDevice={canResetDevice}
         canDelete={canDelete}
@@ -245,6 +248,11 @@ export function ProfessorsPage() {
         description={`Esto permitirá que ${resettingDeviceUser?.name} vuelva a iniciar sesión desde un nuevo dispositivo. ¿Desea continuar?`}
         confirmLabel="Reiniciar"
         loadingLabel="Reiniciando..."
+      />
+
+      <ResetPasswordModal
+        usuario={resettingPasswordUser ? { id: resettingPasswordUser.id, nombre: resettingPasswordUser.name } : null}
+        onClose={() => setResettingPasswordUser(null)}
       />
     </div>
   )

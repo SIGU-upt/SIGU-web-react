@@ -5,6 +5,7 @@ import {
   GraduationCap,
   Trash2,
   SmartphoneNfc,
+  KeyRound,
   Download,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -50,6 +51,7 @@ interface ProfessorsTableProps<T extends Professor> {
   onEdit: (item: T) => void
   onDelete: (item: T) => void
   onResetDevice: (item: T) => void
+  onResetPassword: (item: T) => void
   canEdit: boolean
   canResetDevice: boolean
   canDelete: boolean
@@ -70,7 +72,7 @@ interface ProfessorsTableProps<T extends Professor> {
   onPageChange: (page: number) => void
 }
 
-export function ProfessorsTable<T extends Professor>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps<T>) {
+export function ProfessorsTable<T extends Professor>({ data, loading, onImport, onExport, onCreate, onEdit, onDelete, onResetDevice, onResetPassword, canEdit, canResetDevice, canDelete, sedeOptions, sedeFilter, onSedeFilterChange, pnfOptions, pnfFilter, onPnfFilterChange, searchQuery, onSearchQueryChange, currentPage, totalPages, totalItems, onPageChange }: ProfessorsTableProps<T>) {
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
@@ -220,6 +222,12 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
                               <DropdownMenuItem onClick={() => onResetDevice(item)}>
                                 <SmartphoneNfc className="mr-2 h-4 w-4" />
                                 Reiniciar Dispositivo
+                              </DropdownMenuItem>
+                            )}
+                            {canResetDevice && (
+                              <DropdownMenuItem onClick={() => onResetPassword(item)}>
+                                <KeyRound className="mr-2 h-4 w-4" />
+                                Generar contraseña temporal
                               </DropdownMenuItem>
                             )}
                             {canDelete && (

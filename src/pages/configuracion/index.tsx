@@ -410,10 +410,23 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
                 Activo
               </label>
               <div className="space-y-2">
-                <Label>Sede-PNF ({multipleSedePnfIds.length} seleccionadas)</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Sede-PNF ({multipleSedePnfIds.length} seleccionadas)</Label>
+                  {multipleSedePnfOptions.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setMultipleSedePnfIds(multipleSedePnfIds.length === multipleSedePnfOptions.length ? [] : multipleSedePnfOptions.map((sp) => sp.id))}
+                    >
+                      {multipleSedePnfIds.length === multipleSedePnfOptions.length ? "Quitar todas" : "Seleccionar todas"}
+                    </Button>
+                  )}
+                </div>
                 <div className="max-h-48 overflow-y-auto rounded-md border border-input">
                   {multipleSedePnfOptions.map((sp) => (
-                    <label key={sp.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent cursor-pointer">
+                    <label key={sp.id} className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/70 cursor-pointer">
                       <Checkbox checked={multipleSedePnfIds.includes(sp.id)} onCheckedChange={() => toggleMultipleSedePnf(sp.id)} />
                       <span>{sp.pnf?.nombre ?? '—'} — {sp.sede?.nombre ?? '—'}</span>
                     </label>
