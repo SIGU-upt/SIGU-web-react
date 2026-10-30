@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { getErrorMessage } from "@/lib/errors"
+import { hoyLocal } from "@/lib/fecha"
 
 interface RetirarMatriculaModalProps {
   open: boolean
@@ -51,7 +52,7 @@ export function RetirarMatriculaModal({ open, onOpenChange, onConfirm, alumnoNom
           </div>
           <div className="space-y-2">
             <Label htmlFor="fecha">Fecha (opcional, por defecto hoy)</Label>
-            <Input id="fecha" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+            <Input id="fecha" type="date" value={fecha} max={hoyLocal()} onChange={(e) => setFecha(e.target.value)} />
           </div>
           {error && <FormError>{error}</FormError>}
         </div>

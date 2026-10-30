@@ -13,7 +13,7 @@ export function avisarEstructuraGenerada({ trayectosCreados, tramosCreados }: Ge
 
 // Aviso tras POST /periodos/generar. Las sede-PNF donde no se pudo crear llegan en
 // `omitidos` con su motivo; se muestran juntos (sin repetir) para que se entienda por qué.
-export function avisarPeriodosGenerados({ creados, omitidos }: GenerarPeriodosResultado) {
+export function avisarPeriodosGenerados({ creados, omitidos, advertencias }: GenerarPeriodosResultado) {
   if (creados.length > 0) {
     toast.success(`Período creado en ${creados.length} sede-PNF.`)
   }
@@ -26,4 +26,5 @@ export function avisarPeriodosGenerados({ creados, omitidos }: GenerarPeriodosRe
   if (creados.length === 0 && omitidos.length === 0) {
     toast.info('No se creó ningún período.')
   }
+  advertencias?.forEach((a) => toast.warning(a))
 }

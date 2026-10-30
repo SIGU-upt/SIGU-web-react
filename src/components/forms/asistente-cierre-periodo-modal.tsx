@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 import { Role, type SedePnf, type Trayecto, type AlumnoCohorte } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
@@ -134,6 +135,7 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
         activo: true,
       })
       const nuevoPeriodoId = periodoRes.data.id
+      periodoRes.data?.advertencias?.forEach((a: string) => toast.warning(a))
 
       if (alumnosAfectados.length > 0) {
         const promoverRes = await api.post('/matriculas/promover', {

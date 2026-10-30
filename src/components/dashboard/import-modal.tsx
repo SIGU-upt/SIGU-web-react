@@ -22,7 +22,18 @@ function defaultRenderResult(result: ImportResult) {
       <p>Actualizados: {result.actualizados}</p>
       <p>Matrículas asignadas: {result.matriculasAsignadas}</p>
       <p>Inscripciones creadas: {result.inscripcionesCreadas}</p>
-      {result.errores.length > 0 && <p className="text-destructive">Errores: {result.errores.length}</p>}
+      {result.errores.length > 0 && (
+        // Cada fila rechazada llega con su motivo (por ejemplo, "ya está inscrito en otra sección"):
+        // sin la lista no hay forma de saber qué corregir en el Excel.
+        <div className="text-destructive">
+          <p className="font-medium">Filas con error: {result.errores.length}</p>
+          <ul className="mt-1 max-h-40 list-disc space-y-0.5 overflow-y-auto pl-5">
+            {result.errores.map((e, i) => (
+              <li key={i}>Fila {e.fila} ({e.ci}): {e.motivo}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }

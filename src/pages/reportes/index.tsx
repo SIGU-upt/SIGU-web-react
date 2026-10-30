@@ -53,6 +53,9 @@ interface ClaseDelAlumno {
   // Alias obsoleto de totalSesiones; se conserva como respaldo.
   totalClases?: number
   sesionesInferidas?: boolean
+  // Umbral aplicado a esta materia: 80 % si es Práctica Profesional, si no el general.
+  umbral?: number
+  porEncimaUmbral?: boolean
 }
 
 interface AlumnoReporte {
@@ -470,6 +473,7 @@ export function ReportesPage() {
                         <TableHead>Grupo</TableHead>
                         <TableHead>Asistencias / Sesiones</TableHead>
                         <TableHead>%</TableHead>
+                        <TableHead>Umbral</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -483,9 +487,10 @@ export function ReportesPage() {
                               <span className="ml-1 text-muted-foreground" title="Estimado a partir de las fechas con asistencia registrada">*</span>
                             )}
                           </TableCell>
-                          <TableCell className={c.porcentaje >= (alumnoReport.umbral ?? 75) ? 'text-success font-bold' : 'text-destructive font-bold'}>
+                          <TableCell className={(c.porEncimaUmbral ?? c.porcentaje >= (c.umbral ?? alumnoReport.umbral ?? 75)) ? 'text-success font-bold' : 'text-destructive font-bold'}>
                             {c.porcentaje}%
                           </TableCell>
+                          <TableCell className="text-muted-foreground">{c.umbral ?? alumnoReport.umbral ?? 75}%</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
