@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Sede, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
+import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -130,7 +131,8 @@ export function PersonalAdministrativoPage() {
   useEffect(() => { fetchData() }, [fetchData])
 
   const handleCreate = async (form: AdminUserFormData) => {
-    await api.post('/users', form)
+    const res = await api.post('/users', form)
+    avisarSiCorreoBienvenidaFallo(res.data)
     await fetchData()
   }
 

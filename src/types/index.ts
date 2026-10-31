@@ -31,6 +31,10 @@ export interface User {
     periodo: { id: string; nombre: string }
   } | null
   inscripciones?: { id: string; claseId: string }[]
+  // Solo presente en la respuesta de POST /users (crear usuario): si el correo
+  // de bienvenida no se pudo confirmar enviado, hay que generarle una
+  // contraseña temporal a mano (ver ResetPasswordModal).
+  emailBienvenidaEnviado?: boolean
 }
 
 export interface Sede {
