@@ -319,6 +319,17 @@ export function ReportesPage() {
     .filter((sp) => !riesgoSedeFilter || sp.sedeId === riesgoSedeFilter)
     .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
 
+  const exportRiesgoReport = async () => {
+    if (!riesgoReport?.length) return
+    try {
+      await downloadExportedFile(
+        '/export/en-riesgo',
+        riesgoSedePnfFilter ? { sedePnfId: riesgoSedePnfFilter } : undefined,
+        'alumnos-en-riesgo.xlsx',
+      )
+    } catch { /* el interceptor de axios ya muestra el toast de error */ }
+  }
+
   const exportAlumnoReport = async () => {
     if (!alumnoReport?.clases?.length || !alumnoId) return
     try {
@@ -643,6 +654,11 @@ export function ReportesPage() {
                 <Button onClick={fetchRiesgoReport} disabled={loading}>
                   <AlertTriangle className="mr-2 h-4 w-4" />Consultar
                 </Button>
+                {riesgoReport && riesgoReport.length > 0 && (
+                  <Button variant="outline" onClick={exportRiesgoReport}>
+                    <Download className="mr-2 h-4 w-4" />Descargar Excel
+                  </Button>
+                )}
               </div>
               {error && <div className="text-sm text-destructive">{error}</div>}
               {riesgoReport && (
