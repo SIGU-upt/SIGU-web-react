@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { ImpactoBorradoModal } from "@/components/forms/impacto-borrado-modal"
 import { RespaldoTab } from "@/components/configuracion/respaldo-tab"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico, type GenerarEstructuraResultado, type GenerarPeriodosResultado } from "@/types"
@@ -38,12 +39,16 @@ interface EntityConfig {
   hasGenerarMultiple?: boolean
   groupLabel?: (item: ConfigItem) => string
   rowLink?: (item: ConfigItem) => string
+  // Solo Sedes, PNF y Sede-PNF tienen GET :id/impacto-borrado en el backend
+  // (son las únicas con cascada real); el resto sigue con el modal simple.
+  impactoBorrado?: boolean
 }
 
 const entityConfigs: Record<string, EntityConfig> = {
   sedes: {
     title: 'Sedes', icon: <Building className="h-5 w-5" />, endpoint: '/sedes',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
+    impactoBorrado: true,
     // Fase 5B (§9.7): la fila lleva al detalle agregado de la sede — PNF que
     // ofrece, docentes, alumnos y secciones, todo en un solo lugar.
     rowLink: (s) => `/sedes/${s.id}`,
@@ -58,6 +63,7 @@ const entityConfigs: Record<string, EntityConfig> = {
     title: 'PNFs', icon: <BookOpen className="h-5 w-5" />, endpoint: '/pnfs',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
     hasGenerarEstructura: true,
+    impactoBorrado: true,
     // Fase 5B (§9.7): la fila lleva al detalle agregado del PNF — trayectos y
     // tramos (con su propio CRUD, ya no vive aquí como pestaña aislada, ver
     // decisión #4), secciones, docentes y alumnos.
@@ -94,6 +100,7 @@ const entityConfigs: Record<string, EntityConfig> = {
   },
   sedePnf: {
     title: 'Sede-PNF', icon: <Building className="h-5 w-5" />, endpoint: '/sede-pnf',
+    impactoBorrado: true,
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
     fields: [
       { name: 'sedeId', label: 'Sede', required: true, type: 'select' as const, optionsEndpoint: '/sedes', optionLabel: (s: Sede) => s.nombre, optionValue: (s: Sede) => s.id },
@@ -194,6 +201,12 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
   const handleDelete = async () => {
     if (!deleting) return
     await api.delete(`${config.endpoint}/${deleting.id}`)
+    await fetchData()
+  }
+
+  const handleDeleteConImpacto = async (force: boolean) => {
+    if (!deleting) return
+    await api.delete(`${config.endpoint}/${deleting.id}`, { params: force ? { force: true } : undefined })
     await fetchData()
   }
 
@@ -344,13 +357,26 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
         isEditing={!!editing}
       />
 
-      <ConfirmDeleteModal
-        open={!!deleting}
-        onOpenChange={(v) => { if (!v) setDeleting(null) }}
-        onConfirm={handleDelete}
-        title={`Eliminar ${config.title}`}
-        description={`¿Está seguro de eliminar este registro?`}
-      />
+      {config.impactoBorrado ? (
+        deleting && (
+          <ImpactoBorradoModal
+            open={!!deleting}
+            onOpenChange={(v) => { if (!v) setDeleting(null) }}
+            endpoint={config.endpoint}
+            itemId={deleting.id}
+            itemLabel={config.title}
+            onConfirm={handleDeleteConImpacto}
+          />
+        )
+      ) : (
+        <ConfirmDeleteModal
+          open={!!deleting}
+          onOpenChange={(v) => { if (!v) setDeleting(null) }}
+          onConfirm={handleDelete}
+          title={`Eliminar ${config.title}`}
+          description={`¿Está seguro de eliminar este registro?`}
+        />
+      )}
 
       {config.hasGenerarEstructura && (
         <Dialog open={!!generatingFor} onOpenChange={(v) => { if (!v) setGeneratingFor(null) }}>
