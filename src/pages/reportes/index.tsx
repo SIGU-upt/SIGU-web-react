@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
-import { hoyLocal } from "@/lib/fecha"
+import { hoyLocal, dentroDelPlazoDeJustificacion, DIAS_PLAZO_JUSTIFICACION } from "@/lib/fecha"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 const DIA_SEMANA_LABEL: Record<string, string> = {
@@ -419,7 +419,12 @@ export function ReportesPage() {
                             <TableCell><Badge className={estadoColor(a.estado)}>{a.estado}</Badge></TableCell>
                             {puedeJustificar && (
                               <TableCell className="text-right">
-                                {a.estado !== 'JUSTIFICADO' && a.estado !== 'PRESENTE' && (
+                                {a.estado !== 'JUSTIFICADO' && a.estado !== 'PRESENTE' && !dentroDelPlazoDeJustificacion(classReport.fecha) && (
+                                  <span className="text-xs text-muted-foreground" title={`Solo se puede justificar hasta ${DIAS_PLAZO_JUSTIFICACION} días después de la falta`}>
+                                    Plazo vencido
+                                  </span>
+                                )}
+                                {a.estado !== 'JUSTIFICADO' && a.estado !== 'PRESENTE' && dentroDelPlazoDeJustificacion(classReport.fecha) && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
