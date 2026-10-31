@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/ui/page-header"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
+import { GraficosDocente, type DiaConClases } from "@/components/dashboard/graficos-dashboard"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import type { Clase } from "@/types"
@@ -55,6 +56,10 @@ export function DashboardDocente() {
   const hoy = claveDeHoy()
   const diasConClases = DIAS.filter((d) => (horario?.[d.clave]?.length ?? 0) > 0)
   const totalClases = diasConClases.reduce((n, d) => n + (horario?.[d.clave]?.length ?? 0), 0)
+  // Para el gráfico: de lunes a viernes siempre (aunque un día esté vacío); sábado y domingo solo si hay clases.
+  const clasesPorDia: DiaConClases[] = DIAS
+    .filter((d) => !["SABADO", "DOMINGO"].includes(d.clave) || (horario?.[d.clave]?.length ?? 0) > 0)
+    .map((d) => ({ dia: d.etiqueta, clases: horario?.[d.clave]?.length ?? 0, hoy: d.clave === hoy }))
 
   const tarjetas = [
     {
@@ -168,6 +173,8 @@ export function DashboardDocente() {
           )}
         </CardContent>
       </Card>
+
+      {horario !== null && <GraficosDocente dias={clasesPorDia} />}
 
       <AttendanceTable />
     </div>

@@ -10,6 +10,7 @@ import { crearEstudiante } from "@/lib/estudiantes"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { DashboardDocente } from "@/pages/dashboard/docente"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
+import { GraficosDashboard } from "@/components/dashboard/graficos-dashboard"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { Role } from "@/types"
 
@@ -179,6 +180,14 @@ function DashboardAdministrativo() {
             </div>
           </div>
         </div>
+      )}
+
+      {stats && (
+        <GraficosDashboard
+          totalUsuarios={stats.totalUsuarios}
+          totalDocentes={stats.totalDocentes}
+          totalAlumnos={stats.totalAlumnos}
+        />
       )}
 
       <AttendanceTable />
