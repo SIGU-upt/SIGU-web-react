@@ -16,7 +16,8 @@ import { getErrorMessage } from "@/lib/errors"
 interface UCFormData {
   nombre: string
   trayectoId: string
-  tramoId?: string
+  tramoInicioId?: string
+  tramoFinId?: string
   tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
   // Si se eligió una materia ya existente del catálogo (ver buscador debajo
   // de Nombre), se manda esto en vez de nombre/tipo — así dos coordinadores
@@ -60,14 +61,15 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   const [catalogoSeleccionado, setCatalogoSeleccionado] = useState<CatalogoMatch | null>(null)
 
   const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<UCFormData>({
-    defaultValues: { nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData },
+    defaultValues: { nombre: '', trayectoId: '', tramoInicioId: SIN_TRAMO, tramoFinId: SIN_TRAMO, tipo: 'REGULAR', ...initialData },
   })
   const trayectoId = watch('trayectoId')
   const nombreValue = watch('nombre')
+  const tramoInicioId = watch('tramoInicioId')
 
   useEffect(() => {
     if (open) {
-      reset({ nombre: '', trayectoId: '', tramoId: SIN_TRAMO, tipo: 'REGULAR', ...initialData })
+      reset({ nombre: '', trayectoId: '', tramoInicioId: SIN_TRAMO, tramoFinId: SIN_TRAMO, tipo: 'REGULAR', ...initialData })
       setSelectedSedeId("")
       setSelectedPnfId("")
       setCatalogoMatches([])
@@ -190,13 +192,24 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     setValue('trayectoId', '')
   }
 
+  // Un tramo PER (recuperación) no es parte del cursado regular de una
+  // materia — ni como tramo único ni como extremo de un rango.
+  const tramoSeleccionables = tramoOptions.filter((t) => !t.isPer)
+  const tramoInicioObj = tramoSeleccionables.find((t) => t.id === tramoInicioId)
+  // "Hasta" solo puede ser el mismo tramo (un solo tramo) o uno posterior
+  // (rango consecutivo) dentro del mismo trayecto.
+  const tramoFinOptions = tramoInicioObj
+    ? tramoSeleccionables.filter((t) => t.numero >= tramoInicioObj.numero)
+    : []
+
   const submitHandler = async (data: UCFormData) => {
     setLoading(true)
     setError(null)
     try {
       await onSubmit({
         ...data,
-        tramoId: data.tramoId === SIN_TRAMO ? undefined : data.tramoId,
+        tramoInicioId: data.tramoInicioId === SIN_TRAMO ? undefined : data.tramoInicioId,
+        tramoFinId: data.tramoInicioId === SIN_TRAMO ? undefined : data.tramoFinId,
         ucCatalogoIdSeleccionado: catalogoSeleccionado?.id,
       })
       onOpenChange(false)
@@ -298,25 +311,56 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
             {errors.trayectoId && <p className="text-xs text-destructive">{errors.trayectoId.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tramoId">Tramo (solo si es una materia trimestral)</Label>
-            <p className="text-xs text-muted-foreground">Deje "Anual" si la materia se cursa durante todo el trayecto.</p>
-            <Controller
-              control={control}
-              name="tramoId"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange} disabled={!trayectoId}>
-                  <SelectTrigger id="tramoId" className="w-full">
-                    <SelectValue placeholder={trayectoId ? "Anual" : "Elija primero un trayecto"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={SIN_TRAMO}>Anual (todo el trayecto)</SelectItem>
-                    {tramoOptions.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>{t.isPer ? 'PER' : `Tramo ${t.numero}`}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
+            <Label htmlFor="tramoInicioId">Tramo (solo si es una materia trimestral)</Label>
+            <p className="text-xs text-muted-foreground">
+              Deje "Anual" si la materia se cursa durante todo el trayecto. Si dura más de un
+              tramo pero no todo el trayecto (ej. Tramo 1 y 2), elija el de inicio y el de fin.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <Controller
+                control={control}
+                name="tramoInicioId"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v)
+                      // Al cambiar el tramo de inicio, "Hasta" se resincroniza al
+                      // mismo tramo (caso "un solo tramo") por defecto; el usuario
+                      // puede ampliarlo después si de verdad es un rango.
+                      setValue('tramoFinId', v === SIN_TRAMO ? SIN_TRAMO : v)
+                    }}
+                    disabled={!trayectoId}
+                  >
+                    <SelectTrigger id="tramoInicioId" className="w-full">
+                      <SelectValue placeholder={trayectoId ? "Anual" : "Elija primero un trayecto"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SIN_TRAMO}>Anual (todo el trayecto)</SelectItem>
+                      {tramoSeleccionables.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{`Desde Tramo ${t.numero}`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <Controller
+                control={control}
+                name="tramoFinId"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange} disabled={tramoInicioId === SIN_TRAMO}>
+                    <SelectTrigger id="tramoFinId" className="w-full">
+                      <SelectValue placeholder="Hasta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tramoFinOptions.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{`Hasta Tramo ${t.numero}`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="tipo">Tipo</Label>
