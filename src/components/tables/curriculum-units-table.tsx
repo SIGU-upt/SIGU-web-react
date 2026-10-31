@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Table,
   TableBody,
@@ -54,12 +55,19 @@ interface CurriculumUnitsTableProps<T extends CurriculumUnit> {
 
 export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate, onEdit, onReplicate, onDelete, canEdit, canDelete }: CurriculumUnitsTableProps<T>) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [trayectoFilter, setTrayectoFilter] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  // El backend ya acota esta lista al PNF del coordinador (jurisdiction.service.ts);
+  // este filtro es para acotar más, dentro de ese PNF, cuando tiene varios trayectos.
+  const trayectoOptions = Array.from(new Set(data.map((item) => item.trayecto))).sort()
+
   const filteredData = data.filter((item) => {
-    return item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const coincideTexto = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.code.toLowerCase().includes(searchQuery.toLowerCase())
+    const coincideTrayecto = !trayectoFilter || item.trayecto === trayectoFilter
+    return coincideTexto && coincideTrayecto
   })
 
   const { sorted, sort, toggleSort } = useSortableData<T, 'code' | 'name' | 'trayecto' | 'type'>(
@@ -126,6 +134,22 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
               className="pl-10 bg-background border-border shadow-sm focus:ring-2 focus:ring-primary/20 transition-all"
             />
           </div>
+          {trayectoOptions.length > 1 && (
+            <Select
+              value={trayectoFilter || "__todos__"}
+              onValueChange={(v) => { setTrayectoFilter(v === "__todos__" ? "" : v); setCurrentPage(1) }}
+            >
+              <SelectTrigger className="w-full md:w-[220px] bg-background">
+                <SelectValue placeholder="Todos los trayectos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__todos__">Todos los trayectos</SelectItem>
+                {trayectoOptions.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
