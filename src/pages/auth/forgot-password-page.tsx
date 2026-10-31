@@ -58,6 +58,10 @@ export function ForgotPasswordPage() {
           {message ? (
             <div className="space-y-4">
               <div className="rounded-md bg-primary/10 p-3 text-sm text-primary">{message}</div>
+              <p className="text-xs text-muted-foreground">
+                Si no lo ve en unos minutos, revise su carpeta de Spam o Correo no deseado — el remitente es
+                "SIGU — UPT José Félix Ribas".
+              </p>
               <Link to="/login" className="block text-center text-sm text-primary hover:underline">
                 Volver a iniciar sesión
               </Link>

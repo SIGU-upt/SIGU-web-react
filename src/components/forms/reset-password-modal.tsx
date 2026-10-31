@@ -87,6 +87,9 @@ export function ResetPasswordModal({ usuario, onClose }: ResetPasswordModalProps
               <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
               No se puede volver a consultar. Dicte o envíe la contraseña a la persona ahora; al cerrar esta ventana se pierde.
             </p>
+            <p className="text-xs text-muted-foreground">
+              También se intenta enviar por correo (puede llegar a Spam bajo "SIGU — UPT José Félix Ribas") — no dependa solo de eso, dicte la clave de una vez.
+            </p>
           </div>
         ) : (
           error && <FormError>{error}</FormError>
