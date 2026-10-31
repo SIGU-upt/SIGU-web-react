@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
+import { SortableTableHead } from "@/components/ui/sortable-table-head"
+import type { SortState } from "@/hooks/use-sortable-data"
 import { SeccionFormModal, type SeccionFormData } from "@/components/forms/seccion-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -39,6 +41,12 @@ export function SeccionesPage() {
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
   const [trayectoFilter, setTrayectoFilter] = useState("")
+  type SeccionSortKey = "codigo" | "trayecto" | "turno"
+  const [sort, setSort] = useState<SortState<SeccionSortKey>>({ key: null, direction: "asc" })
+  const toggleSort = (key: SeccionSortKey) =>
+    setSort((prev) =>
+      prev.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" },
+    )
 
   const isSuperadmin = user?.role === Role.SUPERADMIN
   const isRector = user?.role === Role.RECTOR
@@ -164,6 +172,27 @@ export function SeccionesPage() {
     grupo.secciones.push(s)
   }
 
+  // Ordenamiento dentro de cada grupo Sede → PNF (comentario de Vercel en
+  // /personal-administrativo, extendido aquí): la tabla está agrupada, así
+  // que ordenar "toda la lista" no tendría sentido visual — cada grupo se
+  // ordena por separado con el mismo criterio elegido, sin mezclar secciones
+  // de distintas sedes/PNF entre sí.
+  const getSortValue = (s: Seccion, key: SeccionSortKey): string => {
+    if (key === "codigo") return s.codigo
+    if (key === "trayecto") return s.trayecto?.nombre ?? ""
+    return s.turno ? TURNO_LABELS[s.turno] : ""
+  }
+  if (sort.key) {
+    for (const grupo of grupos) {
+      grupo.secciones = [...grupo.secciones].sort((a, b) => {
+        const va = getSortValue(a, sort.key!)
+        const vb = getSortValue(b, sort.key!)
+        const cmp = va.localeCompare(vb)
+        return sort.direction === "asc" ? cmp : -cmp
+      })
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader title="Secciones" subtitle="Gestión de secciones administrativas" icon={<Layers className="h-5 w-5" />} />
@@ -228,9 +257,9 @@ export function SeccionesPage() {
             <Table data-tour="secciones-tabla">
               <TableHeader>
                 <TableRow className="bg-muted">
-                  <TableHead className="font-semibold">Código</TableHead>
-                  <TableHead className="font-semibold">Trayecto</TableHead>
-                  <TableHead className="font-semibold">Turno</TableHead>
+                  <SortableTableHead sortKey="codigo" sort={sort} onSort={toggleSort} className="font-semibold">Código</SortableTableHead>
+                  <SortableTableHead sortKey="trayecto" sort={sort} onSort={toggleSort} className="font-semibold">Trayecto</SortableTableHead>
+                  <SortableTableHead sortKey="turno" sort={sort} onSort={toggleSort} className="font-semibold">Turno</SortableTableHead>
                   <TableHead className="font-semibold text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>

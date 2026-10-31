@@ -33,7 +33,10 @@ export function VincularPnfModal({ open, onOpenChange, sedeId, sedeNombre, pnfId
     setPnfId("")
     setError(null)
     setLoadingLista(true)
-    api.get("/pnfs", { params: { limit: 200 } })
+    // paraVincular: el rector necesita ver el catálogo completo, no solo los
+    // PNF que su sede ya ofrece (si no, nunca podría vincular uno nuevo que
+    // el superadmin acaba de crear — candado circular, comentario de Vercel).
+    api.get("/pnfs", { params: { limit: 200, paraVincular: true } })
       .then((res) => {
         const lista = res.data.data ?? res.data
         setPnfs(Array.isArray(lista) ? lista : [])

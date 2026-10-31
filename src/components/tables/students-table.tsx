@@ -116,7 +116,12 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                 title="Importar Estudiantes"
                 description="Seleccione un archivo .xlsx con la lista de estudiantes"
                 buttonLabel="Cargar Estudiantes"
-                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "sedePnf", "clasesIds"]}
+                // "clasesIds" se quitó de la plantilla (comentario de Vercel en /estudiantes):
+                // no hay forma de que el coordinador consulte esos UUID desde la UI. El import
+                // por Excel sigue soportando esa columna si se agrega a mano; falta rediseñar
+                // cómo identificar la clase de forma legible (sección+materia+grupo) para
+                // ofrecerla de nuevo en la plantilla.
+                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "sedePnf"]}
                 templateFilename="plantilla-estudiantes.csv"
               />
             )}
