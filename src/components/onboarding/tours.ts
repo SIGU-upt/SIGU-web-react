@@ -173,6 +173,13 @@ const TOURS: Record<Role, DriveStep[]> = {
         description: "Puede revisar la estructura de Secciones y Clases, pero los botones de crear/editar/eliminar no aparecerán — su rol no los tiene habilitados.",
       },
     },
+    {
+      element: '[data-tour="nav-security-logs"]',
+      popover: {
+        title: "Seguridad",
+        description: "Consulte aquí los eventos de seguridad dentro de su jurisdicción: intentos fallidos, accesos no autorizados, dispositivos reiniciados. Es solo de lectura.",
+      },
+    },
     VIEW_TOUR_HINT_STEP,
     HELP_BUTTON_STEP,
   ],
