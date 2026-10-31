@@ -42,6 +42,8 @@ interface EntityConfig {
   // Solo Sedes, PNF y Sede-PNF tienen GET :id/impacto-borrado en el backend
   // (son las únicas con cascada real); el resto sigue con el modal simple.
   impactoBorrado?: boolean
+  // Pide escribir el nombre del registro para habilitar "Eliminar" (solo Sedes, por lo que arrastra).
+  confirmarNombre?: boolean
 }
 
 const entityConfigs: Record<string, EntityConfig> = {
@@ -49,6 +51,7 @@ const entityConfigs: Record<string, EntityConfig> = {
     title: 'Sedes', icon: <Building className="h-5 w-5" />, endpoint: '/sedes',
     editRoles: [Role.SUPERADMIN, Role.RECTOR],
     impactoBorrado: true,
+    confirmarNombre: true,
     // Fase 5B (§9.7): la fila lleva al detalle agregado de la sede — PNF que
     // ofrece, docentes, alumnos y secciones, todo en un solo lugar.
     rowLink: (s) => `/sedes/${s.id}`,
@@ -366,6 +369,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
             itemId={deleting.id}
             itemLabel={config.title}
             onConfirm={handleDeleteConImpacto}
+            confirmarEscribiendo={config.confirmarNombre ? deleting.nombre : undefined}
           />
         )
       ) : (

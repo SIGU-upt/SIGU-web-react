@@ -3,6 +3,8 @@ import { AlertTriangle } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/errors"
 import api from "@/config/api"
 
@@ -25,7 +27,13 @@ interface ImpactoBorradoModalProps {
   itemLabel: string
   // `force` solo se manda como true si el usuario marcó la casilla.
   onConfirm: (force: boolean) => Promise<void>
+  // Si se indica, "Eliminar" solo se habilita después de escribir este texto (el nombre del
+  // registro): un doble chequeo para borrados que arrastran mucho, como el de una sede.
+  confirmarEscribiendo?: string
 }
+
+// Se ignoran mayúsculas, tildes y espacios sobrantes: lo que importa es que haya leído el nombre.
+const normalizar = (t: string) => t.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase()
 
 /**
  * Antes de borrar Sede/PNF/Sede-PNF (los únicos recursos con cascada y
@@ -36,7 +44,8 @@ interface ImpactoBorradoModalProps {
  * aplica el backend (`assertBorradoPermitido`), mostrado aquí en vez de
  * solo como un 409 genérico.
  */
-export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, itemLabel, onConfirm }: ImpactoBorradoModalProps) {
+export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, itemLabel, onConfirm, confirmarEscribiendo }: ImpactoBorradoModalProps) {
+  const [escrito, setEscrito] = useState("")
   const [loading, setLoading] = useState(false)
   const [eliminando, setEliminando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,6 +56,7 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
     if (!open) return
     setImpacto(null)
     setForzar(false)
+    setEscrito("")
     setError(null)
     setLoading(true)
     api.get<ImpactoBorrado>(`${endpoint}/${itemId}/impacto-borrado`)
@@ -57,9 +67,11 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
 
   const tieneDataViva = (impacto?.dataViva ?? []).some((d) => d.cantidad > 0)
   const tieneEstructural = (impacto?.estructural ?? []).some((d) => d.cantidad > 0)
-  const puedeConfirmar = !tieneDataViva || forzar
+  const nombreConfirmado = !confirmarEscribiendo || normalizar(escrito) === normalizar(confirmarEscribiendo)
+  const puedeConfirmar = (!tieneDataViva || forzar) && nombreConfirmado
 
   const handleConfirm = async () => {
+    if (!puedeConfirmar) return
     setEliminando(true)
     setError(null)
     try {
@@ -126,10 +138,26 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
                 </label>
               </div>
             )}
+            {confirmarEscribiendo && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmar-nombre" className="text-sm font-normal">
+                  Para confirmar, escriba el nombre exacto: <span className="font-semibold">{confirmarEscribiendo}</span>
+                </Label>
+                <Input
+                  id="confirmar-nombre"
+                  value={escrito}
+                  onChange={(e) => setEscrito(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleConfirm() } }}
+                  placeholder={confirmarEscribiendo}
+                  autoComplete="off"
+                  disabled={eliminando}
+                />
+              </div>
+            )}
           </div>
         ) : null}
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error &&<p className="text-sm text-destructive">{error}</p>}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={eliminando}>Cancelar</Button>
