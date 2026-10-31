@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Fingerprint } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
@@ -16,6 +17,20 @@ export function CedulaInput({ id, value, onChange, disabled }: CedulaInputProps)
   const match = value.toUpperCase().match(/^([VE])-?(\d*)/)
   const prefix = match?.[1] ?? "V"
   const digits = match?.[2] ?? value.replace(/\D/g, "")
+
+  // Un valor guardado sin prefijo (bug de import ya corregido, pero puede
+  // haber quedado alguno viejo en la base) se mostraba "ya corregido" — V-
+  // por defecto en el selector, los dígitos en la caja — sin que el
+  // formulario recibiera nunca ese valor corregido: si el admin no tocaba
+  // el campo, "editar" no cambiaba nada en el envío. Se emite la
+  // normalización apenas se detecta, para que el formulario quede con el
+  // valor correcto aunque nadie lo haya retecleado.
+  useEffect(() => {
+    if (value && !/^[VE]-\d+$/.test(value.toUpperCase())) {
+      onChange(`${prefix}-${digits}`)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
 
   const handlePrefixChange = (newPrefix: string) => {
     onChange(`${newPrefix}-${digits}`)
