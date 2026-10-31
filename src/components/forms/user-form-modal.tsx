@@ -136,7 +136,7 @@ export function UserFormModal({
           <DialogTitle>{isEditing ? `Editar ${roleLabel}` : `Nuevo ${roleLabel}`}</DialogTitle>
           <DialogDescription className="sr-only">Complete los datos de la persona.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+        <form onSubmit={handleSubmit(submitHandler)} className="space-y-4" autoComplete="off">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="nombres">Nombres</Label>
@@ -168,7 +168,7 @@ export function UserFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
+            <Input id="email" type="email" autoComplete="off" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           {showPnfField && (
@@ -244,6 +244,7 @@ export function UserFormModal({
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="off"
                     placeholder="Mínimo 8 caracteres"
                     className="pr-10"
                     {...register('password', {
