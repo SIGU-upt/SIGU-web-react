@@ -41,7 +41,7 @@ export const navigation: NavItem[] = [
   { id: "inconsistencias", name: "Inconsistencias", icon: AlertTriangle, path: "/inconsistencias", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR] },
   { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR, Role.DOCENTE] },
   { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
-  { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR] },
+  { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR, Role.AUDITOR] },
 ]
 
 // Mapa ruta→nombre derivado de `navigation` (fuente única) — lo consume el

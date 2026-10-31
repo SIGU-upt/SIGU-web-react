@@ -154,7 +154,7 @@ function AppRoutes() {
         <Route
           path="/security-logs"
           element={
-            <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR]}>
+            <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.AUDITOR]}>
               <SecurityLogsPage />
             </PrivateRoute>
           }
