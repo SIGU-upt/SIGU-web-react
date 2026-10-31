@@ -13,6 +13,7 @@ import { passwordMeetsRequirements, generateStrongPassword } from "@/lib/passwor
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { nameRule, emailRule, ciRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
@@ -96,7 +97,7 @@ export function AdminUserFormModal({
       }).catch(() => setSedeOptions([]))
     }
     if (showSedePnfField) {
-      api.get('/sede-pnf').then((res) => {
+      api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
         const list = res.data.data ?? res.data
         setSedePnfOptions(Array.isArray(list) ? list : [])
       }).catch(() => setSedePnfOptions([]))
@@ -111,9 +112,7 @@ export function AdminUserFormModal({
     if (sp) setSelectedCoordSedeId(sp.sedeId)
   }, [open, showSedePnfField, initialData?.sedePnfId, sedePnfOptions])
 
-  const coordSedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const coordSedeOptions = opcionesDeSede(sedePnfOptions)
   const coordPnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedCoordSedeId)
 
   const submitHandler = async (data: AdminUserFormData) => {

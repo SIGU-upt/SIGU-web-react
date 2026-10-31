@@ -110,7 +110,7 @@ export function PersonalAdministrativoPage() {
           params: { role, limit: 200, ...extraParams },
         }))),
         api.get('/sedes'),
-        api.get('/sede-pnf'),
+        api.get('/sede-pnf', { params: { limit: 200 } }),
       ])
       const combined = usersResults.flatMap((res) => {
         const list = res.data.data ?? res.data

@@ -11,6 +11,7 @@ import { toast } from "sonner"
 import { Role, type SedePnf, type Trayecto, type AlumnoCohorte } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { getErrorMessage } from "@/lib/errors"
 
 interface AsistenteCierrePeriodoModalProps {
@@ -69,15 +70,13 @@ export function AsistenteCierrePeriodoModal({ open, onOpenChange, onDone }: Asis
 
   useEffect(() => {
     if (!open) return
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setSedePnfOptions([]))
   }, [open])
 
-  const sedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const sedeOptions = opcionesDeSede(sedePnfOptions)
   const pnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedSedeId)
 
   useEffect(() => {

@@ -13,6 +13,7 @@ import { JustificarAsistenciaModal } from "@/components/forms/justificar-asisten
 import { Role, type Trayecto, type Clase, type User, type SedePnf } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
 import { hoyLocal, dentroDelPlazoDeJustificacion, DIAS_PLAZO_JUSTIFICACION } from "@/lib/fecha"
@@ -157,9 +158,7 @@ export function ReportesPage() {
 
   // Cascada sede → PNF → trayecto para el reporte por trayecto, de modo que el
   // superadmin pueda acotar por sede/PNF (antes agregaba todas las sedes del PNF).
-  const reportSedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const reportSedeOptions = opcionesDeSede(sedePnfOptions)
   const reportPnfOptions = sedePnfOptions
     .filter((sp) => !sedeReportFilter || sp.sedeId === sedeReportFilter)
     // Esta lista solo se muestra una vez elegida la sede (el select está

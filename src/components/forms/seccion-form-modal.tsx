@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Role, type SedePnf, type Trayecto, type Turno } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { requiredTextRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
@@ -73,7 +74,7 @@ export function SeccionFormModal({
 
   useEffect(() => {
     if (open) {
-      api.get('/sede-pnf').then((res) => {
+      api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
         const list = res.data.data ?? res.data
         setSedePnfOptions(Array.isArray(list) ? list : [])
       }).catch(() => setSedePnfOptions([]))
@@ -88,9 +89,7 @@ export function SeccionFormModal({
     if (sp) setSelectedSedeId(sp.sedeId)
   }, [open, initialData?.sedePnfId, sedePnfOptions])
 
-  const sedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const sedeOptions = opcionesDeSede(sedePnfOptions)
   const pnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedSedeId)
 
   useEffect(() => {
