@@ -4,6 +4,7 @@ import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { normalizarCi } from "@/lib/validators"
 import { opcionesDeSede } from "@/lib/opciones-sede"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
@@ -170,6 +171,12 @@ export function StudentsPage() {
     if (data.apellidos) payload.apellidos = data.apellidos
     if (data.email) payload.email = data.email
     if (data.sedePnfId) payload.sedePnfId = data.sedePnfId
+    // Solo el superadmin puede cambiar la cédula (el API lo exige). Se envía normalizada si
+    // difiere de la guardada: así se corrige una cédula que quedó sin el prefijo V-.
+    if (user?.role === Role.SUPERADMIN && data.ci) {
+      const ci = normalizarCi(data.ci)
+      if (ci !== editingUser.idNumber) payload.ci = ci
+    }
     await api.patch(`/users/${editingUser.id}`, payload)
 
     // ADR-025: el trayecto ya no se edita por PATCH /users (la matrícula activa
