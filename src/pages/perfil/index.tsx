@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { User as UserIcon, KeyRound, Building2, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -227,6 +228,12 @@ export function PerfilPage() {
         confirmLabel="Sí, cambiar"
         loadingLabel="Cambiando..."
       />
+
+      <p className="text-center text-xs text-muted-foreground">
+        <Link to="/privacidad" className="hover:underline">Política de privacidad</Link>
+        {' · '}
+        <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+      </p>
     </div>
   )
 }

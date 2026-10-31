@@ -21,6 +21,7 @@ import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
 import { MatriculasPage } from '@/pages/matriculas'
 import { InconsistenciasPage } from '@/pages/inconsistencias'
 import { PerfilPage } from '@/pages/perfil'
+import { LegalPage } from '@/pages/legal'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -47,6 +48,8 @@ function AppRoutes() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/privacidad" element={<LegalPage />} />
+        <Route path="/terminos" element={<LegalPage />} />
         <Route
           path="/"
           element={
