@@ -61,9 +61,17 @@ export function PnfDetallePage() {
   const [genNumeroTrayectos, setGenNumeroTrayectos] = useState(4)
   const [genRequierePiu, setGenRequierePiu] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const numeroTrayectosInvalido =
+    !Number.isInteger(genNumeroTrayectos) || genNumeroTrayectos < 1 || genNumeroTrayectos > 6
 
   const canEdit = user ? [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR].includes(user.role) : false
   const canDelete = user?.role === Role.SUPERADMIN
+  // POST /pnfs/:id/generar-estructura es SUPERADMIN/RECTOR únicamente en el
+  // backend (pnfs.controller.ts) — un COORDINADOR sí puede crear/editar
+  // trayectos y tramos uno por uno (de ahí `canEdit`), pero no generar la
+  // estructura completa de una vez. Antes el botón usaba `canEdit` y un
+  // coordinador lo veía para terminar en un 403.
+  const canGenerarEstructura = user ? [Role.SUPERADMIN, Role.RECTOR].includes(user.role) : false
 
   const fetchTramos = useCallback(async (trayectosList: Trayecto[]) => {
     const entries = await Promise.all(
@@ -155,7 +163,7 @@ export function PnfDetallePage() {
   }
 
   const handleGenerarEstructura = async () => {
-    if (!id) return
+    if (!id || numeroTrayectosInvalido) return
     setGenerating(true)
     try {
       const res = await api.post<GenerarEstructuraResultado>(`/pnfs/${id}/generar-estructura`, {
@@ -200,14 +208,18 @@ export function PnfDetallePage() {
         title={pnf.nombre}
         subtitle={`Código ${pnf.codigo}`}
         icon={<BookOpen className="h-5 w-5" />}
-        actions={canEdit && (
+        actions={(canGenerarEstructura || canEdit) && (
           <>
-            <Button variant="outline" onClick={() => setGeneratingEstructura(true)}>
-              <Wand2 className="mr-2 h-4 w-4" /> Generar estructura
-            </Button>
-            <Button onClick={() => { setEditingTrayecto(null); setTrayectoModalOpen(true) }}>
-              <Plus className="mr-2 h-4 w-4" /> Nuevo Trayecto
-            </Button>
+            {canGenerarEstructura && (
+              <Button variant="outline" onClick={() => setGeneratingEstructura(true)}>
+                <Wand2 className="mr-2 h-4 w-4" /> Generar estructura
+              </Button>
+            )}
+            {canEdit && (
+              <Button onClick={() => { setEditingTrayecto(null); setTrayectoModalOpen(true) }}>
+                <Plus className="mr-2 h-4 w-4" /> Nuevo Trayecto
+              </Button>
+            )}
           </>
         )}
       />
@@ -419,7 +431,20 @@ export function PnfDetallePage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="gen-numero-trayectos">Cantidad de trayectos</Label>
-              <Input id="gen-numero-trayectos" type="number" min={1} max={6} value={genNumeroTrayectos} onChange={(e) => setGenNumeroTrayectos(Number(e.target.value))} />
+              <Input
+                id="gen-numero-trayectos"
+                type="number"
+                min={1}
+                max={6}
+                value={genNumeroTrayectos}
+                onChange={(e) => setGenNumeroTrayectos(Number(e.target.value))}
+              />
+              {/* El atributo HTML `max` solo frena un <form> nativo — este diálogo
+                  no es un form y el botón de abajo llama a la API directo, así que
+                  sin esta validación propia un valor fuera de 1-6 se enviaba igual. */}
+              {numeroTrayectosInvalido && (
+                <p className="text-xs text-destructive">Debe ser un número entero entre 1 y 6.</p>
+              )}
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <Checkbox checked={genRequierePiu} onCheckedChange={(v) => setGenRequierePiu(!!v)} />
@@ -428,7 +453,7 @@ export function PnfDetallePage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setGeneratingEstructura(false)} disabled={generating}>Cancelar</Button>
-            <Button onClick={handleGenerarEstructura} disabled={generating}>{generating ? 'Generando...' : 'Generar'}</Button>
+            <Button onClick={handleGenerarEstructura} disabled={generating || numeroTrayectosInvalido}>{generating ? 'Generando...' : 'Generar'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

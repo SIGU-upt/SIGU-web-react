@@ -140,7 +140,7 @@ export function AdminUserFormModal({
           <DialogTitle>{isEditing ? 'Editar Personal Administrativo' : 'Nuevo Personal Administrativo'}</DialogTitle>
           <DialogDescription className="sr-only">Complete los datos del personal administrativo.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
+        <form onSubmit={handleSubmit(submitHandler)} className="space-y-4" autoComplete="off">
           <div className="space-y-2">
             <Label htmlFor="role">Rol</Label>
             <Controller
@@ -201,7 +201,7 @@ export function AdminUserFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
+            <Input id="email" type="email" autoComplete="off" placeholder="usuario@uptjfr.edu.ve" {...register('email', emailRule)} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           {showSedeField && (
@@ -280,6 +280,7 @@ export function AdminUserFormModal({
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="off"
                     placeholder="Mínimo 8 caracteres"
                     className="pr-10"
                     {...register('password', {
