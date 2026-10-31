@@ -33,6 +33,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Professor {
   id: string | number
@@ -82,6 +83,18 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
   const itemsPerPage = 20
   const startIndex = (currentPage - 1) * itemsPerPage
 
+  // Mismo criterio que StudentsTable: un coordinador importa siempre dentro
+  // de su propia sede-PNF (el backend ignora pnfCodigo para ese rol), así
+  // que solo rector/superadmin necesitan ver esa columna en la plantilla.
+  const { user } = useAuth()
+  const necesitaPnfCodigo = !user?.sedePnfId
+  const importHeaders = necesitaPnfCodigo
+    ? ["ci", "nombres", "apellidos", "email", "pnfCodigo"]
+    : ["ci", "nombres", "apellidos", "email"]
+  const importDescription = necesitaPnfCodigo
+    ? "Seleccione un archivo .xlsx con la lista de docentes. La columna pnfCodigo es el código del PNF (ej. PNFI, visible en Configuración → PNF) donde quedará asignado cada docente."
+    : "Seleccione un archivo .xlsx con la lista de docentes"
+
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-4 space-y-4">
@@ -103,9 +116,9 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
               <ImportModal
                 onImport={onImport}
                 title="Importar Docentes"
-                description="Seleccione un archivo .xlsx con la lista de docentes"
+                description={importDescription}
                 buttonLabel="Cargar Docentes"
-                templateHeaders={["ci", "nombres", "apellidos", "email", "sedePnf"]}
+                templateHeaders={importHeaders}
                 templateFilename="plantilla-docentes.csv"
               />
             )}

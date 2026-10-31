@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { type Trayecto } from "@/types"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Student {
   id: string | number
@@ -93,6 +94,19 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
     new Map(trayectoOptions.map((t) => [t.numero, t.nombre])).entries(),
   ).sort(([a], [b]) => a - b)
 
+  // Un coordinador siempre importa dentro de su propia sede-PNF — el backend
+  // ignora la columna pnfCodigo para ese rol (import.controller.ts), así que
+  // ni siquiera tiene sentido mostrarla en su plantilla. Solo rector/
+  // superadmin (sin sedePnfId propio) la necesitan.
+  const { user } = useAuth()
+  const necesitaPnfCodigo = !user?.sedePnfId
+  const importHeaders = necesitaPnfCodigo
+    ? ["ci", "nombres", "apellidos", "email", "trayecto", "pnfCodigo"]
+    : ["ci", "nombres", "apellidos", "email", "trayecto"]
+  const importDescription = necesitaPnfCodigo
+    ? "Seleccione un archivo .xlsx con la lista de estudiantes. La columna pnfCodigo es el código del PNF (ej. PNFI, visible en Configuración → PNF) donde quedará matriculado cada alumno."
+    : "Seleccione un archivo .xlsx con la lista de estudiantes"
+
   return (
     <Card className="shadow-md">
       <CardHeader className="pb-4 space-y-4">
@@ -114,14 +128,14 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
               <ImportModal
                 onImport={onImport}
                 title="Importar Estudiantes"
-                description="Seleccione un archivo .xlsx con la lista de estudiantes"
+                description={importDescription}
                 buttonLabel="Cargar Estudiantes"
                 // "clasesIds" se quitó de la plantilla (comentario de Vercel en /estudiantes):
                 // no hay forma de que el coordinador consulte esos UUID desde la UI. El import
                 // por Excel sigue soportando esa columna si se agrega a mano; falta rediseñar
                 // cómo identificar la clase de forma legible (sección+materia+grupo) para
                 // ofrecerla de nuevo en la plantilla.
-                templateHeaders={["ci", "nombres", "apellidos", "email", "trayecto", "sedePnf"]}
+                templateHeaders={importHeaders}
                 templateFilename="plantilla-estudiantes.csv"
               />
             )}
