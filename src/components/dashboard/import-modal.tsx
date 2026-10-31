@@ -57,7 +57,9 @@ const TEMPLATE_EXAMPLES: Record<string, string> = {
   // Código del PNF (Configuración → PNF). Solo es obligatoria para rector o
   // superadministrador, que no tienen una sede-PNF propia que el servidor
   // pueda usar por defecto — si se omite, esa fila falla con un error claro.
-  sedePnf: '',
+  // Para un coordinador ni siquiera aparece en su plantilla (ver
+  // students-table.tsx/professors-table.tsx): el backend la ignora para ese rol.
+  pnfCodigo: 'PNFI',
   // Plantilla de "Importar horario" (ver secciones/detalle.tsx).
   seccion: 'A',
   materia: 'PROG-I',
