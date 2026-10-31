@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { crearEstudiante } from "@/lib/estudiantes"
+import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { DashboardDocente } from "@/pages/dashboard/docente"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
@@ -45,8 +46,12 @@ function DashboardAdministrativo() {
   const handleCreateUser = async (data: UserFormData) => {
     // El estudiante se crea igual que en Estudiantes (trayecto y matrícula incluidos).
     // El docente no tiene campo de trayecto en el formulario.
-    if (newUserRole === Role.ALUMNO) await crearEstudiante(data, user?.sedePnfId)
-    else await api.post('/users', { ...data, role: newUserRole })
+    if (newUserRole === Role.ALUMNO) {
+      await crearEstudiante(data, user?.sedePnfId)
+    } else {
+      const res = await api.post('/users', { ...data, role: newUserRole })
+      avisarSiCorreoBienvenidaFallo(res.data)
+    }
   }
 
   const roleLabels: Record<string, string> = {

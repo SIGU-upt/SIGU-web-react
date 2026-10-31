@@ -6,6 +6,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
+import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type SedePnf, type Clase } from "@/types"
 
@@ -155,7 +156,8 @@ export function ProfessorsPage() {
   }, [fetchData])
 
   const handleCreate = async (data: UserFormData) => {
-    await api.post('/users', { ...data, role: 'DOCENTE' })
+    const res = await api.post('/users', { ...data, role: 'DOCENTE' })
+    avisarSiCorreoBienvenidaFallo(res.data)
     await fetchData()
   }
 

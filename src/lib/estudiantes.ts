@@ -1,6 +1,7 @@
 import { toast } from "sonner"
 import api from "@/config/api"
 import { getErrorStatus } from "@/lib/errors"
+import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import type { UserFormData } from "@/components/forms/user-form-modal"
 
 /**
@@ -16,6 +17,7 @@ import type { UserFormData } from "@/components/forms/user-form-modal"
 export async function crearEstudiante(data: UserFormData, sedePnfIdPorDefecto?: string | null) {
   const { trayectoId, ...userData } = data
   const res = await api.post('/users', { ...userData, role: 'ALUMNO', trayectoActualId: trayectoId || undefined })
+  avisarSiCorreoBienvenidaFallo(res.data)
   const sedePnfId = data.sedePnfId ?? sedePnfIdPorDefecto
   if (trayectoId && sedePnfId) {
     try {
