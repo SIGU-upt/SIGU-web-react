@@ -135,8 +135,13 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground">
-        © 2026 Universidad • Sistema de Gestión Universitaria
+      <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground space-y-1">
+        <p>© 2026 Universidad • Sistema de Gestión Universitaria</p>
+        <p className="text-xs">
+          <Link to="/privacidad" className="hover:underline">Privacidad</Link>
+          {' · '}
+          <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+        </p>
       </footer>
     </div>
   )

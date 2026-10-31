@@ -147,6 +147,11 @@ export function LoginPage() {
       <p className="mt-8 text-sm text-muted-foreground">
         © 2026 Universidad • Sistema de Gestión Universitaria
       </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        <Link to="/privacidad" className="hover:underline">Privacidad</Link>
+        {' · '}
+        <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+      </p>
     </div>
   )
 }
