@@ -8,13 +8,22 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { type UnidadCurricular, type User, Role } from "@/types"
+import { type UnidadCurricular, type User, type Turno, Role } from "@/types"
 import api from "@/config/api"
 import { requiredTextRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 
 const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'] as const
+
+// Días válidos según el turno de la sección: una clase entre semana no puede
+// caer en fin de semana y viceversa. Viernes se admite en ambos (algunas
+// secciones de fin de semana arrancan ese día).
+const DIAS_POR_TURNO: Record<Turno, readonly string[]> = {
+  ENTRESEMANA: ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'],
+  NOCHE: ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'],
+  FIN_DE_SEMANA: ['VIERNES', 'SABADO', 'DOMINGO'],
+}
 
 export interface ClaseFormData {
   ucId: string
@@ -32,6 +41,9 @@ interface ClaseFormModalProps {
   onSubmit: (data: ClaseFormData) => Promise<void>
   trayectoId: string
   sedePnfId: string
+  // Acota qué días se pueden elegir (ver DIAS_POR_TURNO). Sin turno definido
+  // en la sección, no se restringe nada.
+  turno?: Turno | null
   initialData?: Partial<ClaseFormData>
   isEditing?: boolean
 }
@@ -52,9 +64,11 @@ export function ClaseFormModal({
   onSubmit,
   trayectoId,
   sedePnfId,
+  turno,
   initialData,
   isEditing,
 }: ClaseFormModalProps) {
+  const diasDisponibles = turno ? DIAS_POR_TURNO[turno] : DIAS_SEMANA
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -245,7 +259,7 @@ export function ClaseFormModal({
                     <SelectValue placeholder="Sin definir" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DIAS_SEMANA.map((d) => (
+                    {diasDisponibles.map((d) => (
                       <SelectItem key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</SelectItem>
                     ))}
                   </SelectContent>

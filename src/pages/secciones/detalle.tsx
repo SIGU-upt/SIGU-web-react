@@ -640,6 +640,7 @@ export function SeccionDetallePage() {
         onSubmit={editing ? handleEdit : handleCreate}
         trayectoId={seccion.trayectoId}
         sedePnfId={seccion.sedePnfId}
+        turno={seccion.turno}
         initialData={editing ? {
           ucId: editing.ucId,
           docenteId: editing.docenteId,
