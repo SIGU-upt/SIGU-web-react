@@ -48,6 +48,18 @@ export const ciRule = {
     typeof value === 'string' ? value.trim().toUpperCase() : value,
 };
 
+/**
+ * Cédula en el formato con que el API la guarda y busca en el login (`V-12345678`).
+ * Una cédula de solo dígitos se toma como venezolana. Se usa al editar para detectar
+ * cédulas que quedaron guardadas sin prefijo (p. ej. por una importación) y corregirlas.
+ */
+export const normalizarCi = (ci: string): string => {
+  const limpia = ci.trim().toUpperCase().replace(/\s+/g, '')
+  const conPrefijo = /^([VE])-?(\d+)$/.exec(limpia)
+  if (conPrefijo) return `${conPrefijo[1]}-${conPrefijo[2]}`
+  return /^\d+$/.test(limpia) ? `V-${limpia}` : limpia
+}
+
 /** Número requerido que no admite valores negativos. */
 export const nonNegativeNumberRule = {
   required: 'Requerido',
