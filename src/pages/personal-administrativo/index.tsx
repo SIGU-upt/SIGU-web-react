@@ -19,6 +19,7 @@ import { Role, type User, type Sede, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -252,7 +253,7 @@ export function PersonalAdministrativoPage() {
                 <TableBody>
                   {paginated.map((u) => (
                     <TableRow key={u.id}>
-                      <TableCell>{u.nombreCompleto}</TableCell>
+                      <TableCell><TextoTruncado texto={u.nombreCompleto} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{u.ci}</TableCell>
                       <TableCell><Badge variant="secondary">{ROLE_LABELS[u.role] ?? u.role}</Badge></TableCell>
                       <TableCell className="text-sm text-muted-foreground">
@@ -262,7 +263,7 @@ export function PersonalAdministrativoPage() {
                         {canEdit || canResetDevice ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones"><MoreVertical className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {canEdit && (

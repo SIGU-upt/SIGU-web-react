@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/ui/page-header"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ClaseFormModal, type ClaseFormData } from "@/components/forms/clase-form-modal"
@@ -22,6 +22,7 @@ import { getErrorMessage, getErrorStatus } from "@/lib/errors"
 import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
 import { downloadExportedFile } from "@/lib/export"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 interface InscripcionMasivaResponse {
   procesados: number
@@ -461,7 +462,7 @@ export function SeccionDetallePage() {
                   const inscritas = clasesInscritasPorAlumno.get(ac.alumnoId) ?? 0
                   return (
                     <TableRow key={ac.id}>
-                      <TableCell className="font-medium">{ac.alumno?.nombreCompleto ?? ac.alumnoId}</TableCell>
+                      <TableCell className="font-medium"><TextoTruncado texto={ac.alumno?.nombreCompleto ?? ac.alumnoId} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{ac.alumno?.ci ?? '—'}</TableCell>
                       <TableCell>
                         {inscritas > 0 ? (
@@ -488,6 +489,7 @@ export function SeccionDetallePage() {
             <Button variant="outline" onClick={handleExportHorario} disabled={clases.length === 0}>
               Exportar horario
             </Button>
+            {canEdit && (
             <ImportModal
               onImport={handleImportHorario}
               triggerLabel="Importar horario"
@@ -499,6 +501,9 @@ export function SeccionDetallePage() {
               renderResult={(result: { creadas: number; errores: { fila: number; motivo: string }[] }) => (
                 <div className="text-sm space-y-1 ml-7">
                   <p>Clases creadas: {result.creadas}</p>
+                  {result.creadas === 0 && result.errores.length === 0 && (
+                    <p className="text-amber-600 dark:text-amber-400">El archivo no tenía filas para importar. Revise que los datos estén en la primera hoja.</p>
+                  )}
                   {result.errores.length > 0 && (
                     <div className="text-destructive">
                       <p>Filas con error: {result.errores.length}</p>
@@ -512,6 +517,7 @@ export function SeccionDetallePage() {
                 </div>
               )}
             />
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -566,7 +572,7 @@ export function SeccionDetallePage() {
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{c.docente?.nombreCompleto ?? '—'}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{c.diaSemana ? DIA_LABEL[c.diaSemana] ?? c.diaSemana : '—'}</TableCell>
-                                <TableCell className="text-sm text-muted-foreground">{c.horaInicio && c.horaFin ? `${c.horaInicio} - ${c.horaFin}` : '—'}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground">{c.horaInicio && c.horaFin ? `${c.horaInicio.slice(0, 5)} - ${c.horaFin.slice(0, 5)}` : '—'}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{c.aula ?? '—'}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                   {(inscripcionesPorClase[c.id] ?? []).length === 0 ? '—' : (
@@ -591,7 +597,7 @@ export function SeccionDetallePage() {
                                   {canEdit ? (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones"><MoreVertical className="h-4 w-4" /></Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={() => { setEditing(c); setModalOpen(true) }}>
@@ -667,6 +673,7 @@ export function SeccionDetallePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Suspender clase</DialogTitle>
+            <DialogDescription className="sr-only">Indique la fecha y el motivo de la suspensión.</DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {suspendingClase?.unidadCurricular?.nombre} ({suspendingClase?.nombreGrupo})
@@ -694,6 +701,7 @@ export function SeccionDetallePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar inscripción masiva</DialogTitle>
+            <DialogDescription className="sr-only">Revise cuántos alumnos y clases se inscribirán.</DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Se va a intentar inscribir a <span className="font-semibold text-foreground">{matricula.length}</span> alumno(s) de la matrícula en <span className="font-semibold text-foreground">{claseIdsSinAmbiguedad.length}</span> clase(s) sin ambigüedad de grupo (considerando todo el trayecto, no solo esta Sección).

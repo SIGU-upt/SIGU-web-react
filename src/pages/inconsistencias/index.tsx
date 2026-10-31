@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { downloadCsv } from "@/lib/export-csv"
 import type { InscripcionInconsistencia, TipoInconsistencia } from "@/types"
 import api from "@/config/api"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 const PAGE_SIZE = 20
 
@@ -179,7 +180,7 @@ export function InconsistenciasPage() {
                   {pagina.map((i, idx) => (
                     <TableRow key={`${i.alumnoId}-${i.tipo}-${startIndex + idx}`} className="hover:bg-muted/70">
                       <TableCell>
-                        <p className="font-medium text-foreground">{i.nombreCompleto}</p>
+                        <p className="font-medium text-foreground"><TextoTruncado texto={i.nombreCompleto} /></p>
                         <p className="text-xs text-muted-foreground font-mono">{i.ci}</p>
                       </TableCell>
                       <TableCell>

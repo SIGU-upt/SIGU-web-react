@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -127,6 +127,7 @@ export function SeccionFormModal({
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Sección' : 'Nueva Sección'}</DialogTitle>
+          <DialogDescription className="sr-only">Datos de la sección: código, trayecto y turno.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           {isSuperadmin && (

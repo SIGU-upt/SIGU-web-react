@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useForm, Controller } from "react-hook-form"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -115,6 +115,7 @@ export function EntityFormModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription className="sr-only">Complete los datos y guarde los cambios.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           {visibleFields.map((f) => (

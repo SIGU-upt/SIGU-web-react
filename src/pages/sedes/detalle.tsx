@@ -11,6 +11,7 @@ import { Role, type Sede, type SedePnf, type Seccion, type User } from "@/types"
 import { VincularPnfModal } from "@/components/forms/vincular-pnf-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 export function SedeDetallePage() {
   const { id } = useParams<{ id: string }>()
@@ -170,7 +171,7 @@ export function SedeDetallePage() {
               <TableBody>
                 {docentes.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell>{d.nombreCompleto}</TableCell>
+                    <TableCell><TextoTruncado texto={d.nombreCompleto} /></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{d.ci}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
                   </TableRow>
@@ -199,7 +200,7 @@ export function SedeDetallePage() {
                 <TableBody>
                   {alumnos.map((a) => (
                     <TableRow key={a.id}>
-                      <TableCell>{a.nombreCompleto}</TableCell>
+                      <TableCell><TextoTruncado texto={a.nombreCompleto} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.ci}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.sedePnf?.pnf?.nombre ?? '—'}</TableCell>
                     </TableRow>

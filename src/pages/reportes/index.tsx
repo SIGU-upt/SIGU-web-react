@@ -16,6 +16,7 @@ import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
 import { hoyLocal } from "@/lib/fecha"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 const DIA_SEMANA_LABEL: Record<string, string> = {
   LUNES: 'lunes', MARTES: 'martes', MIERCOLES: 'miércoles', JUEVES: 'jueves',
@@ -342,7 +343,7 @@ export function ReportesPage() {
     <div className="space-y-6">
       <PageHeader title="Reportes" subtitle="Reportes de asistencia académica" icon={<FileBarChart className="h-5 w-5" />} />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList data-tour="reportes-tabs">
+        <TabsList data-tour="reportes-tabs" className="max-w-full justify-start overflow-x-auto">
           <TabsTrigger value="clase">Por Clase</TabsTrigger>
           <TabsTrigger value="alumno">Por Alumno</TabsTrigger>
           {!esDocente && <TabsTrigger value="trayecto">Por Trayecto</TabsTrigger>}
@@ -412,7 +413,7 @@ export function ReportesPage() {
                         {classReport.alumnos?.map((a) => (
                           <TableRow key={a.alumnoId}>
                             <TableCell>
-                              <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left">{a.nombreCompleto}</button>
+                              <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left"><TextoTruncado texto={a.nombreCompleto} /></button>
                             </TableCell>
                             <TableCell className="text-muted-foreground">{a.ci}</TableCell>
                             <TableCell><Badge className={estadoColor(a.estado)}>{a.estado}</Badge></TableCell>
@@ -595,7 +596,7 @@ export function ReportesPage() {
                     <TableBody>
                       {trayectoReport.map((a) => (
                         <TableRow key={a.alumnoId}>
-                          <TableCell>{a.nombreCompleto}</TableCell>
+                          <TableCell><TextoTruncado texto={a.nombreCompleto} /></TableCell>
                           <TableCell className="text-muted-foreground">{a.ci}</TableCell>
                           <TableCell className={a.porEncimaUmbral ? 'text-success font-bold' : 'text-destructive font-bold'}>
                             {a.porcentajeGlobal}%
@@ -655,7 +656,7 @@ export function ReportesPage() {
                       {riesgoReport.map((a) => (
                         <TableRow key={a.alumnoId}>
                           <TableCell>
-                            <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left">{a.nombreCompleto}</button>
+                            <button type="button" onClick={() => verDetalleAlumno(a.alumnoId)} className="hover:underline text-left"><TextoTruncado texto={a.nombreCompleto} /></button>
                           </TableCell>
                           <TableCell className="text-muted-foreground">{a.ci}</TableCell>
                           <TableCell className="text-destructive font-bold">{a.porcentajeGlobal}%</TableCell>

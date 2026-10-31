@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -44,6 +44,7 @@ export function RetirarMatriculaModal({ open, onOpenChange, onConfirm, alumnoNom
       <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle>Retirar {alumnoNombre ? `a ${alumnoNombre}` : 'alumno'} de la matrícula</DialogTitle>
+          <DialogDescription className="sr-only">Indique el motivo y la fecha del retiro.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

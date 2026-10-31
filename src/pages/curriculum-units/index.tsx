@@ -13,6 +13,7 @@ interface UcRow {
   code: string
   name: string
   trayecto: string
+  pnf: string
   // Art. 24(b): la Práctica Profesional exige 80% de asistencia, no el 75%
   // general — es la única clasificación real que existe hoy para una UC. No
   // hay distinción "obligatoria/electiva" en el modelo (comentario de Vercel
@@ -52,6 +53,7 @@ export function CurriculumUnitsPage() {
         code: `UC-${uc.nombre.substring(0, 3).toUpperCase()}`,
         name: uc.nombre,
         trayecto: uc.trayecto?.nombre ?? '—',
+        pnf: uc.trayecto?.pnf?.nombre ?? '—',
         type: uc.catalogo?.tipo === 'PRACTICA_PROFESIONAL' ? 'Práctica Profesional' as const : 'Regular' as const,
         _raw: uc,
       })))

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Role } from '@/types'
 import { DashboardLayout } from '@/layouts/dashboard-layout'
@@ -9,7 +9,8 @@ interface PrivateRouteProps {
 }
 
 export function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
-  const { isAuthenticated, isLoading, user, logout } = useAuth()
+  const { isAuthenticated, isLoading, user, logout, mustChangePassword } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -21,6 +22,11 @@ export function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+
+  // Con una clave temporal el API rechaza todo lo demás: se lleva a la persona a Perfil, donde la cambia.
+  if (mustChangePassword && location.pathname !== '/perfil') {
+    return <Navigate to="/perfil" replace />
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {

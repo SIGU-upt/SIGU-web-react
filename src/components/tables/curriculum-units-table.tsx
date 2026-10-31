@@ -38,6 +38,7 @@ interface CurriculumUnit {
   code: string
   name: string
   trayecto: string
+  pnf?: string
   type: "Regular" | "Práctica Profesional"
 }
 
@@ -77,6 +78,8 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
       filteredData.map((item) => ({
         Código: item.code,
         'Unidad Curricular': item.name,
+        // «Trayecto 1» existe en cada PNF: sin el PNF el pensum exportado no se puede interpretar.
+        PNF: item.pnf ?? '—',
         Trayecto: item.trayecto,
         Tipo: item.type,
       })),
@@ -160,7 +163,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
                       {canEdit ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

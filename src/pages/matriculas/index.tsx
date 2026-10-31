@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type AlumnoCohorte } from "@/types"
 import api from "@/config/api"
 import { toast } from "sonner"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 // 28/10/2026: esta pantalla mostraba "cohortes" como grupos con nombre y
 // cupo propios (entidad `Cohorte`, aparte de la matrícula). Se quitó esa
@@ -164,7 +165,7 @@ export function MatriculasPage() {
                               <TableBody>
                                 {g.miembros.map((m) => (
                                   <TableRow key={m.id}>
-                                    <TableCell className="text-sm">{m.alumno?.nombreCompleto ?? m.alumnoId}</TableCell>
+                                    <TableCell className="text-sm"><TextoTruncado texto={m.alumno?.nombreCompleto ?? m.alumnoId} /></TableCell>
                                     <TableCell className="text-sm text-muted-foreground">{m.alumno?.ci ?? '—'}</TableCell>
                                     <TableCell className="text-sm">
                                       {m.activa ? (

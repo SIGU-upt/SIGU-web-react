@@ -10,15 +10,17 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/ui/page-header"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, type GenerarEstructuraResultado } from "@/types"
 import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 const trayectoFields: EntityField[] = [
   { name: 'nombre', label: 'Nombre', required: true },
@@ -131,6 +133,7 @@ export function PnfDetallePage() {
   const handleDeleteTrayecto = async () => {
     if (!deletingTrayecto) return
     await api.delete(`/trayectos/${deletingTrayecto.id}`)
+    toast.success('Trayecto eliminado.')
     await fetchData()
   }
 
@@ -147,6 +150,7 @@ export function PnfDetallePage() {
   const handleDeleteTramo = async () => {
     if (!deletingTramo) return
     await api.delete(`/tramos/${deletingTramo.id}`)
+    toast.success('Tramo eliminado.')
     await fetchData()
   }
 
@@ -263,7 +267,7 @@ export function PnfDetallePage() {
                                   <TableCell className="text-right">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones"><MoreVertical className="h-4 w-4" /></Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={() => { setTramoTrayectoId(t.id); setEditingTramo(tr); setTramoModalOpen(true) }}>
@@ -319,7 +323,7 @@ export function PnfDetallePage() {
               <TableBody>
                 {docentes.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell>{d.nombreCompleto}</TableCell>
+                    <TableCell><TextoTruncado texto={d.nombreCompleto} /></TableCell>
                     <TableCell className="text-sm text-muted-foreground">{d.ci}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
                   </TableRow>
@@ -348,7 +352,7 @@ export function PnfDetallePage() {
                 <TableBody>
                   {alumnos.map((a) => (
                     <TableRow key={a.id}>
-                      <TableCell>{a.nombreCompleto}</TableCell>
+                      <TableCell><TextoTruncado texto={a.nombreCompleto} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.ci}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.trayectoActual?.nombre ?? '—'}</TableCell>
                     </TableRow>
@@ -407,6 +411,7 @@ export function PnfDetallePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Generar estructura académica</DialogTitle>
+            <DialogDescription className="sr-only">Crea los trayectos y tramos que falten.</DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Crea los trayectos y tramos que falten. Es idempotente: no duplica lo que ya esté creado.

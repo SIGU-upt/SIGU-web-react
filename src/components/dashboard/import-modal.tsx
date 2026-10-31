@@ -16,8 +16,17 @@ export interface ImportResult {
 }
 
 function defaultRenderResult(result: ImportResult) {
+  // El API responde 201 aunque el archivo esté vacío o no sea un Excel: sin este aviso parece que funcionó.
+  const sinFilas =
+    result.creados + result.actualizados + result.matriculasAsignadas + result.inscripcionesCreadas === 0 &&
+    result.errores.length === 0
   return (
     <div className="text-sm space-y-1 ml-7">
+      {sinFilas && (
+        <p className="text-amber-600 dark:text-amber-400">
+          El archivo no tenía filas para importar. Revise que sea un Excel con datos en la primera hoja.
+        </p>
+      )}
       <p>Creados: {result.creados}</p>
       <p>Actualizados: {result.actualizados}</p>
       <p>Matrículas asignadas: {result.matriculasAsignadas}</p>

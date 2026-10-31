@@ -33,6 +33,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { type Trayecto } from "@/types"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 interface Student {
   id: string | number
@@ -216,9 +217,9 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                             {item.initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium text-foreground leading-none">{item.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.email}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground leading-none"><TextoTruncado texto={item.name} /></p>
+                          <p className="text-xs text-muted-foreground mt-1"><TextoTruncado texto={item.email} /></p>
                         </div>
                       </div>
                     </TableCell>
@@ -238,7 +239,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                       {canEdit || canResetDevice || canDelete ? (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
