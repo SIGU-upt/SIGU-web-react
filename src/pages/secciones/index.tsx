@@ -19,8 +19,7 @@ import api from "@/config/api"
 import { opcionesDeSede } from "@/lib/opciones-sede"
 
 const TURNO_LABELS: Record<Turno, string> = {
-  MANANA: "Mañana",
-  TARDE: "Tarde",
+  ENTRESEMANA: "Entre semana",
   NOCHE: "Noche",
   FIN_DE_SEMANA: "Fin de semana",
 }

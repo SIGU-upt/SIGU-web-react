@@ -14,8 +14,7 @@ import { requiredTextRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
 const TURNO_LABELS: Record<Turno, string> = {
-  MANANA: "Mañana",
-  TARDE: "Tarde",
+  ENTRESEMANA: "Entre semana",
   NOCHE: "Noche",
   FIN_DE_SEMANA: "Fin de semana",
 }
