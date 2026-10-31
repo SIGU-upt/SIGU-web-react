@@ -27,7 +27,8 @@ interface UcRow {
 interface UcFormValues {
   nombre: string
   trayectoId: string
-  tramoId?: string
+  tramoInicioId?: string
+  tramoFinId?: string
   tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
   ucCatalogoIdSeleccionado?: string
 }
@@ -78,7 +79,8 @@ export function CurriculumUnitsPage() {
     await api.patch(`/unidades-curriculares/${editing._raw.id}`, {
       nombre: formData.nombre,
       trayectoId: formData.trayectoId,
-      tramoId: formData.tramoId ?? null,
+      tramoInicioId: formData.tramoInicioId ?? null,
+      tramoFinId: formData.tramoFinId ?? null,
       tipo: formData.tipo,
     })
     await fetchData()
@@ -110,7 +112,7 @@ export function CurriculumUnitsPage() {
         open={modalOpen}
         onOpenChange={setModalOpen}
         onSubmit={editing ? handleEdit : handleCreate}
-        initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoId: editing._raw.tramoId ?? undefined, tipo: editing._raw.catalogo?.tipo } : undefined}
+        initialData={editing ? { nombre: editing.name, trayectoId: editing._raw.trayectoId, tramoInicioId: editing._raw.tramoInicioId ?? undefined, tramoFinId: editing._raw.tramoFinId ?? undefined, tipo: editing._raw.catalogo?.tipo } : undefined}
         isEditing={!!editing}
         ucCatalogoId={editing?._raw.ucCatalogoId}
       />

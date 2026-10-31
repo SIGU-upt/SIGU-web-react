@@ -82,9 +82,13 @@ export interface UnidadCurricular {
   id: string
   trayectoId: string
   nombre: string
-  tramoId: string | null
+  // Null en ambos = anual. Mismo valor = un solo tramo. Distintos = rango de
+  // tramos consecutivos (ej. Tramo 1 y 2).
+  tramoInicioId: string | null
+  tramoFinId: string | null
   trayecto?: Trayecto
-  tramo?: Tramo | null
+  tramoInicio?: Tramo | null
+  tramoFin?: Tramo | null
   // ADR-023: la UC ahora referencia un catálogo compartido entre trayectos.
   ucCatalogoId?: string
   codigo?: string
