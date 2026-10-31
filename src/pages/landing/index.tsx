@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 import {
   GraduationCap,
@@ -7,16 +8,26 @@ import {
   Github,
   Smartphone,
   Download,
+  ShieldCheck as ShieldIcon,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 const APP_REPO_URL = "https://github.com/SIGU-upt/SIGU-app-flutter"
-// Hasta que se suba un APK real (ver docs/PENDIENTES.md), el botón de
-// descarga apunta aquí; se puede cambiar por la URL pública de Supabase sin
-// tocar nada más.
-const APP_DOWNLOAD_URL = import.meta.env.VITE_APP_DOWNLOAD_URL || APP_REPO_URL
+const APP_DOWNLOAD_URL =
+  import.meta.env.VITE_APP_DOWNLOAD_URL ||
+  "https://github.com/SIGU-upt/sigu-app-releases/releases/download/v1.0.0/SIGU.apk"
+const APK_VIRUSTOTAL_URL =
+  "https://www.virustotal.com/gui/file/94cd5e83c55e00b100f182c6c2273715907685bf272c30c39cca6a39cfad4909"
 
 const CARACTERISTICAS = [
   {
@@ -40,6 +51,8 @@ const CARACTERISTICAS = [
 ]
 
 export function LandingPage() {
+  const [descargaAbierta, setDescargaAbierta] = useState(false)
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -115,15 +128,14 @@ export function LandingPage() {
               sus clases desde su teléfono.
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <a href={APP_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
-                <Button
-                  size="lg"
-                  className="h-12 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  <Download className="h-5 w-5" />
-                  Descargar la aplicación (APK)
-                </Button>
-              </a>
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => setDescargaAbierta(true)}
+              >
+                <Download className="h-5 w-5" />
+                Descargar la aplicación (APK)
+              </Button>
               <a href={APP_REPO_URL} target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold">
                   <Github className="h-5 w-5" />
@@ -131,6 +143,33 @@ export function LandingPage() {
                 </Button>
               </a>
             </div>
+
+            <Dialog open={descargaAbierta} onOpenChange={setDescargaAbierta}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Descargar la aplicación SIGU</DialogTitle>
+                  <DialogDescription>
+                    Antes de instalar un APK fuera de una tienda oficial, se recomienda verificar
+                    el archivo. Puede revisar el análisis público en VirusTotal (0 de 68
+                    antivirus lo marcan como malicioso).
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex-col gap-2 sm:flex-col">
+                  <a href={APP_DOWNLOAD_URL} className="w-full">
+                    <Button className="w-full">
+                      <Download className="h-4 w-4" />
+                      Descargar APK
+                    </Button>
+                  </a>
+                  <a href={APK_VIRUSTOTAL_URL} target="_blank" rel="noopener noreferrer" className="w-full">
+                    <Button variant="outline" className="w-full">
+                      <ShieldIcon className="h-4 w-4" />
+                      Ver análisis en VirusTotal
+                    </Button>
+                  </a>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </section>
       </main>
