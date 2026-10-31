@@ -4,6 +4,7 @@ import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
 import { crearEstudiante } from "@/lib/estudiantes"
@@ -77,8 +78,7 @@ export function StudentsPage() {
 
   // Opciones de sede (solo superadmin): sedes únicas derivadas de las sede-PNF.
   const sedeOptions = isSuperadmin
-    ? Array.from(new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries())
-        .map(([id, label]) => ({ id, label }))
+    ? opcionesDeSede(sedePnfOptions)
     : undefined
 
   // Opciones de PNF: filtro global por pnfId (deduplicado — ya hay un filtro

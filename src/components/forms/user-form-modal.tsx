@@ -13,6 +13,7 @@ import { passwordMeetsRequirements, generateStrongPassword } from "@/lib/passwor
 import { Eye, EyeOff, Wand2 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { nameRule, emailRule, ciRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
@@ -79,7 +80,7 @@ export function UserFormModal({
 
   useEffect(() => {
     if (open && (showPnfField || showTrayectoField)) {
-      api.get('/sede-pnf').then((res) => {
+      api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
         const list = res.data.data ?? res.data
         setSedePnfOptions(Array.isArray(list) ? list : [])
       }).catch(() => setSedePnfOptions([]))
@@ -94,9 +95,7 @@ export function UserFormModal({
     if (sp) setSelectedSedeId(sp.sedeId)
   }, [open, initialData?.sedePnfId, sedePnfOptions])
 
-  const sedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const sedeOptions = opcionesDeSede(sedePnfOptions)
   const pnfOptionsForSede = sedePnfOptions.filter((sp) => sp.sedeId === selectedSedeId)
 
   useEffect(() => {

@@ -16,6 +16,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Seccion, type SedePnf, type Trayecto, type Turno } from "@/types"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 
 const TURNO_LABELS: Record<Turno, string> = {
   MANANA: "Mañana",
@@ -71,9 +72,7 @@ export function SeccionesPage() {
   }, [])
 
   // Opciones de sede (solo superadmin): sedes únicas derivadas de las sede-PNF.
-  const sedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label })).sort((a, b) => a.label.localeCompare(b.label))
+  const sedeOptions = opcionesDeSede(sedePnfOptions).sort((a, b) => a.label.localeCompare(b.label))
   // El PNF es un filtro global (por eso ya hay un filtro de sede aparte): se
   // deduplica por pnfId sin importar en cuántas sedes exista, ordenado
   // alfabéticamente, y el backend lo combina con sedeId si ambos están activos.

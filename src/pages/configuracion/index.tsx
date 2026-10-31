@@ -214,7 +214,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
     setMultipleForm({ nombre: '', fechaInicio: '', fechaFin: '', activo: true })
     setMultipleSedePnfIds([])
     setMultipleOpen(true)
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setMultipleSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setMultipleSedePnfOptions([]))

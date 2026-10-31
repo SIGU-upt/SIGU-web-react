@@ -4,6 +4,7 @@ import { ProfessorsTable } from "@/components/tables/professors-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
@@ -71,8 +72,7 @@ export function ProfessorsPage() {
 
   // Opciones de sede (solo superadmin/auditor): sedes únicas derivadas de las sede-PNF.
   const sedeOptions = isUnscoped
-    ? Array.from(new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries())
-        .map(([id, label]) => ({ id, label }))
+    ? opcionesDeSede(sedePnfOptions)
     : undefined
 
   // Opciones de PNF: filtro global por pnfId (deduplicado — ya hay un filtro

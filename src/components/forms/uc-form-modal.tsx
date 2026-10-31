@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Role, type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
+import { opcionesDeSede } from "@/lib/opciones-sede"
 import { useAuth } from "@/contexts/AuthContext"
 import { requiredTextRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
@@ -115,7 +116,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
       const list = res.data.data ?? res.data
       setTrayectoOptions(Array.isArray(list) ? list : [])
     }).catch(() => setTrayectoOptions([]))
-    api.get('/sede-pnf').then((res) => {
+    api.get('/sede-pnf', { params: { limit: 200 } }).then((res) => {
       const list = res.data.data ?? res.data
       setSedePnfOptions(Array.isArray(list) ? list : [])
     }).catch(() => setSedePnfOptions([]))
@@ -167,9 +168,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
   // (un trayecto no pertenece a una sede), así que el trayecto siempre se filtra
   // por PNF; la sede es solo un filtro opcional para acotar la lista de PNF.
   // Evita la ambigüedad de "Trayecto 1" repetido entre PNF distintos.
-  const sedeOptions = Array.from(
-    new Map(sedePnfOptions.map((sp) => [sp.sedeId, sp.sede?.nombre ?? sp.sedeId])).entries(),
-  ).map(([id, label]) => ({ id, label }))
+  const sedeOptions = opcionesDeSede(sedePnfOptions)
   const pnfOptions = Array.from(
     new Map(
       sedePnfOptions
