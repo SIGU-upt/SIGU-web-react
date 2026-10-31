@@ -52,6 +52,16 @@ export function RespaldoTab() {
     if (!archivo || confirmacion !== FRASE_CONFIRMACION || !password) return
     setRestaurando(true)
     try {
+      // Se valida la contraseña primero, en un endpoint aparte que no recibe
+      // el archivo: si está mal, el usuario lo sabe de inmediato sin esperar
+      // a que se suba un respaldo de hasta 200MB para nada.
+      try {
+        await api.post("/backup/verify-password", { password })
+      } catch (err) {
+        toast.error(getErrorMessage(err, "Contraseña incorrecta"))
+        return
+      }
+
       const formData = new FormData()
       formData.append("file", archivo)
       formData.append("confirmacion", confirmacion)
@@ -118,6 +128,8 @@ export function RespaldoTab() {
             </Label>
             <Input
               id="confirmacion-restore"
+              name="restore-confirmacion"
+              autoComplete="off"
               value={confirmacion}
               onChange={(e) => setConfirmacion(e.target.value)}
               placeholder={FRASE_CONFIRMACION}
@@ -127,8 +139,9 @@ export function RespaldoTab() {
             <Label htmlFor="password-restore">Su contraseña</Label>
             <Input
               id="password-restore"
+              name="restore-password-confirm"
               type="password"
-              autoComplete="current-password"
+              autoComplete="off"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Contraseña de su cuenta"
