@@ -17,6 +17,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Sede, type SedePnf } from "@/types"
 import api from "@/config/api"
+import { normalizarCi } from "@/lib/validators"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
@@ -145,6 +146,12 @@ export function PersonalAdministrativoPage() {
     if (form.email) payload.email = form.email
     if (form.sedeActualId) payload.sedeActualId = form.sedeActualId
     if (form.sedePnfId) payload.sedePnfId = form.sedePnfId
+    // Solo el superadmin puede cambiar la cédula (el API lo exige). Se envía normalizada si
+    // difiere de la guardada: así se corrige una cédula que quedó sin el prefijo V-.
+    if (user?.role === Role.SUPERADMIN && form.ci) {
+      const ci = normalizarCi(form.ci)
+      if (ci !== editing.ci) payload.ci = ci
+    }
     await api.patch(`/users/${editing.id}`, payload)
     await fetchData()
   }
