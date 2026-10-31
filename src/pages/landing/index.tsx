@@ -5,11 +5,11 @@ import {
   QrCode,
   BarChart3,
   ShieldCheck,
-  Github,
   Smartphone,
   Download,
   ShieldCheck as ShieldIcon,
 } from "lucide-react"
+import { SiGithub, SiFlutter, SiDart } from "react-icons/si"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -127,7 +127,7 @@ export function LandingPage() {
               Descargue la aplicación móvil de SIGU para registrar y controlar la asistencia de
               sus clases desde su teléfono.
             </p>
-            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-6 flex justify-center">
               <Button
                 size="lg"
                 className="h-12 px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
@@ -136,12 +136,6 @@ export function LandingPage() {
                 <Download className="h-5 w-5" />
                 Descargar la aplicación (APK)
               </Button>
-              <a href={APP_REPO_URL} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold">
-                  <Github className="h-5 w-5" />
-                  Ver el código fuente
-                </Button>
-              </a>
             </div>
 
             <Dialog open={descargaAbierta} onOpenChange={setDescargaAbierta}>
@@ -167,6 +161,35 @@ export function LandingPage() {
                       Ver análisis en VirusTotal
                     </Button>
                   </a>
+                  <div className="flex items-center justify-center gap-4 pt-2 text-muted-foreground">
+                    <a
+                      href={APP_REPO_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Código fuente en GitHub"
+                      className="hover:text-foreground"
+                    >
+                      <SiGithub className="h-5 w-5" />
+                    </a>
+                    <a
+                      href="https://flutter.dev"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Hecho con Flutter"
+                      className="hover:text-foreground"
+                    >
+                      <SiFlutter className="h-5 w-5" />
+                    </a>
+                    <a
+                      href="https://dart.dev"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Hecho con Dart"
+                      className="hover:text-foreground"
+                    >
+                      <SiDart className="h-5 w-5" />
+                    </a>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
