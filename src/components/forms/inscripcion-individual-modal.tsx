@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { Search, Check } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -163,6 +163,7 @@ export function InscripcionIndividualModal({
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Inscribir alumnos</DialogTitle>
+          <DialogDescription className="sr-only">Elija los alumnos y las clases en las que se inscribirán.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">

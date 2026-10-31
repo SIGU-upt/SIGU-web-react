@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -274,6 +274,13 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {Array.isArray(sortedData) && sortedData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={config.columns.length + 1} className="h-24 text-center text-muted-foreground">
+                    No se encontraron resultados.
+                  </TableCell>
+                </TableRow>
+              )}
               {Array.isArray(sortedData) && sortedData.map((item, index) => {
                 const groupLabel = config.groupLabel?.(item)
                 const previousGroupLabel = config.groupLabel && index > 0 ? config.groupLabel(sortedData[index - 1]) : null
@@ -297,7 +304,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
                     {canEdit ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones"><MoreVertical className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => { setEditing(item); setModalOpen(true) }}>
@@ -350,6 +357,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Generar estructura académica</DialogTitle>
+              <DialogDescription className="sr-only">Crea los trayectos y tramos que falten.</DialogDescription>
             </DialogHeader>
             <p className="text-sm text-muted-foreground">
               Crea los trayectos y tramos que falten para "{generatingFor?.nombre}". Es idempotente: no duplica lo que ya esté creado.
@@ -386,6 +394,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Generar período en varias sede-PNF</DialogTitle>
+              <DialogDescription className="sr-only">Crea el mismo período en las sede-PNF que elija.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">

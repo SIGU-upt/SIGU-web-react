@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { User as UserIcon, KeyRound, Building2, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -41,19 +42,22 @@ function Dato({ label, value }: { label: string; value: string }) {
 }
 
 export function PerfilPage() {
-  const { user } = useAuth()
+  const { user, mustChangePassword, logout } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<PasswordFormData>()
   const newPassword = watch("newPassword")
   const [pendingPassword, setPendingPassword] = useState<PasswordFormData | null>(null)
-  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false)
+  // Con una clave temporal el formulario se muestra abierto: es lo único que se puede hacer.
+  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(mustChangePassword)
   const [rectoresDeMiSede, setRectoresDeMiSede] = useState<{ id: string; nombreCompleto: string; ci: string }[]>([])
 
   useEffect(() => {
+    // Con una clave temporal el API responde 403 a todo salvo cambiar la contraseña.
+    if (mustChangePassword) return
     api.get('/users/mi-institucion').then((res) => {
       setRectoresDeMiSede(Array.isArray(res.data) ? res.data : [])
     }).catch(() => setRectoresDeMiSede([]))
-  }, [])
+  }, [mustChangePassword])
 
   if (!user) return null
 
@@ -71,8 +75,14 @@ export function PerfilPage() {
         currentPassword: pendingPassword.currentPassword,
         newPassword: pendingPassword.newPassword,
       })
-      toast.success("Contraseña actualizada")
       reset()
+      if (mustChangePassword) {
+        // El token de la clave temporal sigue marcado como «debe cambiarla»: hay que entrar de nuevo.
+        toast.success("Contraseña actualizada. Inicie sesión con la nueva.")
+        logout()
+        return
+      }
+      toast.success("Contraseña actualizada")
     } catch (err) {
       setError(getErrorMessage(err, "No se pudo cambiar la contraseña"))
     } finally {
@@ -83,6 +93,16 @@ export function PerfilPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Perfil" subtitle="Tus datos y tu contraseña" icon={<UserIcon className="h-5 w-5" />} />
+
+      {mustChangePassword && (
+        <Alert variant="destructive">
+          <KeyRound className="h-4 w-4" />
+          <AlertTitle>Debe cambiar su contraseña temporal</AlertTitle>
+          <AlertDescription>
+            Está usando una contraseña temporal. Cámbiela abajo para poder usar el resto del sistema.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="shadow-md">
         <CardHeader>

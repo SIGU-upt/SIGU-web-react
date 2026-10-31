@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { toast } from 'sonner'
+import { MENSAJE_DEMASIADOS_INTENTOS } from '@/lib/errors'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
@@ -26,14 +27,16 @@ api.interceptors.response.use(
     }
 
     const message =
-      err.response?.data?.message ||
-      (err.response?.status === 403
-        ? 'No tiene permisos para realizar esta accion'
-        : err.response?.status === 404
-          ? 'Recurso no encontrado'
-          : err.response?.status === 409
-            ? 'Conflicto: el recurso ya existe'
-            : 'Error de conexion con el servidor')
+      err.response?.status === 429
+        ? MENSAJE_DEMASIADOS_INTENTOS
+        : err.response?.data?.message ||
+          (err.response?.status === 403
+            ? 'No tiene permisos para realizar esta acción'
+            : err.response?.status === 404
+              ? 'Recurso no encontrado'
+              : err.response?.status === 409
+                ? 'Conflicto: el recurso ya existe'
+                : 'Error de conexión con el servidor')
 
     toast.error(message)
     return Promise.reject(err)

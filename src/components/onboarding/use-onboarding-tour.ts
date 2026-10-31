@@ -22,6 +22,7 @@ function runTour(steps: DriveStep[]) {
   if (steps.length === 0) return
   driver({
     showProgress: true,
+    progressText: "{{current}} de {{total}}",
     steps,
     nextBtnText: "Siguiente",
     prevBtnText: "Atrás",

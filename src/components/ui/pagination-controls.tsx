@@ -37,6 +37,7 @@ export function PaginationControls({
           className="h-8 w-8"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
+          aria-label="Página anterior"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -61,6 +62,8 @@ export function PaginationControls({
                     currentPage === pageNum ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                   )}
                   onClick={() => onPageChange(pageNum)}
+                  aria-label={`Ir a la página ${pageNum}`}
+                  aria-current={currentPage === pageNum ? "page" : undefined}
                 >
                   {pageNum}
                 </Button>
@@ -75,6 +78,7 @@ export function PaginationControls({
           className="h-8 w-8"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages || totalPages === 0}
+          aria-label="Página siguiente"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

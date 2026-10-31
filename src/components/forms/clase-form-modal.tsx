@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { FormError } from "@/components/ui/form-error"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -155,6 +155,7 @@ export function ClaseFormModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Editar Clase' : 'Agregar Clase'}</DialogTitle>
+          <DialogDescription className="sr-only">Datos de la clase: materia, docente, grupo y horario.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">

@@ -24,6 +24,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EvidenciaModal } from "@/components/dashboard/evidencia-modal"
 import api from "@/config/api"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 // Registro de asistencia tal como lo devuelve GET /attendance (con sus relaciones).
 interface AttendanceApiItem {
@@ -142,7 +143,7 @@ export function AttendanceTable() {
                               {item.initials}
                             </AvatarFallback>
                           </Avatar>
-                          <p className="font-medium text-foreground">{item.student}</p>
+                          <p className="font-medium text-foreground"><TextoTruncado texto={item.student} /></p>
                         </div>
                       </TableCell>
                       <TableCell className="text-foreground">{item.subject}</TableCell>
@@ -156,7 +157,7 @@ export function AttendanceTable() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Más acciones">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

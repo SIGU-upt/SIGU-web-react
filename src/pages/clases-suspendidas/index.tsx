@@ -13,6 +13,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type ClaseSuspendida, type User, type Seccion } from "@/types"
 import api from "@/config/api"
+import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 export function ClasesSuspendidasPage() {
   const { user } = useAuth()
@@ -143,7 +144,7 @@ export function ClasesSuspendidasPage() {
                         {s.clase?.nombreGrupo && <Badge variant="secondary" className="ml-2 font-mono">{s.clase.nombreGrupo}</Badge>}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.clase?.seccion?.codigo ?? '—'}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{s.clase?.docente?.nombreCompleto ?? '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground"><TextoTruncado texto={s.clase?.docente?.nombreCompleto ?? '—'} /></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.motivo}</TableCell>
                       {canAnular && (
                         <TableCell className="text-right pr-4">
