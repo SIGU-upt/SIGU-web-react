@@ -21,6 +21,7 @@ export function RespaldoTab() {
   const [exportando, setExportando] = useState<"json" | "sql" | null>(null)
   const [archivo, setArchivo] = useState<File | null>(null)
   const [confirmacion, setConfirmacion] = useState("")
+  const [password, setPassword] = useState("")
   const [restaurando, setRestaurando] = useState(false)
 
   const handleExportarJson = async () => {
@@ -48,18 +49,20 @@ export function RespaldoTab() {
   }
 
   const handleRestaurar = async () => {
-    if (!archivo || confirmacion !== FRASE_CONFIRMACION) return
+    if (!archivo || confirmacion !== FRASE_CONFIRMACION || !password) return
     setRestaurando(true)
     try {
       const formData = new FormData()
       formData.append("file", archivo)
       formData.append("confirmacion", confirmacion)
+      formData.append("password", password)
       const res = await api.post("/backup/restore", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       })
       toast.success(`Base de datos restaurada: ${res.data.filasRestauradas} filas.`)
       setArchivo(null)
       setConfirmacion("")
+      setPassword("")
     } catch (err) {
       toast.error(getErrorMessage(err, "No se pudo restaurar el respaldo"))
     } finally {
@@ -120,10 +123,22 @@ export function RespaldoTab() {
               placeholder={FRASE_CONFIRMACION}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="password-restore">Su contraseña</Label>
+            <Input
+              id="password-restore"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña de su cuenta"
+            />
+            <p className="text-xs text-muted-foreground">Se pide para confirmar que es usted quien ejecuta la restauración, no solo que su sesión sigue abierta.</p>
+          </div>
           <Button
             variant="destructive"
             onClick={handleRestaurar}
-            disabled={!archivo || confirmacion !== FRASE_CONFIRMACION || restaurando}
+            disabled={!archivo || confirmacion !== FRASE_CONFIRMACION || !password || restaurando}
           >
             <Upload className="mr-2 h-4 w-4" />
             {restaurando ? "Restaurando..." : "Restaurar y reemplazar todo"}
