@@ -101,7 +101,7 @@ export interface PeriodoAcademico {
   advertencias?: string[]
 }
 
-export type Turno = "MANANA" | "TARDE" | "NOCHE" | "FIN_DE_SEMANA"
+export type Turno = "ENTRESEMANA" | "NOCHE" | "FIN_DE_SEMANA"
 
 export interface Seccion {
   id: string
