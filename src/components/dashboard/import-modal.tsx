@@ -156,7 +156,7 @@ export function ImportModal<TResult = ImportResult>({
           )}
           <div className="space-y-2">
             <Label htmlFor="excel-file">Seleccionar Archivo</Label>
-            <Input id="excel-file" type="file" accept=".xlsx, .xls" onChange={handleFileChange}
+            <Input id="excel-file" type="file" accept=".xlsx, .xls, .csv" onChange={handleFileChange}
               className="bg-secondary cursor-pointer file:bg-primary file:text-primary-foreground file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-4" />
           </div>
 
