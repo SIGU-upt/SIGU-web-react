@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
-import { User as UserIcon, KeyRound, Building2 } from "lucide-react"
+import { User as UserIcon, KeyRound, Building2, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -45,6 +46,7 @@ export function PerfilPage() {
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<PasswordFormData>()
   const newPassword = watch("newPassword")
   const [pendingPassword, setPendingPassword] = useState<PasswordFormData | null>(null)
+  const [mostrarCambioPassword, setMostrarCambioPassword] = useState(false)
   const [rectoresDeMiSede, setRectoresDeMiSede] = useState<{ id: string; nombreCompleto: string; ci: string }[]>([])
 
   useEffect(() => {
@@ -122,11 +124,18 @@ export function PerfilPage() {
       )}
 
       <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <KeyRound className="h-4 w-4" /> Cambiar contraseña
-          </CardTitle>
-        </CardHeader>
+        <Collapsible open={mostrarCambioPassword} onOpenChange={setMostrarCambioPassword}>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer select-none">
+              <CardTitle className="text-base flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <KeyRound className="h-4 w-4" /> Cambiar contraseña
+                </span>
+                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${mostrarCambioPassword ? "rotate-180" : ""}`} />
+              </CardTitle>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-sm">
             <div className="space-y-2">
@@ -170,6 +179,8 @@ export function PerfilPage() {
             <Button type="submit">Cambiar contraseña</Button>
           </form>
         </CardContent>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
 
       <ConfirmDeleteModal

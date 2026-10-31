@@ -102,7 +102,7 @@ export function ClasesSuspendidasPage() {
                 searchPlaceholder="Buscar docente..."
                 options={[
                   { value: "__all__", label: "Todos los docentes" },
-                  ...docentes.map((d) => ({ value: d.id, label: d.nombreCompleto })),
+                  ...docentes.map((d) => ({ value: d.id, label: `${d.nombreCompleto} (${d.ci})` })),
                 ]}
               />
             </div>
@@ -124,7 +124,7 @@ export function ClasesSuspendidasPage() {
                     <TableHead className="font-semibold">Sección</TableHead>
                     <TableHead className="font-semibold">Docente</TableHead>
                     <TableHead className="font-semibold">Motivo</TableHead>
-                    {canAnular && <TableHead className="font-semibold text-right">Acciones</TableHead>}
+                    {canAnular && <TableHead className="font-semibold text-right pr-4">Acciones</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -146,7 +146,7 @@ export function ClasesSuspendidasPage() {
                       <TableCell className="text-sm text-muted-foreground">{s.clase?.docente?.nombreCompleto ?? '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{s.motivo}</TableCell>
                       {canAnular && (
-                        <TableCell className="text-right">
+                        <TableCell className="text-right pr-4">
                           <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setAnulando(s)}>Anular</Button>
                         </TableCell>
                       )}
