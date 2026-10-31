@@ -18,3 +18,15 @@ const FORMATEADOR = new Intl.DateTimeFormat('en-CA', {
 export function hoyLocal(referencia: Date = new Date()): string {
   return FORMATEADOR.format(referencia)
 }
+
+/** Días de plazo para justificar una falta (el API rechaza con 400 lo que pase de este límite). */
+export const DIAS_PLAZO_JUSTIFICACION = 7
+
+/**
+ * ¿Se puede todavía justificar una falta de esa fecha (`YYYY-MM-DD`)? Misma cuenta que
+ * `assertDentroVentanaJustificacion` del API: hasta 7 días después de la falta, inclusive.
+ */
+export function dentroDelPlazoDeJustificacion(fecha: string, hoy: string = hoyLocal()): boolean {
+  const dias = Math.floor((Date.parse(hoy) - Date.parse(fecha)) / 86_400_000)
+  return dias <= DIAS_PLAZO_JUSTIFICACION
+}
