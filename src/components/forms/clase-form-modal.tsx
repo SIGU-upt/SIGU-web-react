@@ -11,7 +11,7 @@ import { TimeSlotSelect } from "@/components/ui/time-slot-select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { type UnidadCurricular, type User, type Turno, Role } from "@/types"
 import api from "@/config/api"
-import { requiredTextRule } from "@/lib/validators"
+import { entityNameRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 
@@ -301,7 +301,7 @@ export function ClaseFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="nombreGrupo">Nombre de grupo</Label>
-            <Input id="nombreGrupo" placeholder="Grupo A" {...register('nombreGrupo', { ...requiredTextRule, maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
+            <Input id="nombreGrupo" placeholder="Grupo A" {...register('nombreGrupo', { ...entityNameRule, maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
             {errors.nombreGrupo && <p className="text-xs text-destructive">{errors.nombreGrupo.message}</p>}
           </div>
           <div className="space-y-2">
@@ -368,7 +368,7 @@ export function ClaseFormModal({
           <div className="space-y-2">
             <Label htmlFor="aula">Aula (opcional)</Label>
             <p className="text-xs text-muted-foreground">Si se indica, no puede coincidir con otra clase en el mismo horario.</p>
-            <Input id="aula" placeholder="A-101" {...register('aula', { maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
+            <Input id="aula" placeholder="A-101" {...register('aula', { maxLength: { value: 50, message: 'Máximo 50 caracteres' }, pattern: entityNameRule.pattern, setValueAs: (value: unknown) => (typeof value === 'string' ? value.trim() : value) })} />
             {errors.aula && <p className="text-xs text-destructive">{errors.aula.message}</p>}
           </div>
 

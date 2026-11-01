@@ -10,7 +10,7 @@ import { Role, type Trayecto, type Tramo, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { opcionesDeSede } from "@/lib/opciones-sede"
 import { useAuth } from "@/contexts/AuthContext"
-import { requiredTextRule } from "@/lib/validators"
+import { entityNameRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
 interface UCFormData {
@@ -230,7 +230,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
         <form onSubmit={handleSubmit(submitHandler)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="nombre">Nombre</Label>
-            <Input id="nombre" {...register('nombre', requiredTextRule)} disabled={!!catalogoSeleccionado} />
+            <Input id="nombre" {...register('nombre', entityNameRule)} disabled={!!catalogoSeleccionado} />
             {errors.nombre && <p className="text-xs text-destructive">{errors.nombre.message}</p>}
             {isEditing && ofertasCount != null && ofertasCount > 1 && (
               <p className="text-xs text-muted-foreground">Esta materia se dicta en {ofertasCount} trayectos; el cambio de nombre aplicará a todos.</p>

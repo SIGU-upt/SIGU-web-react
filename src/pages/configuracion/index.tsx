@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/ui/page-header"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
+import { entityNameRule, codeRule } from "@/lib/validators"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { ImpactoBorradoModal } from "@/components/forms/impacto-borrado-modal"
 import { RespaldoTab } from "@/components/configuracion/respaldo-tab"
@@ -56,7 +57,7 @@ const entityConfigs: Record<string, EntityConfig> = {
     // ofrece, docentes, alumnos y secciones, todo en un solo lugar.
     rowLink: (s) => `/sedes/${s.id}`,
     fields: [
-      { name: 'nombre', label: 'Nombre', required: true },
+      { name: 'nombre', label: 'Nombre', required: true, pattern: entityNameRule.pattern },
       { name: 'ubicacion', label: 'Ubicación', required: true },
     ],
     columns: ['Nombre', 'Ubicación'],
@@ -72,8 +73,8 @@ const entityConfigs: Record<string, EntityConfig> = {
     // decisión #4), secciones, docentes y alumnos.
     rowLink: (p) => `/pnfs/${p.id}`,
     fields: [
-      { name: 'nombre', label: 'Nombre', required: true },
-      { name: 'codigo', label: 'Código', required: true },
+      { name: 'nombre', label: 'Nombre', required: true, pattern: entityNameRule.pattern },
+      { name: 'codigo', label: 'Código', required: true, pattern: codeRule.pattern },
       { name: 'requierePiu', label: 'Requiere PIU (Trayecto 0)', type: 'checkbox' as const, createOnly: true, defaultValue: true },
       { name: 'numeroTrayectos', label: 'Cantidad de trayectos a generar (1-6)', type: 'number' as const, required: false, createOnly: true, defaultValue: 4 },
     ],

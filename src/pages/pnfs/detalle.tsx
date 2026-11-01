@@ -21,9 +21,10 @@ import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, typ
 import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { entityNameRule } from "@/lib/validators"
 
 const trayectoFields: EntityField[] = [
-  { name: 'nombre', label: 'Nombre', required: true },
+  { name: 'nombre', label: 'Nombre', required: true, pattern: entityNameRule.pattern },
   { name: 'numero', label: 'Número (0=PIU, 1-4)', required: true, type: 'number' },
 ]
 
