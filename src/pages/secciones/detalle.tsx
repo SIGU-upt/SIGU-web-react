@@ -642,7 +642,7 @@ export function SeccionDetallePage() {
                                         {canDeleteClase && (
                                           <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(c)}>
                                             <Trash2 className="mr-2 h-4 w-4" />
-                                            Eliminar
+                                            Deshabilitar
                                           </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
@@ -713,8 +713,8 @@ export function SeccionDetallePage() {
         open={!!deleting}
         onOpenChange={(v) => { if (!v) setDeleting(null) }}
         onConfirm={handleDelete}
-        title="Eliminar Clase"
-        description={`¿Eliminar la clase "${deleting?.unidadCurricular?.nombre} (${deleting?.nombreGrupo})"?`}
+        title="Deshabilitar Clase"
+        description={`¿Deshabilitar la clase "${deleting?.unidadCurricular?.nombre} (${deleting?.nombreGrupo})"?`}
       />
 
       <Dialog open={!!suspendingClase} onOpenChange={(v) => { if (!v) setSuspendingClase(null) }}>

@@ -295,7 +295,7 @@ export function SeccionesPage() {
                                 {canDelete && (
                                   <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(s)}>
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Eliminar
+                                    Deshabilitar
                                   </DropdownMenuItem>
                                 )}
                               </DropdownMenuContent>
@@ -326,8 +326,8 @@ export function SeccionesPage() {
         open={!!deleting}
         onOpenChange={(v) => { if (!v) setDeleting(null) }}
         onConfirm={handleDelete}
-        title="Eliminar Sección"
-        description={`¿Eliminar la sección "${deleting?.codigo}"?`}
+        title="Deshabilitar Sección"
+        description={`¿Deshabilitar la sección "${deleting?.codigo}"?`}
       />
     </div>
   )

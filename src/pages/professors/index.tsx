@@ -255,8 +255,8 @@ export function ProfessorsPage() {
         open={!!deletingUser}
         onOpenChange={(v) => { if (!v) setDeletingUser(null) }}
         onConfirm={handleDelete}
-        title="Eliminar Docente"
-        description={`¿Está seguro de eliminar a ${deletingUser?.name}?`}
+        title="Deshabilitar Docente"
+        description={`¿Está seguro de deshabilitar a ${deletingUser?.name}?`}
       />
 
       <ConfirmDeleteModal

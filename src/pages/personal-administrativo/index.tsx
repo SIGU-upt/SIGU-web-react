@@ -294,7 +294,7 @@ export function PersonalAdministrativoPage() {
                               {canDelete && (
                                 <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(u)}>
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar
+                                  Deshabilitar
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -334,8 +334,8 @@ export function PersonalAdministrativoPage() {
         open={!!deleting}
         onOpenChange={(v) => { if (!v) setDeleting(null) }}
         onConfirm={handleDelete}
-        title="Eliminar Usuario"
-        description={`¿Eliminar a "${deleting?.nombreCompleto}"?`}
+        title="Deshabilitar Usuario"
+        description={`¿Deshabilitar a "${deleting?.nombreCompleto}"?`}
       />
 
       <ConfirmDeleteModal

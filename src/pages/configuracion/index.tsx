@@ -42,7 +42,7 @@ interface EntityConfig {
   // Solo Sedes, PNF y Sede-PNF tienen GET :id/impacto-borrado en el backend
   // (son las únicas con cascada real); el resto sigue con el modal simple.
   impactoBorrado?: boolean
-  // Pide escribir el nombre del registro para habilitar "Eliminar" (solo Sedes, por lo que arrastra).
+  // Pide escribir el nombre del registro para habilitar "Deshabilitar" (solo Sedes, por lo que arrastra).
   confirmarNombre?: boolean
 }
 
@@ -333,7 +333,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
                           )}
                           {canDelete && (
                             <DropdownMenuItem className="text-destructive" onClick={() => setDeleting(item)}>
-                              <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                              <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -377,8 +377,8 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
           open={!!deleting}
           onOpenChange={(v) => { if (!v) setDeleting(null) }}
           onConfirm={handleDelete}
-          title={`Eliminar ${config.title}`}
-          description={`¿Está seguro de eliminar este registro?`}
+          title={`Deshabilitar ${config.title}`}
+          description={`¿Está seguro de deshabilitar este registro?`}
         />
       )}
 

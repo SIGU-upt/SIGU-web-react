@@ -170,7 +170,7 @@ const TOURS: Record<Role, DriveStep[]> = {
       element: '[data-tour="nav-secciones"]',
       popover: {
         title: "Secciones y clases",
-        description: "Puede revisar la estructura de Secciones y Clases, pero los botones de crear/editar/eliminar no aparecerán — su rol no los tiene habilitados.",
+        description: "Puede revisar la estructura de Secciones y Clases, pero los botones de crear/editar/deshabilitar no aparecerán — su rol no los tiene habilitados.",
       },
     },
     {

@@ -27,7 +27,7 @@ interface ImpactoBorradoModalProps {
   itemLabel: string
   // `force` solo se manda como true si el usuario marcó la casilla.
   onConfirm: (force: boolean) => Promise<void>
-  // Si se indica, "Eliminar" solo se habilita después de escribir este texto (el nombre del
+  // Si se indica, "Deshabilitar" solo se habilita después de escribir este texto (el nombre del
   // registro): un doble chequeo para borrados que arrastran mucho, como el de una sede.
   confirmarEscribiendo?: string
 }
@@ -78,7 +78,7 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
       await onConfirm(forzar)
       onOpenChange(false)
     } catch (err) {
-      setError(getErrorMessage(err, "No se pudo eliminar"))
+      setError(getErrorMessage(err, "No se pudo deshabilitar"))
     } finally {
       setEliminando(false)
     }
@@ -90,10 +90,10 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            Eliminar {itemLabel}
+            Deshabilitar {itemLabel}
           </DialogTitle>
           <DialogDescription>
-            Esto también elimina (borrado lógico, se puede auditar después) todo lo que depende de este registro.
+            Esto también deshabilita (borrado lógico, se puede auditar después) todo lo que depende de este registro.
           </DialogDescription>
         </DialogHeader>
 
@@ -102,11 +102,11 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
         ) : impacto ? (
           <div className="space-y-4">
             {!tieneEstructural && !tieneDataViva && (
-              <p className="text-sm text-muted-foreground">No tiene nada vinculado — se puede eliminar sin afectar otros datos.</p>
+              <p className="text-sm text-muted-foreground">No tiene nada vinculado — se puede deshabilitar sin afectar otros datos.</p>
             )}
             {tieneEstructural && (
               <div className="space-y-1">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Se eliminará también</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Se deshabilitará también</p>
                 <ul className="text-sm space-y-0.5">
                   {impacto.estructural.filter((d) => d.cantidad > 0).map((d) => (
                     <li key={d.tipo} className="flex justify-between gap-4">
@@ -130,11 +130,11 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
                 </ul>
                 <p className="text-xs text-muted-foreground">
                   Si prefiere no perder esta información, cancele y revise/depure esos registros desde su propia
-                  pantalla antes de eliminar {itemLabel.toLowerCase()}.
+                  pantalla antes de deshabilitar {itemLabel.toLowerCase()}.
                 </p>
                 <label className="flex items-start gap-2 pt-1 cursor-pointer">
                   <Checkbox checked={forzar} onCheckedChange={(v) => setForzar(v === true)} className="mt-0.5" />
-                  <span className="text-sm">Entiendo, eliminar de todas formas (se pierde este historial)</span>
+                  <span className="text-sm">Entiendo, deshabilitar de todas formas (se pierde este historial)</span>
                 </label>
               </div>
             )}
@@ -167,7 +167,7 @@ export function ImpactoBorradoModal({ open, onOpenChange, endpoint, itemId, item
             disabled={loading || eliminando || !impacto || !puedeConfirmar}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {eliminando ? "Eliminando..." : "Eliminar"}
+            {eliminando ? "Deshabilitando..." : "Deshabilitar"}
           </Button>
         </DialogFooter>
       </DialogContent>
