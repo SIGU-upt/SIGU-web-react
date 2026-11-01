@@ -81,7 +81,7 @@ export function HistorialPage() {
       />
       <Card className="shadow-md">
         <CardHeader className="pb-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div data-tour="historial-filtros" className="flex flex-wrap items-center gap-3">
             <Select value={tipo} onValueChange={setTipo}>
               <SelectTrigger className="w-64"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -100,7 +100,7 @@ export function HistorialPage() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent data-tour="historial-tabla">
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
           ) : (

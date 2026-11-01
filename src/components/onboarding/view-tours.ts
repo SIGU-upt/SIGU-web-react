@@ -251,6 +251,25 @@ const VIEW_TOURS: { prefix: string; steps: DriveStep[] }[] = [
     ],
   },
   {
+    prefix: "/historial",
+    steps: [
+      {
+        element: '[data-tour="historial-filtros"]',
+        popover: {
+          title: "Elegir qué historial ver",
+          description: "Cada tipo de registro (Sedes, Secciones, Clases, Usuarios...) tiene su propia lista — cámbielo aquí. El rango de fechas filtra por cuándo se deshabilitó, no por cuándo se creó el registro.",
+        },
+      },
+      {
+        element: '[data-tour="historial-tabla"]',
+        popover: {
+          title: "Qué significa cada columna",
+          description: "\"Descripción\" arma un resumen legible del registro (con sus relaciones, ej. la materia y el docente de una Clase) para no tener que adivinar qué era por su sola id. Si no conoce a quién deshabilitó un registro, probablemente ese usuario también está deshabilitado.",
+        },
+      },
+    ],
+  },
+  {
     prefix: "/matriculas",
     steps: [
       {

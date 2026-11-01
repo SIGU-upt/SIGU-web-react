@@ -235,10 +235,20 @@
   color: var(--popover-foreground) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius) !important;
+  font-family: var(--font-sans) !important;
+  min-width: 300px !important;
+  max-width: 380px !important;
+  padding: 18px !important;
+  box-shadow: 0 10px 30px -10px rgb(26 31 46 / 0.25), 0 4px 10px -4px rgb(26 31 46 / 0.15) !important;
 }
-.driver-popover-title,
+.driver-popover-title {
+  color: var(--popover-foreground) !important;
+  font-size: 1.0625rem !important;
+}
 .driver-popover-description {
   color: var(--popover-foreground) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
 }
 .driver-popover-arrow-side-left.driver-popover-arrow,
 .driver-popover-arrow-side-right.driver-popover-arrow,
@@ -269,6 +279,10 @@
   color: var(--primary-foreground) !important;
   border: 1px solid var(--primary) !important;
   text-shadow: none !important;
+  padding: 6px 14px !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  border-radius: calc(var(--radius) - 2px) !important;
 }
 .driver-popover-footer .driver-popover-prev-btn {
   background-color: var(--secondary) !important;
