@@ -26,7 +26,7 @@ export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, descr
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="sm:max-w-xl p-8">
         <AlertDialogHeader>
           <AlertDialogTitle>{title || 'Confirmar eliminación'}</AlertDialogTitle>
           <AlertDialogDescription>
