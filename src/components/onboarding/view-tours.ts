@@ -149,6 +149,108 @@ const VIEW_TOURS: { prefix: string; steps: DriveStep[] }[] = [
     ],
   },
   {
+    prefix: "/dashboard",
+    steps: [
+      {
+        element: '[data-tour="dashboard-stats"]',
+        popover: {
+          title: "Cifras de su jurisdicción",
+          description: "Estos números ya están acotados a su alcance: sede para Rector, sede-PNF para Coordinador. El badge junto al título indica a qué ámbito corresponden, para no confundirlos con el total del sistema.",
+        },
+      },
+      {
+        element: '[data-tour="dashboard-graficos"]',
+        popover: {
+          title: "Distribución docentes/alumnos",
+          description: "Compara la proporción de personal académico frente a estudiantes matriculados, útil para detectar sedes o PNF con poca cobertura docente.",
+        },
+      },
+      {
+        element: '[data-tour="dashboard-asistencia-baja"]',
+        popover: {
+          title: "Alumnos con menor asistencia",
+          description: "Lista a quienes están más cerca de quedar por debajo del umbral institucional (75%, o 80% en Práctica Profesional), para actuar antes de que pierdan la materia por inasistencia.",
+        },
+      },
+    ],
+  },
+  {
+    prefix: "/unidades",
+    steps: [
+      {
+        element: '[data-tour="unidades-filtros"]',
+        popover: {
+          title: "Buscar y acotar por trayecto",
+          description: "Busque una U.C. por código o nombre, y filtre por trayecto cuando el PNF tenga varios — útil antes de crear una nueva, para confirmar que no existe ya una equivalente.",
+        },
+      },
+      {
+        element: '[data-tour="unidades-acciones"]',
+        popover: {
+          title: "Exportar pensum y crear U.C.",
+          description: "\"Exportar Pensum\" descarga el catálogo completo a Excel. \"Nueva U.C\" la da de alta asociada a un trayecto y, si corresponde, a un rango de tramos consecutivos (no solo uno).",
+        },
+      },
+    ],
+  },
+  {
+    prefix: "/security-logs",
+    steps: [
+      {
+        element: '[data-tour="security-logs-filtros"]',
+        popover: {
+          title: "Filtrar eventos",
+          description: "Busque por usuario o detalle, acote por tipo de acción (ej. intentos de login fallidos, cambios de contraseña, registros de asistencia) y por rango de fechas.",
+        },
+      },
+      {
+        element: '[data-tour="security-logs-tabla"]',
+        popover: {
+          title: "Auditoría de seguridad",
+          description: "Cada fila es un evento sensible registrado automáticamente por el sistema (no editable), útil para investigar accesos indebidos o incidencias de asistencia reportadas por un docente.",
+        },
+      },
+    ],
+  },
+  {
+    prefix: "/clases-suspendidas",
+    steps: [
+      {
+        element: '[data-tour="clases-suspendidas-filtros"]',
+        popover: {
+          title: "Filtrar suspensiones",
+          description: "Acote por fecha, sección o docente para encontrar una suspensión puntual — útil para resolver reclamos de alumnos sobre una clase que no se dictó.",
+        },
+      },
+      {
+        element: '[data-tour="clases-suspendidas-tabla"]',
+        popover: {
+          title: "Historial de suspensiones",
+          description: "Registra cuándo una clase programada no se dictó y por qué. Anular una suspensión la elimina del historial; hágalo solo si se registró por error.",
+        },
+      },
+    ],
+  },
+  {
+    prefix: "/perfil",
+    steps: [
+      {
+        element: '[data-tour="perfil-mis-datos"]',
+        popover: {
+          title: "Sus datos",
+          description: "Nombre, cédula, correo, rol y la sede/PNF a la que está asignado. Si algún dato está incorrecto, repórtelo a quien administra el sistema — no es editable desde aquí.",
+        },
+      },
+      {
+        element: '[data-tour="perfil-cambiar-password"]',
+        popover: {
+          title: "Cambiar su contraseña",
+          description: "Requiere la contraseña actual. Si inició sesión con una contraseña temporal, este formulario queda abierto de forma obligatoria hasta que la cambie.",
+        },
+      },
+    ],
+  },
+  {
     prefix: "/matriculas",
     steps: [
       {

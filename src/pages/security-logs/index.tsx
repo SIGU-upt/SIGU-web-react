@@ -59,7 +59,7 @@ export function SecurityLogsPage() {
       <PageHeader title="Logs de Seguridad" subtitle="Auditoría de eventos de seguridad del sistema" icon={<Shield className="h-5 w-5" />} />
       <Card className="shadow-md">
         <CardHeader className="pb-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div data-tour="security-logs-filtros" className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar por usuario o detalle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
@@ -79,7 +79,7 @@ export function SecurityLogsPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent data-tour="security-logs-tabla">
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
           ) : (

@@ -104,7 +104,7 @@ function DashboardAdministrativo() {
       {loading ? (
         <div className="text-center py-10 text-muted-foreground">Cargando estadísticas...</div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div data-tour="dashboard-stats" className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="lg:col-span-2">
             <CardContent className="flex h-full flex-col p-6">
               <div className="flex items-start justify-between">
@@ -183,14 +183,18 @@ function DashboardAdministrativo() {
       )}
 
       {stats && (
-        <GraficosDashboard
-          totalUsuarios={stats.totalUsuarios}
-          totalDocentes={stats.totalDocentes}
-          totalAlumnos={stats.totalAlumnos}
-        />
+        <div data-tour="dashboard-graficos">
+          <GraficosDashboard
+            totalUsuarios={stats.totalUsuarios}
+            totalDocentes={stats.totalDocentes}
+            totalAlumnos={stats.totalAlumnos}
+          />
+        </div>
       )}
 
-      <AttendanceTable />
+      <div data-tour="dashboard-asistencia-baja">
+        <AttendanceTable />
+      </div>
 
       {newUserRole && (
         <UserFormModal
