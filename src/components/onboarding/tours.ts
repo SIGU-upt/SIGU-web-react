@@ -74,6 +74,13 @@ const TOURS: Record<Role, DriveStep[]> = {
         description: "Eventos de seguridad de todo el sistema: intentos de login fallidos, accesos no autorizados y reinicios de dispositivo vinculado.",
       },
     },
+    {
+      element: '[data-tour="nav-historial"]',
+      popover: {
+        title: "Historial de deshabilitados",
+        description: "Nada se borra de verdad en SIGU: deshabilitar una Sede, Sección, Clase, etc. es un borrado lógico. Aquí ve ese historial completo por tipo de registro, con quién lo deshabilitó y cuándo, y puede exportarlo a Excel. Solo visible para usted.",
+      },
+    },
     VIEW_TOUR_HINT_STEP,
     HELP_BUTTON_STEP,
   ],
