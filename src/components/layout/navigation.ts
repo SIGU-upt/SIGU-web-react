@@ -9,6 +9,7 @@ import {
   Shield,
   CalendarOff,
   AlertTriangle,
+  Archive,
 } from "lucide-react"
 import { Role } from "@/types"
 
@@ -42,6 +43,7 @@ export const navigation: NavItem[] = [
   { id: "reportes", name: "Reportes", icon: FileBarChart, path: "/reportes", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR, Role.DOCENTE] },
   { id: "configuracion", name: "Configuración", icon: Settings, path: "/configuracion", roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: "security-logs", name: "Seguridad", icon: Shield, path: "/security-logs", roles: [Role.SUPERADMIN, Role.RECTOR, Role.AUDITOR] },
+  { id: "historial", name: "Historial de eliminados", icon: Archive, path: "/historial", roles: [Role.SUPERADMIN] },
 ]
 
 // Mapa ruta→nombre derivado de `navigation` (fuente única) — lo consume el

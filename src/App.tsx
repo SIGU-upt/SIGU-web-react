@@ -17,6 +17,7 @@ import { PnfDetallePage } from '@/pages/pnfs/detalle'
 import { SedeDetallePage } from '@/pages/sedes/detalle'
 import { PersonalAdministrativoPage } from '@/pages/personal-administrativo'
 import { SecurityLogsPage } from '@/pages/security-logs'
+import { HistorialPage } from '@/pages/historial'
 import { ClasesSuspendidasPage } from '@/pages/clases-suspendidas'
 import { MatriculasPage } from '@/pages/matriculas'
 import { InconsistenciasPage } from '@/pages/inconsistencias'
@@ -159,6 +160,14 @@ function AppRoutes() {
           element={
             <PrivateRoute allowedRoles={[Role.SUPERADMIN, Role.RECTOR, Role.AUDITOR]}>
               <SecurityLogsPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/historial"
+          element={
+            <PrivateRoute allowedRoles={[Role.SUPERADMIN]}>
+              <HistorialPage />
             </PrivateRoute>
           }
         />
