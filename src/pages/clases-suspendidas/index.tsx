@@ -84,7 +84,7 @@ export function ClasesSuspendidasPage() {
       <PageHeader title="Clases Suspendidas" subtitle="Historial de suspensiones registradas" icon={<CalendarOff className="h-5 w-5" />} />
       <Card className="shadow-md">
         <CardHeader className="pb-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div data-tour="clases-suspendidas-filtros" className="flex flex-wrap items-center gap-3">
             <Input type="date" value={fechaDesde} onChange={(e) => { setFechaDesde(e.target.value); setPage(1) }} className="max-w-[160px]" />
             <span className="text-sm text-muted-foreground">a</span>
             <Input type="date" value={fechaHasta} onChange={(e) => { setFechaHasta(e.target.value); setPage(1) }} className="max-w-[160px]" />
@@ -112,7 +112,7 @@ export function ClasesSuspendidasPage() {
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent data-tour="clases-suspendidas-tabla">
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
           ) : (

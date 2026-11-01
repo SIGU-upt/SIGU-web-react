@@ -10,6 +10,10 @@ function seenKey(userId: string) {
   return `sigu_tour_visto_${userId}`
 }
 
+function viewSeenKey(userId: string, pathname: string) {
+  return `sigu_view_tour_visto_${userId}_${pathname}`
+}
+
 // Filtra a los pasos cuyo elemento existe ahora mismo en el DOM — en mobile,
 // por ejemplo, el contenido de la sidebar vive en un Sheet cerrado por
 // defecto, y driver.js revienta si un paso apunta a un selector que no
@@ -82,6 +86,35 @@ export function useOnboardingTour() {
     }, 400)
     return () => clearTimeout(id)
   }, [user, startTour])
+
+  // Recorrido corto por pantalla: se auto-inicia una vez por usuario y por
+  // pantalla, pero solo después de que ya vio el tour general — si ambos
+  // dispararan en la primera visita se superpondrían dos recorridos seguidos.
+  useEffect(() => {
+    if (!user || !viewTourSteps) return
+    let roleTourVisto = false
+    try {
+      roleTourVisto = !!localStorage.getItem(seenKey(user.id))
+    } catch {
+      return
+    }
+    if (!roleTourVisto) return
+    const key = viewSeenKey(user.id, location.pathname)
+    try {
+      if (localStorage.getItem(key)) return
+    } catch {
+      return
+    }
+    const id = setTimeout(() => {
+      try {
+        localStorage.setItem(key, "1")
+      } catch {
+        // visto arriba: si falla, igual se deja mostrar el recorrido.
+      }
+      startViewTour()
+    }, 400)
+    return () => clearTimeout(id)
+  }, [user, location.pathname, viewTourSteps, startViewTour])
 
   return { startTour, startViewTour, hasViewTour: viewTourSteps !== null }
 }

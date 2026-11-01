@@ -107,7 +107,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
               Catálogo de asignaturas por trayecto del programa
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div data-tour="unidades-acciones" className="flex flex-wrap items-center gap-3">
             <Button variant="outline" className="border-primary/60 text-primary hover:bg-primary/5 dark:hover:bg-primary/15 shadow-sm" onClick={exportPensum}>
               <Download className="mr-2 h-4 w-4" />
               Exportar Pensum
@@ -121,7 +121,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6">
+        <div data-tour="unidades-filtros" className="flex flex-wrap items-center gap-4 py-4 border-y border-border/50 bg-muted/70 -mx-6 px-6">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/60 dark:text-primary" />
             <Input

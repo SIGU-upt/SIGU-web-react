@@ -108,7 +108,7 @@ export function PerfilPage() {
         </Alert>
       )}
 
-      <Card className="shadow-md">
+      <Card data-tour="perfil-mis-datos" className="shadow-md">
         <CardHeader>
           <CardTitle className="text-base">Mis datos</CardTitle>
         </CardHeader>
@@ -159,7 +159,7 @@ export function PerfilPage() {
         </Card>
       )}
 
-      <Card className="shadow-md">
+      <Card data-tour="perfil-cambiar-password" className="shadow-md">
         <Collapsible open={mostrarCambioPassword} onOpenChange={setMostrarCambioPassword}>
           <CollapsibleTrigger asChild>
             <CardHeader className="cursor-pointer select-none">
