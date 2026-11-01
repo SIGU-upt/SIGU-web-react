@@ -128,8 +128,8 @@ export function CurriculumUnitsPage() {
         open={!!deleting}
         onOpenChange={(v) => { if (!v) setDeleting(null) }}
         onConfirm={handleDelete}
-        title="Eliminar U.C"
-        description={`¿Está seguro de eliminar "${deleting?.name}"?`}
+        title="Deshabilitar U.C"
+        description={`¿Está seguro de deshabilitar "${deleting?.name}"?`}
       />
     </div>
   )

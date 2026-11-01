@@ -28,15 +28,15 @@ export function ConfirmDeleteModal({ open, onOpenChange, onConfirm, title, descr
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-xl p-8">
         <AlertDialogHeader>
-          <AlertDialogTitle>{title || 'Confirmar eliminación'}</AlertDialogTitle>
+          <AlertDialogTitle>{title || 'Confirmar deshabilitación'}</AlertDialogTitle>
           <AlertDialogDescription>
-            {description || 'Esta acción eliminará el registro de forma permanente. ¿Desea continuar?'}
+            {description || 'Esta acción deshabilitará el registro. ¿Desea continuar?'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>Cancelar</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={loading} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            {loading ? (loadingLabel || 'Eliminando...') : (confirmLabel || 'Eliminar')}
+            {loading ? (loadingLabel || 'Deshabilitando...') : (confirmLabel || 'Deshabilitar')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

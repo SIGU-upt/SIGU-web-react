@@ -141,7 +141,7 @@ export function PnfDetallePage() {
   const handleDeleteTrayecto = async () => {
     if (!deletingTrayecto) return
     await api.delete(`/trayectos/${deletingTrayecto.id}`)
-    toast.success('Trayecto eliminado.')
+    toast.success('Trayecto deshabilitado.')
     await fetchData()
   }
 
@@ -158,7 +158,7 @@ export function PnfDetallePage() {
   const handleDeleteTramo = async () => {
     if (!deletingTramo) return
     await api.delete(`/tramos/${deletingTramo.id}`)
-    toast.success('Tramo eliminado.')
+    toast.success('Tramo deshabilitado.')
     await fetchData()
   }
 
@@ -254,7 +254,7 @@ export function PnfDetallePage() {
                             </Button>
                             <Button size="sm" variant="ghost" onClick={() => { setEditingTrayecto(t); setTrayectoModalOpen(true) }}>Editar</Button>
                             {canDelete && (
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingTrayecto(t)}>Eliminar</Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeletingTrayecto(t)}>Deshabilitar</Button>
                             )}
                           </div>
                         )}
@@ -287,7 +287,7 @@ export function PnfDetallePage() {
                                         </DropdownMenuItem>
                                         {canDelete && (
                                           <DropdownMenuItem className="text-destructive" onClick={() => setDeletingTramo(tr)}>
-                                            <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                                            <Trash2 className="mr-2 h-4 w-4" />Deshabilitar
                                           </DropdownMenuItem>
                                         )}
                                       </DropdownMenuContent>
@@ -398,8 +398,8 @@ export function PnfDetallePage() {
         open={!!deletingTrayecto}
         onOpenChange={(v) => { if (!v) setDeletingTrayecto(null) }}
         onConfirm={handleDeleteTrayecto}
-        title="Eliminar Trayecto"
-        description={`¿Eliminar "${deletingTrayecto?.nombre}"? Arrastra sus tramos, unidades curriculares, secciones y clases.`}
+        title="Deshabilitar Trayecto"
+        description={`¿Deshabilitar "${deletingTrayecto?.nombre}"? Arrastra sus tramos, unidades curriculares, secciones y clases.`}
       />
 
       <EntityFormModal
@@ -415,8 +415,8 @@ export function PnfDetallePage() {
         open={!!deletingTramo}
         onOpenChange={(v) => { if (!v) setDeletingTramo(null) }}
         onConfirm={handleDeleteTramo}
-        title="Eliminar Tramo"
-        description="¿Eliminar este tramo?"
+        title="Deshabilitar Tramo"
+        description="¿Deshabilitar este tramo?"
       />
 
       <Dialog open={generatingEstructura} onOpenChange={setGeneratingEstructura}>

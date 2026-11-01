@@ -286,8 +286,8 @@ export function StudentsPage() {
         open={!!deletingUser}
         onOpenChange={(v) => { if (!v) setDeletingUser(null) }}
         onConfirm={handleDelete}
-        title="Eliminar Estudiante"
-        description={`¿Está seguro de eliminar a ${deletingUser?.name}?`}
+        title="Deshabilitar Estudiante"
+        description={`¿Está seguro de deshabilitar a ${deletingUser?.name}?`}
       />
 
       <ConfirmDeleteModal

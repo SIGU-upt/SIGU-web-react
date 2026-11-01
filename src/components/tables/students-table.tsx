@@ -284,7 +284,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
                             {canDelete && (
                               <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Eliminar
+                                Deshabilitar
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>

@@ -75,8 +75,8 @@ export function HistorialPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Historial de eliminados"
-        subtitle="Registros dados de baja (borrado lógico), por tipo de entidad"
+        title="Historial de deshabilitados"
+        subtitle="Registros deshabilitados (borrado lógico), por tipo de entidad"
         icon={<Archive className="h-5 w-5" />}
       />
       <Card className="shadow-md">
@@ -109,15 +109,15 @@ export function HistorialPage() {
                 <TableHeader>
                   <TableRow className="bg-muted">
                     <TableHead className="font-semibold">Descripción</TableHead>
-                    <TableHead className="font-semibold">Eliminado el</TableHead>
-                    <TableHead className="font-semibold">Eliminado por</TableHead>
+                    <TableHead className="font-semibold">Deshabilitado el</TableHead>
+                    <TableHead className="font-semibold">Deshabilitado por</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {items.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                        No hay registros eliminados de este tipo en el rango elegido.
+                        No hay registros deshabilitados de este tipo en el rango elegido.
                       </TableCell>
                     </TableRow>
                   )}
