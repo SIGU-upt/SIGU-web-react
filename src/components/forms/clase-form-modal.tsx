@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SearchableSelect } from "@/components/ui/searchable-select"
+import { TimeSlotSelect } from "@/components/ui/time-slot-select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { type UnidadCurricular, type User, type Turno, Role } from "@/types"
 import api from "@/config/api"
@@ -46,6 +47,13 @@ interface ClaseFormModalProps {
   turno?: Turno | null
   initialData?: Partial<ClaseFormData>
   isEditing?: boolean
+  // Para no listar la propia clase editada como "horario ocupado" consigo misma.
+  claseId?: string
+}
+
+interface ClaseOcupada {
+  horaInicio: string
+  horaFin: string
 }
 
 const DEFAULT_VALUES: ClaseFormData = {
@@ -67,6 +75,7 @@ export function ClaseFormModal({
   turno,
   initialData,
   isEditing,
+  claseId,
 }: ClaseFormModalProps) {
   const diasDisponibles = turno ? DIAS_POR_TURNO[turno] : DIAS_SEMANA
   const { user } = useAuth()
@@ -93,6 +102,53 @@ export function ClaseFormModal({
     defaultValues: { ...DEFAULT_VALUES, ...initialData },
   })
   const horaInicio = watch('horaInicio')
+  const diaSemanaElegido = watch('diaSemana')
+  const docenteIdElegido = watch('docenteId')
+  const aulaElegida = watch('aula')
+
+  // Clases ya agendadas ese día para el docente elegido (y el aula, si se
+  // indicó), para no dejar elegir una hora que el backend va a rechazar de
+  // todas formas por solapamiento (assertSinSolapamiento en el backend sigue
+  // siendo la validación real; esto es solo UX).
+  const [ocupados, setOcupados] = useState<ClaseOcupada[]>([])
+  useEffect(() => {
+    if (!open || !diaSemanaElegido || !docenteIdElegido) {
+      setOcupados([])
+      return
+    }
+    let cancelado = false
+    const paramsDocente = { diaSemana: diaSemanaElegido, docenteId: docenteIdElegido, limit: 100 }
+    const pedidos = [api.get('/clases', { params: paramsDocente })]
+    if (aulaElegida) {
+      pedidos.push(api.get('/clases', { params: { diaSemana: diaSemanaElegido, aula: aulaElegida, limit: 100 } }))
+    }
+    Promise.all(pedidos).then((responses) => {
+      if (cancelado) return
+      const vistos = new Set<string>()
+      const lista: ClaseOcupada[] = []
+      for (const res of responses) {
+        const data = res.data.data ?? res.data
+        for (const c of Array.isArray(data) ? data : []) {
+          if (c.id === claseId || vistos.has(c.id)) continue
+          if (!c.horaInicio || !c.horaFin) continue
+          vistos.add(c.id)
+          lista.push({ horaInicio: normalizeTime(c.horaInicio), horaFin: normalizeTime(c.horaFin) })
+        }
+      }
+      setOcupados(lista)
+    }).catch(() => { if (!cancelado) setOcupados([]) })
+    return () => { cancelado = true }
+  }, [open, diaSemanaElegido, docenteIdElegido, aulaElegida, claseId])
+
+  const horaInicioOcupada = (hora: string) => ocupados.some((o) => hora >= o.horaInicio && hora < o.horaFin)
+  const horaFinOcupada = (hora: string) => {
+    if (!horaInicio || hora <= horaInicio) return true
+    const proximoChoque = ocupados
+      .filter((o) => o.horaInicio >= horaInicio)
+      .map((o) => o.horaInicio)
+      .sort()[0]
+    return proximoChoque ? hora > proximoChoque : false
+  }
 
   useEffect(() => {
     if (open) {
@@ -270,21 +326,45 @@ export function ClaseFormModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="horaInicio">Hora inicio</Label>
-              <Input id="horaInicio" type="time" {...register('horaInicio')} />
+              <Controller
+                control={control}
+                name="horaInicio"
+                render={({ field }) => (
+                  <TimeSlotSelect
+                    id="horaInicio"
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabledTimes={horaInicioOcupada}
+                  />
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="horaFin">Hora fin</Label>
-              <Input
-                id="horaFin"
-                type="time"
-                {...register('horaFin', {
+              <Controller
+                control={control}
+                name="horaFin"
+                rules={{
                   validate: (value) =>
                     !value || !horaInicio || value > horaInicio || 'Debe ser posterior a la hora de inicio',
-                })}
+                }}
+                render={({ field }) => (
+                  <TimeSlotSelect
+                    id="horaFin"
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabledTimes={horaFinOcupada}
+                  />
+                )}
               />
               {errors.horaFin && <p className="text-xs text-destructive">{errors.horaFin.message}</p>}
             </div>
           </div>
+          {ocupados.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Horarios ocupados este día: {ocupados.map((o) => `${o.horaInicio}–${o.horaFin}`).join(', ')}
+            </p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="aula">Aula (opcional)</Label>
             <p className="text-xs text-muted-foreground">Si se indica, no puede coincidir con otra clase en el mismo horario.</p>

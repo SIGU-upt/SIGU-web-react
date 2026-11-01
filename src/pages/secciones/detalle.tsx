@@ -651,6 +651,7 @@ export function SeccionDetallePage() {
           aula: editing.aula ?? '',
         } : undefined}
         isEditing={!!editing}
+        claseId={editing?.id}
       />
 
       <InscripcionIndividualModal
