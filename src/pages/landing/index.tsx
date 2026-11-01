@@ -13,6 +13,7 @@ import { SiGithub, SiFlutter, SiDart } from "react-icons/si"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DecorativeBackground } from "@/components/layout/decorative-background"
 import {
   Dialog,
   DialogContent,
@@ -54,8 +55,9 @@ export function LandingPage() {
   const [descargaAbierta, setDescargaAbierta] = useState(false)
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="relative min-h-screen bg-background">
+      <DecorativeBackground />
+      <header className="relative sticky top-0 z-10 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
@@ -74,7 +76,7 @@ export function LandingPage() {
         </div>
       </header>
 
-      <main>
+      <main className="relative">
         <section className="mx-auto max-w-6xl px-4 py-20 text-center">
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Sistema de Información para la Gestión Universitaria
@@ -197,7 +199,7 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-border/50 py-8 text-center text-sm text-muted-foreground space-y-1">
+      <footer className="relative border-t border-border/50 py-8 text-center text-sm text-muted-foreground space-y-1">
         <p>© 2026 Universidad • Sistema de Gestión Universitaria</p>
         <p className="text-xs">
           <Link to="/privacidad" className="hover:underline">Privacidad</Link>

@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/top-bar"
+import { DecorativeBackground } from "@/components/layout/decorative-background"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -16,8 +17,9 @@ export function DashboardLayout({
     <SidebarProvider>
       <Sidebar />
       <SidebarInset>
+        <DecorativeBackground />
         <TopBar onLogout={onLogout} />
-        <main>
+        <main className="relative z-10">
           <div className="p-4 md:p-6 space-y-6">
             {children}
           </div>
