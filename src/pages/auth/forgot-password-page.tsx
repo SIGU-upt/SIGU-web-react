@@ -9,6 +9,7 @@ import api from "@/config/api"
 import { getErrorMessage } from "@/lib/errors"
 import { FormError } from "@/components/ui/form-error"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { DecorativeBackground } from "@/components/layout/decorative-background"
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -33,11 +34,12 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="fixed top-4 right-4">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-background p-4 overflow-hidden">
+      <DecorativeBackground />
+      <div className="fixed top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      <div className="flex items-center gap-3 mb-8">
+      <div className="relative z-10 flex items-center gap-3 mb-8">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
           <GraduationCap className="h-8 w-8" />
         </div>
@@ -47,7 +49,7 @@ export function ForgotPasswordPage() {
         </div>
       </div>
 
-      <Card className="w-full max-w-md shadow-xl border-border/50">
+      <Card className="relative z-10 w-full max-w-md shadow-xl border-border/50">
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold text-foreground">Restablecer contraseña</CardTitle>
           <CardDescription>
@@ -102,7 +104,7 @@ export function ForgotPasswordPage() {
         </CardContent>
       </Card>
 
-      <p className="mt-8 text-sm text-muted-foreground">
+      <p className="relative z-10 mt-8 text-sm text-muted-foreground">
         © 2026 Universidad • Sistema de Gestión Universitaria
       </p>
     </div>

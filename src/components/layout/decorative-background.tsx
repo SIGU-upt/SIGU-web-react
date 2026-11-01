@@ -1,76 +1,93 @@
+import { Fragment } from "react"
 import { useLocation } from "react-router-dom"
 
 // Fondo decorativo sutil: un degradado casi imperceptible más 2-3 formas
-// geométricas grandes a baja opacidad, solo para darle algo de personalidad
-// al fondo plano sin perder el tono formal/académico. Usa los tokens de color
-// ya definidos (primary/accent) para que respete el tema claro/oscuro sin
+// geométricas a baja opacidad, solo para darle algo de personalidad al fondo
+// plano sin perder el tono formal/académico. Usa los tokens de color ya
+// definidos (primary/accent) para que respete el tema claro/oscuro sin
 // colores nuevos hardcodeados. Puramente decorativo: pointer-events-none y
 // aria-hidden para que no interfiera con el contenido ni con lectores de
 // pantalla.
 //
-// Cada pantalla recibe una combinación distinta de forma/posición/rotación
-// (la "variante"), elegida según la ruta actual, para que el fondo no se
-// sienta repetido entre módulos sin dejar de ser el mismo sistema visual.
+// Cada pantalla recibe una combinación de formas fija (elegida según la
+// ruta actual), para no generar ruido visual al navegar entre pantallas de
+// un mismo módulo. La variedad entre formas viene de una segunda capa: cada
+// posición tiene 2 siluetas candidatas y cuál de las dos se usa se decide
+// una sola vez por sesión del navegador (sessionStorage), así que se ve
+// distinto entre un inicio de sesión y otro sin reacomodarse en cada clic.
 
-type Forma = "anillos" | "triangulo" | "cuadrado" | "hexagono" | "rombo" | "lineas"
+type Forma = "anillos" | "triangulo" | "cuadrado" | "hexagono" | "rombo" | "lineas" | "estrella" | "medialuna"
 
-interface FormaConfig {
-  forma: Forma
+interface Slot {
+  // Dos siluetas candidatas para esta posición; cuál se usa depende de
+  // `setIndex` (ver obtenerSetIndex), igual para toda la app en una sesión.
+  opciones: [Forma, Forma]
   clase: string // posición, tamaño y rotación (Tailwind)
   color: "primary" | "accent"
   opacidad: number
 }
 
-interface Variante {
-  forma1: FormaConfig
-  forma2: FormaConfig
+const VARIANTES: Record<string, Slot[]> = {
+  landing: [
+    { opciones: ["anillos", "hexagono"], clase: "-right-24 -top-24 h-[30rem] w-[30rem]", color: "primary", opacidad: 0.08 },
+    { opciones: ["triangulo", "estrella"], clase: "-bottom-32 -left-20 h-[26rem] w-[26rem] rotate-12", color: "accent", opacidad: 0.08 },
+    { opciones: ["medialuna", "rombo"], clase: "right-0 top-1/2 h-48 w-48 -translate-y-1/2 translate-x-1/3", color: "accent", opacidad: 0.06 },
+  ],
+  auth: [
+    { opciones: ["anillos", "rombo"], clase: "-left-20 -top-24 h-[26rem] w-[26rem]", color: "primary", opacidad: 0.08 },
+    { opciones: ["hexagono", "triangulo"], clase: "-bottom-28 -right-16 h-72 w-72 -rotate-6", color: "accent", opacidad: 0.075 },
+    { opciones: ["estrella", "medialuna"], clase: "left-1/2 bottom-10 h-40 w-40 -translate-x-1/2", color: "primary", opacidad: 0.05 },
+  ],
+  dashboard: [
+    { opciones: ["anillos", "estrella"], clase: "-right-24 -top-24 h-[28rem] w-[28rem]", color: "primary", opacidad: 0.07 },
+    { opciones: ["cuadrado", "hexagono"], clase: "-bottom-28 -left-16 h-64 w-64 rotate-12", color: "accent", opacidad: 0.065 },
+    { opciones: ["medialuna", "rombo"], clase: "-left-10 top-1/4 h-40 w-40", color: "accent", opacidad: 0.05 },
+  ],
+  usuarios: [
+    { opciones: ["rombo", "cuadrado"], clase: "-right-16 top-1/4 h-64 w-64", color: "accent", opacidad: 0.07 },
+    { opciones: ["lineas", "triangulo"], clase: "-bottom-24 -left-24 h-80 w-80 -rotate-6", color: "primary", opacidad: 0.06 },
+    { opciones: ["estrella", "anillos"], clase: "-top-10 left-1/3 h-40 w-40", color: "primary", opacidad: 0.05 },
+  ],
+  academico: [
+    { opciones: ["hexagono", "anillos"], clase: "-right-20 -top-16 h-[26rem] w-[26rem] rotate-12", color: "primary", opacidad: 0.07 },
+    { opciones: ["anillos", "rombo"], clase: "-bottom-28 -left-20 h-72 w-72", color: "accent", opacidad: 0.065 },
+    { opciones: ["medialuna", "lineas"], clase: "right-10 bottom-10 h-40 w-40", color: "accent", opacidad: 0.05 },
+  ],
+  matriculas: [
+    { opciones: ["triangulo", "estrella"], clase: "-right-20 -bottom-20 h-[26rem] w-[26rem] -rotate-6", color: "accent", opacidad: 0.075 },
+    { opciones: ["lineas", "cuadrado"], clase: "-top-16 -left-16 h-72 w-72 rotate-6", color: "primary", opacidad: 0.06 },
+    { opciones: ["rombo", "hexagono"], clase: "left-1/2 top-10 h-36 w-36 -translate-x-1/2", color: "primary", opacidad: 0.045 },
+  ],
+  reportes: [
+    { opciones: ["cuadrado", "rombo"], clase: "-right-16 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.07 },
+    { opciones: ["hexagono", "anillos"], clase: "-bottom-24 -left-24 h-72 w-72 -rotate-12", color: "accent", opacidad: 0.065 },
+    { opciones: ["estrella", "triangulo"], clase: "right-1/4 bottom-6 h-36 w-36", color: "accent", opacidad: 0.05 },
+  ],
+  configuracion: [
+    { opciones: ["rombo", "hexagono"], clase: "-right-20 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.07 },
+    { opciones: ["anillos", "cuadrado"], clase: "-bottom-28 -left-16 h-64 w-64", color: "accent", opacidad: 0.06 },
+    { opciones: ["lineas", "medialuna"], clase: "-left-6 top-10 h-36 w-36", color: "primary", opacidad: 0.045 },
+  ],
+  seguridad: [
+    { opciones: ["hexagono", "estrella"], clase: "-right-16 -bottom-20 h-80 w-80", color: "accent", opacidad: 0.075 },
+    { opciones: ["lineas", "anillos"], clase: "-top-20 -left-20 h-72 w-72 rotate-12", color: "primary", opacidad: 0.06 },
+    { opciones: ["rombo", "triangulo"], clase: "right-10 top-1/3 h-36 w-36", color: "primary", opacidad: 0.045 },
+  ],
+  historial: [
+    { opciones: ["cuadrado", "lineas"], clase: "left-1/2 top-1/3 h-72 w-72 -translate-x-1/2", color: "primary", opacidad: 0.055 },
+    { opciones: ["triangulo", "hexagono"], clase: "-bottom-28 -right-20 h-80 w-80 rotate-12", color: "accent", opacidad: 0.07 },
+    { opciones: ["medialuna", "estrella"], clase: "-top-10 -left-10 h-36 w-36", color: "accent", opacidad: 0.05 },
+  ],
+  default: [
+    { opciones: ["anillos", "hexagono"], clase: "-right-24 -top-24 h-[26rem] w-[26rem]", color: "primary", opacidad: 0.06 },
+    { opciones: ["rombo", "cuadrado"], clase: "-bottom-24 -left-20 h-64 w-64", color: "accent", opacidad: 0.06 },
+    { opciones: ["estrella", "triangulo"], clase: "right-10 top-10 h-32 w-32", color: "primary", opacidad: 0.045 },
+  ],
 }
 
-const VARIANTES: Record<string, Variante> = {
-  landing: {
-    forma1: { forma: "anillos", clase: "-right-24 -top-24 h-[30rem] w-[30rem]", color: "primary", opacidad: 0.07 },
-    forma2: { forma: "triangulo", clase: "-bottom-32 -left-20 h-[26rem] w-[26rem] rotate-12", color: "accent", opacidad: 0.08 },
-  },
-  dashboard: {
-    forma1: { forma: "anillos", clase: "-right-24 -top-24 h-[28rem] w-[28rem]", color: "primary", opacidad: 0.06 },
-    forma2: { forma: "cuadrado", clase: "-bottom-28 -left-16 h-64 w-64 rotate-12", color: "accent", opacidad: 0.055 },
-  },
-  usuarios: {
-    forma1: { forma: "rombo", clase: "-right-16 top-1/4 h-64 w-64", color: "accent", opacidad: 0.06 },
-    forma2: { forma: "lineas", clase: "-bottom-24 -left-24 h-80 w-80 -rotate-6", color: "primary", opacidad: 0.05 },
-  },
-  academico: {
-    forma1: { forma: "hexagono", clase: "-right-20 -top-16 h-[26rem] w-[26rem] rotate-12", color: "primary", opacidad: 0.06 },
-    forma2: { forma: "anillos", clase: "-bottom-28 -left-20 h-72 w-72", color: "accent", opacidad: 0.055 },
-  },
-  matriculas: {
-    forma1: { forma: "triangulo", clase: "-right-20 -bottom-20 h-[26rem] w-[26rem] -rotate-6", color: "accent", opacidad: 0.065 },
-    forma2: { forma: "lineas", clase: "-top-16 -left-16 h-72 w-72 rotate-6", color: "primary", opacidad: 0.05 },
-  },
-  reportes: {
-    forma1: { forma: "cuadrado", clase: "-right-16 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.06 },
-    forma2: { forma: "hexagono", clase: "-bottom-24 -left-24 h-72 w-72 -rotate-12", color: "accent", opacidad: 0.055 },
-  },
-  configuracion: {
-    forma1: { forma: "rombo", clase: "-right-20 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.06 },
-    forma2: { forma: "anillos", clase: "-bottom-28 -left-16 h-64 w-64", color: "accent", opacidad: 0.05 },
-  },
-  seguridad: {
-    forma1: { forma: "hexagono", clase: "-right-16 -bottom-20 h-80 w-80", color: "accent", opacidad: 0.065 },
-    forma2: { forma: "lineas", clase: "-top-20 -left-20 h-72 w-72 rotate-12", color: "primary", opacidad: 0.05 },
-  },
-  historial: {
-    forma1: { forma: "cuadrado", clase: "left-1/2 top-1/3 h-72 w-72 -translate-x-1/2", color: "primary", opacidad: 0.045 },
-    forma2: { forma: "triangulo", clase: "-bottom-28 -right-20 h-80 w-80 rotate-12", color: "accent", opacidad: 0.06 },
-  },
-  default: {
-    forma1: { forma: "anillos", clase: "-right-24 -top-24 h-[26rem] w-[26rem]", color: "primary", opacidad: 0.05 },
-    forma2: { forma: "rombo", clase: "-bottom-24 -left-20 h-64 w-64", color: "accent", opacidad: 0.05 },
-  },
-}
-
-function varianteParaRuta(pathname: string): Variante {
+function varianteParaRuta(pathname: string): Slot[] {
   if (pathname === "/") return VARIANTES.landing
+  if (pathname.startsWith("/login") || pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password")) return VARIANTES.auth
   if (pathname.startsWith("/dashboard")) return VARIANTES.dashboard
   if (pathname.startsWith("/docentes") || pathname.startsWith("/estudiantes") || pathname.startsWith("/personal-administrativo")) return VARIANTES.usuarios
   if (pathname.startsWith("/unidades") || pathname.startsWith("/secciones") || pathname.startsWith("/clases-suspendidas")) return VARIANTES.academico
@@ -82,14 +99,32 @@ function varianteParaRuta(pathname: string): Variante {
   return VARIANTES.default
 }
 
-const CLASE_COLOR: Record<FormaConfig["color"], string> = {
+// Decide una vez por pestaña/sesión cuál de las 2 siluetas candidatas de
+// cada posición se usa — no en cada render ni en cada cambio de pantalla,
+// para que el fondo no "salte" mientras se navega dentro de una sesión.
+const SEED_KEY = "sigu_decor_set"
+
+function obtenerSetIndex(): 0 | 1 {
+  try {
+    const guardado = sessionStorage.getItem(SEED_KEY)
+    if (guardado === "0" || guardado === "1") return guardado === "1" ? 1 : 0
+    const nuevo: 0 | 1 = Math.random() < 0.5 ? 0 : 1
+    sessionStorage.setItem(SEED_KEY, String(nuevo))
+    return nuevo
+  } catch {
+    return 0
+  }
+}
+
+const CLASE_COLOR: Record<Slot["color"], string> = {
   primary: "text-primary",
   accent: "text-accent",
 }
 
-function renderForma({ forma, clase, color, opacidad }: FormaConfig) {
-  const claseBase = `absolute ${CLASE_COLOR[color]} ${clase}`
-  const style = { opacity: opacidad }
+function renderForma(slot: Slot, setIndex: 0 | 1) {
+  const forma = slot.opciones[setIndex]
+  const claseBase = `absolute ${CLASE_COLOR[slot.color]} ${slot.clase}`
+  const style = { opacity: slot.opacidad }
   switch (forma) {
     case "anillos":
       return (
@@ -130,12 +165,34 @@ function renderForma({ forma, clase, color, opacidad }: FormaConfig) {
           <line x1="0" y1="160" x2="200" y2="160" stroke="currentColor" strokeWidth="2" />
         </svg>
       )
+    case "estrella":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon
+            points="100,10 122,69 186,72 136,112 153,173 100,138 47,173 64,112 14,72 78,69"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case "medialuna":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <path
+            d="M140 30 A70 70 0 1 0 140 170 A55 55 0 1 1 140 30 Z"
+            fill="currentColor"
+            stroke="none"
+          />
+        </svg>
+      )
   }
 }
 
 export function DecorativeBackground() {
   const { pathname } = useLocation()
-  const { forma1, forma2 } = varianteParaRuta(pathname)
+  const slots = varianteParaRuta(pathname)
+  const setIndex = obtenerSetIndex()
 
   return (
     <div
@@ -143,12 +200,13 @@ export function DecorativeBackground() {
       className="pointer-events-none absolute inset-0 overflow-hidden"
       style={{
         background:
-          "radial-gradient(ellipse 80% 50% at 15% 0%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent), " +
-          "radial-gradient(ellipse 60% 40% at 100% 100%, color-mix(in srgb, var(--color-accent) 8%, transparent), transparent)",
+          "radial-gradient(ellipse 80% 50% at 15% 0%, color-mix(in srgb, var(--color-primary) 9%, transparent), transparent), " +
+          "radial-gradient(ellipse 60% 40% at 100% 100%, color-mix(in srgb, var(--color-accent) 9%, transparent), transparent)",
       }}
     >
-      {renderForma(forma1)}
-      {renderForma(forma2)}
+      {slots.map((slot, i) => (
+        <Fragment key={i}>{renderForma(slot, setIndex)}</Fragment>
+      ))}
     </div>
   )
 }

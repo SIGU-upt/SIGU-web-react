@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -76,7 +77,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
   const crumbs = useBreadcrumbs(location.pathname)
-  const { startTour, startViewTour, hasViewTour } = useOnboardingTour()
+  const { startTour, startViewTour, hasViewTour, autoInicioDesactivado, toggleAutoInicio } = useOnboardingTour()
 
   const initials = user
     ? (user.nombres?.charAt(0) ?? '') + (user.apellidos?.charAt(0) ?? '')
@@ -135,6 +136,10 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
               {hasViewTour && (
                 <DropdownMenuItem onClick={startViewTour}>Recorrido de esta pantalla</DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem checked={autoInicioDesactivado} onCheckedChange={toggleAutoInicio}>
+                No mostrar automáticamente
+              </DropdownMenuCheckboxItem>
               {user && MANUAL_URL_POR_ROL[user.role] && (
                 <>
                   <DropdownMenuSeparator />

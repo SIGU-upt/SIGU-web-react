@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { driver, type DriveStep } from "driver.js"
 import "driver.js/dist/driver.css"
@@ -12,6 +12,10 @@ function seenKey(userId: string) {
 
 function viewSeenKey(userId: string, pathname: string) {
   return `sigu_view_tour_visto_${userId}_${pathname}`
+}
+
+function desactivadosKey(userId: string) {
+  return `sigu_tours_desactivados_${userId}`
 }
 
 // Filtra a los pasos cuyo elemento existe ahora mismo en el DOM — en mobile,
@@ -44,6 +48,32 @@ export function useOnboardingTour() {
   const { user } = useAuth()
   const location = useLocation()
 
+  // "No mostrar automáticamente" (botón de ayuda): apaga solo el auto-inicio
+  // (tour de rol y de pantalla); el usuario siempre puede abrirlos a mano
+  // desde el mismo menú, que no consulta esta bandera.
+  const [autoInicioDesactivado, setAutoInicioDesactivado] = useState(() => {
+    if (!user) return false
+    try {
+      return !!localStorage.getItem(desactivadosKey(user.id))
+    } catch {
+      return false
+    }
+  })
+
+  const toggleAutoInicio = useCallback(() => {
+    if (!user) return
+    setAutoInicioDesactivado((prev) => {
+      const next = !prev
+      try {
+        if (next) localStorage.setItem(desactivadosKey(user.id), "1")
+        else localStorage.removeItem(desactivadosKey(user.id))
+      } catch {
+        // almacenamiento bloqueado: el toggle igual cambia en memoria para esta sesión.
+      }
+      return next
+    })
+  }, [user])
+
   const startTour = useCallback(() => {
     if (!user) return
     // El botón de ayuda del top-bar siempre existe, así que un usuario en
@@ -60,7 +90,7 @@ export function useOnboardingTour() {
   }, [viewTourSteps])
 
   useEffect(() => {
-    if (!user) return
+    if (!user || autoInicioDesactivado) return
     const key = seenKey(user.id)
     try {
       if (localStorage.getItem(key)) return
@@ -85,13 +115,13 @@ export function useOnboardingTour() {
       startTour()
     }, 400)
     return () => clearTimeout(id)
-  }, [user, startTour])
+  }, [user, startTour, autoInicioDesactivado])
 
   // Recorrido corto por pantalla: se auto-inicia una vez por usuario y por
   // pantalla, pero solo después de que ya vio el tour general — si ambos
   // dispararan en la primera visita se superpondrían dos recorridos seguidos.
   useEffect(() => {
-    if (!user || !viewTourSteps) return
+    if (!user || !viewTourSteps || autoInicioDesactivado) return
     let roleTourVisto = false
     try {
       roleTourVisto = !!localStorage.getItem(seenKey(user.id))
@@ -114,7 +144,7 @@ export function useOnboardingTour() {
       startViewTour()
     }, 400)
     return () => clearTimeout(id)
-  }, [user, location.pathname, viewTourSteps, startViewTour])
+  }, [user, location.pathname, viewTourSteps, startViewTour, autoInicioDesactivado])
 
-  return { startTour, startViewTour, hasViewTour: viewTourSteps !== null }
+  return { startTour, startViewTour, hasViewTour: viewTourSteps !== null, autoInicioDesactivado, toggleAutoInicio }
 }
