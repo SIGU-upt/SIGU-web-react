@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ClaseFormModal, type ClaseFormData } from "@/components/forms/clase-form-modal"
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
+import { RepartoGrupoModal } from "@/components/forms/reparto-grupo-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
@@ -61,6 +62,7 @@ export function SeccionDetallePage() {
   const [deleting, setDeleting] = useState<Clase | null>(null)
   const [inscribiendo, setInscribiendo] = useState(false)
   const [resultado, setResultado] = useState<InscripcionMasivaResponse | null>(null)
+  const [repartoGrupos, setRepartoGrupos] = useState<[{ claseId: string; nombreGrupo: string }, { claseId: string; nombreGrupo: string }] | null>(null)
   const [suspendingClase, setSuspendingClase] = useState<Clase | null>(null)
   const [suspendFecha, setSuspendFecha] = useState("")
   const [suspendMotivo, setSuspendMotivo] = useState("")
@@ -239,15 +241,44 @@ export function SeccionDetallePage() {
     [clases],
   )
 
-  const handleCreate = async (form: ClaseFormData) => {
-    await api.post('/clases', { ...form, seccionId: id })
+  // `grupos` trae 1 elemento normalmente, o 2 cuando se activó "Dividir en
+  // grupos" en el modal — ambos se crean con POST /clases secuenciales (no
+  // hace falta un endpoint nuevo: nombreGrupo ya es texto libre). Si el
+  // segundo falla después de crear el primero, se refresca igual (el primero
+  // sí quedó creado) y se avisa qué faltó, en vez de perder ese dato en un
+  // error genérico.
+  const handleCreate = async (grupos: ClaseFormData[]) => {
+    const creadas: Clase[] = []
+    try {
+      for (const g of grupos) {
+        const res = await api.post('/clases', { ...g, seccionId: id })
+        creadas.push(res.data)
+      }
+    } catch (err) {
+      if (creadas.length > 0) await refreshClases()
+      if (grupos.length === 2 && creadas.length === 1) {
+        throw new Error(`Se creó el grupo "${creadas[0].nombreGrupo}", pero no se pudo crear el segundo: ${getErrorMessage(err, 'error desconocido')}`)
+      }
+      throw err
+    }
+    await refreshClases()
+    if (creadas.length === 2) {
+      setRepartoGrupos([
+        { claseId: creadas[0].id, nombreGrupo: creadas[0].nombreGrupo },
+        { claseId: creadas[1].id, nombreGrupo: creadas[1].nombreGrupo },
+      ])
+    }
+  }
+
+  const handleEdit = async (grupos: ClaseFormData[]) => {
+    if (!editing) return
+    await api.patch(`/clases/${editing.id}`, grupos[0])
     await refreshClases()
   }
 
-  const handleEdit = async (form: ClaseFormData) => {
-    if (!editing) return
-    await api.patch(`/clases/${editing.id}`, form)
-    await refreshClases()
+  const handleRepartoSubmit = async (alumnoId: string, claseId: string) => {
+    const res = await api.post('/inscripciones/batch', { alumnoId, claseIds: [claseId] })
+    return res.data
   }
 
   const handleDelete = async () => {
@@ -653,6 +684,21 @@ export function SeccionDetallePage() {
         isEditing={!!editing}
         claseId={editing?.id}
       />
+
+      {repartoGrupos && (
+        <RepartoGrupoModal
+          open={!!repartoGrupos}
+          onOpenChange={(v) => {
+            if (!v) {
+              setRepartoGrupos(null)
+              fetchInscripcionesYSuspensiones(clases)
+            }
+          }}
+          matricula={matricula}
+          grupos={repartoGrupos}
+          onSubmit={handleRepartoSubmit}
+        />
+      )}
 
       <InscripcionIndividualModal
         open={individualModalOpen}

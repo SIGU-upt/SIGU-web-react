@@ -36,10 +36,32 @@ export interface ClaseFormData {
   aula: string
 }
 
+// Formulario interno: el grupo 1 son los mismos campos de siempre; "dividir"
+// agrega un segundo bloque (grupo 2) con sufijo "2" en cada campo. Al enviar
+// se arma un arreglo de 1 o 2 ClaseFormData (ver submitHandler) — la materia
+// (ucId) es la misma para ambos grupos, por eso no se duplica.
+interface ClaseFormInternal {
+  ucId: string
+  docenteId: string
+  nombreGrupo: string
+  diaSemana: string
+  horaInicio: string
+  horaFin: string
+  aula: string
+  dividir: boolean
+  docenteId2: string
+  nombreGrupo2: string
+  diaSemana2: string
+  horaInicio2: string
+  horaFin2: string
+  aula2: string
+}
+
 interface ClaseFormModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: ClaseFormData) => Promise<void>
+  // Un elemento si es un solo grupo, dos si se dividió — ver "Dividir en grupos".
+  onSubmit: (grupos: ClaseFormData[]) => Promise<void>
   trayectoId: string
   sedePnfId: string
   // Acota qué días se pueden elegir (ver DIAS_POR_TURNO). Sin turno definido
@@ -56,8 +78,10 @@ interface ClaseOcupada {
   horaFin: string
 }
 
-const DEFAULT_VALUES: ClaseFormData = {
+const DEFAULT_VALUES: ClaseFormInternal = {
   ucId: '', docenteId: '', nombreGrupo: '', diaSemana: '', horaInicio: '', horaFin: '', aula: '',
+  dividir: false,
+  docenteId2: '', nombreGrupo2: '', diaSemana2: '', horaInicio2: '', horaFin2: '', aula2: '',
 }
 
 // El backend devuelve las columnas TIME como "HH:mm:ss" (con segundos). El
@@ -65,6 +89,64 @@ const DEFAULT_VALUES: ClaseFormData = {
 // que al editar sin modificar la hora se reenviaba "19:01:00" y el backend
 // lo rechazaba (@Matches exige exactamente HH:mm).
 const normalizeTime = (t?: string) => (t ? t.slice(0, 5) : '')
+
+// Clases ya agendadas ese día para el docente (y el aula, si se indicó), para
+// no dejar elegir una hora que el backend va a rechazar de todas formas por
+// solapamiento (assertSinSolapamiento en el backend sigue siendo la
+// validación real; esto es solo UX). Factorizado en un hook porque el grupo 2
+// (ver "Dividir en grupos") necesita la misma consulta con sus propios campos.
+function useHorariosOcupados(
+  activo: boolean,
+  diaSemana: string,
+  docenteId: string,
+  aula: string,
+  excludeClaseId?: string,
+): ClaseOcupada[] {
+  const [ocupados, setOcupados] = useState<ClaseOcupada[]>([])
+  useEffect(() => {
+    if (!activo || !diaSemana || !docenteId) {
+      setOcupados([])
+      return
+    }
+    let cancelado = false
+    const pedidos = [api.get('/clases', { params: { diaSemana, docenteId, limit: 100 } })]
+    if (aula) {
+      pedidos.push(api.get('/clases', { params: { diaSemana, aula, limit: 100 } }))
+    }
+    Promise.all(pedidos).then((responses) => {
+      if (cancelado) return
+      const vistos = new Set<string>()
+      const lista: ClaseOcupada[] = []
+      for (const res of responses) {
+        const data = res.data.data ?? res.data
+        for (const c of Array.isArray(data) ? data : []) {
+          if (c.id === excludeClaseId || vistos.has(c.id)) continue
+          if (!c.horaInicio || !c.horaFin) continue
+          vistos.add(c.id)
+          lista.push({ horaInicio: normalizeTime(c.horaInicio), horaFin: normalizeTime(c.horaFin) })
+        }
+      }
+      setOcupados(lista)
+    }).catch(() => { if (!cancelado) setOcupados([]) })
+    return () => { cancelado = true }
+  }, [activo, diaSemana, docenteId, aula, excludeClaseId])
+  return ocupados
+}
+
+function disabledHoraInicio(ocupados: ClaseOcupada[]) {
+  return (hora: string) => ocupados.some((o) => hora >= o.horaInicio && hora < o.horaFin)
+}
+
+function disabledHoraFin(ocupados: ClaseOcupada[], horaInicio: string) {
+  return (hora: string) => {
+    if (!horaInicio || hora <= horaInicio) return true
+    const proximoChoque = ocupados
+      .filter((o) => o.horaInicio >= horaInicio)
+      .map((o) => o.horaInicio)
+      .sort()[0]
+    return proximoChoque ? hora > proximoChoque : false
+  }
+}
 
 export function ClaseFormModal({
   open,
@@ -98,57 +180,26 @@ export function ClaseFormModal({
   const [buscandoDocente, setBuscandoDocente] = useState(false)
   const [errorBusquedaDocente, setErrorBusquedaDocente] = useState<string | null>(null)
 
-  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<ClaseFormData>({
+  const { register, handleSubmit, reset, watch, control, setValue, formState: { errors } } = useForm<ClaseFormInternal>({
     defaultValues: { ...DEFAULT_VALUES, ...initialData },
   })
   const horaInicio = watch('horaInicio')
   const diaSemanaElegido = watch('diaSemana')
   const docenteIdElegido = watch('docenteId')
   const aulaElegida = watch('aula')
+  const dividir = watch('dividir')
+  const horaInicio2 = watch('horaInicio2')
+  const diaSemana2Elegido = watch('diaSemana2')
+  const docenteId2Elegido = watch('docenteId2')
+  const aula2Elegida = watch('aula2')
 
-  // Clases ya agendadas ese día para el docente elegido (y el aula, si se
-  // indicó), para no dejar elegir una hora que el backend va a rechazar de
-  // todas formas por solapamiento (assertSinSolapamiento en el backend sigue
-  // siendo la validación real; esto es solo UX).
-  const [ocupados, setOcupados] = useState<ClaseOcupada[]>([])
-  useEffect(() => {
-    if (!open || !diaSemanaElegido || !docenteIdElegido) {
-      setOcupados([])
-      return
-    }
-    let cancelado = false
-    const paramsDocente = { diaSemana: diaSemanaElegido, docenteId: docenteIdElegido, limit: 100 }
-    const pedidos = [api.get('/clases', { params: paramsDocente })]
-    if (aulaElegida) {
-      pedidos.push(api.get('/clases', { params: { diaSemana: diaSemanaElegido, aula: aulaElegida, limit: 100 } }))
-    }
-    Promise.all(pedidos).then((responses) => {
-      if (cancelado) return
-      const vistos = new Set<string>()
-      const lista: ClaseOcupada[] = []
-      for (const res of responses) {
-        const data = res.data.data ?? res.data
-        for (const c of Array.isArray(data) ? data : []) {
-          if (c.id === claseId || vistos.has(c.id)) continue
-          if (!c.horaInicio || !c.horaFin) continue
-          vistos.add(c.id)
-          lista.push({ horaInicio: normalizeTime(c.horaInicio), horaFin: normalizeTime(c.horaFin) })
-        }
-      }
-      setOcupados(lista)
-    }).catch(() => { if (!cancelado) setOcupados([]) })
-    return () => { cancelado = true }
-  }, [open, diaSemanaElegido, docenteIdElegido, aulaElegida, claseId])
+  const ocupados = useHorariosOcupados(open, diaSemanaElegido, docenteIdElegido, aulaElegida, claseId)
+  const horaInicioOcupada = disabledHoraInicio(ocupados)
+  const horaFinOcupada = disabledHoraFin(ocupados, horaInicio)
 
-  const horaInicioOcupada = (hora: string) => ocupados.some((o) => hora >= o.horaInicio && hora < o.horaFin)
-  const horaFinOcupada = (hora: string) => {
-    if (!horaInicio || hora <= horaInicio) return true
-    const proximoChoque = ocupados
-      .filter((o) => o.horaInicio >= horaInicio)
-      .map((o) => o.horaInicio)
-      .sort()[0]
-    return proximoChoque ? hora > proximoChoque : false
-  }
+  const ocupados2 = useHorariosOcupados(open && dividir, diaSemana2Elegido, docenteId2Elegido, aula2Elegida)
+  const horaInicio2Ocupada = disabledHoraInicio(ocupados2)
+  const horaFin2Ocupada = disabledHoraFin(ocupados2, horaInicio2)
 
   useEffect(() => {
     if (open) {
@@ -207,11 +258,32 @@ export function ClaseFormModal({
     }).catch(() => setDocenteOptions([]))
   }, [open, trayectoId, sedePnfId, mostrarOtrosPnf, puedeVerOtrosPnf])
 
-  const submitHandler = async (data: ClaseFormData) => {
+  const submitHandler = async (data: ClaseFormInternal) => {
     setLoading(true)
     setError(null)
     try {
-      await onSubmit(data)
+      const grupo1: ClaseFormData = {
+        ucId: data.ucId,
+        docenteId: data.docenteId,
+        nombreGrupo: data.nombreGrupo,
+        diaSemana: data.diaSemana,
+        horaInicio: data.horaInicio,
+        horaFin: data.horaFin,
+        aula: data.aula,
+      }
+      const grupos: ClaseFormData[] = [grupo1]
+      if (!isEditing && data.dividir) {
+        grupos.push({
+          ucId: data.ucId,
+          docenteId: data.docenteId2,
+          nombreGrupo: data.nombreGrupo2,
+          diaSemana: data.diaSemana2,
+          horaInicio: data.horaInicio2,
+          horaFin: data.horaFin2,
+          aula: data.aula2,
+        })
+      }
+      await onSubmit(grupos)
       onOpenChange(false)
     } catch (err) {
       setError(getErrorMessage(err, 'Error al guardar'))
@@ -371,6 +443,124 @@ export function ClaseFormModal({
             <Input id="aula" placeholder="A-101" {...register('aula', { maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
             {errors.aula && <p className="text-xs text-destructive">{errors.aula.message}</p>}
           </div>
+
+          {!isEditing && (
+            <div className="flex items-center gap-2 rounded-md border border-dashed border-input p-3">
+              <Controller
+                control={control}
+                name="dividir"
+                render={({ field }) => (
+                  <Checkbox id="dividir" checked={field.value} onCheckedChange={(checked) => field.onChange(checked === true)} />
+                )}
+              />
+              <Label htmlFor="dividir" className="font-normal cursor-pointer">
+                Dividir esta materia en 2 grupos (misma materia, docente/horario propios cada uno)
+              </Label>
+            </div>
+          )}
+
+          {!isEditing && dividir && (
+            <div className="space-y-4 rounded-md border border-input p-3">
+              <p className="text-sm font-medium">Grupo 2</p>
+              <div className="space-y-2">
+                <Label htmlFor="docenteId2">Docente</Label>
+                <Controller
+                  control={control}
+                  name="docenteId2"
+                  rules={{ validate: (v) => !dividir || !!v || 'Requerido' }}
+                  render={({ field }) => (
+                    <SearchableSelect
+                      id="docenteId2"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      placeholder="Seleccione un docente"
+                      searchPlaceholder="Buscar docente..."
+                      options={docenteOptions.map((d) => ({
+                        value: d.id,
+                        label: `${d.nombreCompleto} — ${d.ci}${d.sedePnfId !== sedePnfId ? ' (otro PNF)' : ''}`,
+                      }))}
+                    />
+                  )}
+                />
+                {errors.docenteId2 && <p className="text-xs text-destructive">{errors.docenteId2.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nombreGrupo2">Nombre de grupo</Label>
+                <Input
+                  id="nombreGrupo2"
+                  placeholder="Grupo B"
+                  {...register('nombreGrupo2', { validate: (v) => !dividir || !!v?.trim() || 'Requerido' })}
+                />
+                {errors.nombreGrupo2 && <p className="text-xs text-destructive">{errors.nombreGrupo2.message}</p>}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="diaSemana2">Día de la semana</Label>
+                <Controller
+                  control={control}
+                  name="diaSemana2"
+                  render={({ field }) => (
+                    <Select value={field.value || undefined} onValueChange={field.onChange}>
+                      <SelectTrigger id="diaSemana2" className="w-full">
+                        <SelectValue placeholder="Sin definir" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {diasDisponibles.map((d) => (
+                          <SelectItem key={d} value={d}>{d.charAt(0) + d.slice(1).toLowerCase()}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="horaInicio2">Hora inicio</Label>
+                  <Controller
+                    control={control}
+                    name="horaInicio2"
+                    render={({ field }) => (
+                      <TimeSlotSelect
+                        id="horaInicio2"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabledTimes={horaInicio2Ocupada}
+                      />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="horaFin2">Hora fin</Label>
+                  <Controller
+                    control={control}
+                    name="horaFin2"
+                    rules={{
+                      validate: (value) =>
+                        !value || !horaInicio2 || value > horaInicio2 || 'Debe ser posterior a la hora de inicio',
+                    }}
+                    render={({ field }) => (
+                      <TimeSlotSelect
+                        id="horaFin2"
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabledTimes={horaFin2Ocupada}
+                      />
+                    )}
+                  />
+                  {errors.horaFin2 && <p className="text-xs text-destructive">{errors.horaFin2.message}</p>}
+                </div>
+              </div>
+              {ocupados2.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Horarios ocupados este día: {ocupados2.map((o) => `${o.horaInicio}–${o.horaFin}`).join(', ')}
+                </p>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="aula2">Aula (opcional)</Label>
+                <Input id="aula2" placeholder="A-102" {...register('aula2', { maxLength: { value: 50, message: 'Máximo 50 caracteres' } })} />
+                {errors.aula2 && <p className="text-xs text-destructive">{errors.aula2.message}</p>}
+              </div>
+            </div>
+          )}
 
           {error && <FormError>{error}</FormError>}
 
