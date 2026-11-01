@@ -1,7 +1,7 @@
 import { Fragment } from "react"
 import { useLocation } from "react-router-dom"
 
-// Fondo decorativo sutil: un degradado casi imperceptible más 2-3 formas
+// Fondo decorativo sutil: un degradado casi imperceptible más 1-2 formas
 // geométricas a baja opacidad, solo para darle algo de personalidad al fondo
 // plano sin perder el tono formal/académico. Usa los tokens de color ya
 // definidos (primary/accent) para que respete el tema claro/oscuro sin
@@ -9,79 +9,112 @@ import { useLocation } from "react-router-dom"
 // aria-hidden para que no interfiera con el contenido ni con lectores de
 // pantalla.
 //
-// Cada pantalla recibe una combinación de formas fija (elegida según la
-// ruta actual), para no generar ruido visual al navegar entre pantallas de
-// un mismo módulo. La variedad entre formas viene de una segunda capa: cada
-// posición tiene 2 siluetas candidatas y cuál de las dos se usa se decide
-// una sola vez por sesión del navegador (sessionStorage), así que se ve
-// distinto entre un inicio de sesión y otro sin reacomodarse en cada clic.
+// Composición por pantalla (regla pedida): hasta 3 formas, nunca dos
+// grandes juntas — una grande sola, o 2-3 formas entre medianas y
+// pequeñas (media+media, media+pequeña, pequeña+pequeña, y hasta una
+// pequeña extra de acento) — para no saturar. Cada pantalla tiene su
+// composición fija según la ruta; la variedad entre formas viene de una
+// segunda capa: cada posición tiene 2 siluetas candidatas y cuál se usa se
+// decide una sola vez por sesión del navegador (sessionStorage), así que se
+// ve distinto entre un inicio de sesión y otro sin reacomodarse en cada clic.
 
-type Forma = "anillos" | "triangulo" | "cuadrado" | "hexagono" | "rombo" | "lineas" | "estrella" | "medialuna"
+type Forma =
+  | "anillos"
+  | "triangulo"
+  | "cuadrado"
+  | "hexagono"
+  | "rombo"
+  | "lineas"
+  | "estrella"
+  | "medialuna"
+  | "pentagono"
+  | "octagono"
+  | "paralelogramo"
+  | "trapecio"
+  | "arco"
+  | "cruz"
+  | "zigzag"
+  | "cuadrados-concentricos"
+
+type Tamano = "grande" | "media" | "pequeña"
+type Esquina = "tr" | "br" | "bl" | "tl"
 
 interface Slot {
   // Dos siluetas candidatas para esta posición; cuál se usa depende de
   // `setIndex` (ver obtenerSetIndex), igual para toda la app en una sesión.
   opciones: [Forma, Forma]
-  clase: string // posición, tamaño y rotación (Tailwind)
+  esquina: Esquina
+  tamano: Tamano
+  rotar?: string
   color: "primary" | "accent"
   opacidad: number
 }
 
+const TAMANO_CLASES: Record<Tamano, string> = {
+  grande: "h-[28rem] w-[28rem]",
+  media: "h-64 w-64",
+  pequeña: "h-36 w-36",
+}
+
+const POSICION: Record<Esquina, Record<Tamano, string>> = {
+  tr: { grande: "-right-24 -top-24", media: "-right-12 -top-12", pequeña: "-right-6 -top-6" },
+  br: { grande: "-right-24 -bottom-24", media: "-right-12 -bottom-12", pequeña: "-right-6 -bottom-6" },
+  bl: { grande: "-left-24 -bottom-24", media: "-left-12 -bottom-12", pequeña: "-left-6 -bottom-6" },
+  tl: { grande: "-left-24 -top-24", media: "-left-12 -top-12", pequeña: "-left-6 -top-6" },
+}
+
 const VARIANTES: Record<string, Slot[]> = {
   landing: [
-    { opciones: ["anillos", "hexagono"], clase: "-right-24 -top-24 h-[30rem] w-[30rem]", color: "primary", opacidad: 0.08 },
-    { opciones: ["triangulo", "estrella"], clase: "-bottom-32 -left-20 h-[26rem] w-[26rem] rotate-12", color: "accent", opacidad: 0.08 },
-    { opciones: ["medialuna", "rombo"], clase: "right-0 top-1/2 h-48 w-48 -translate-y-1/2 translate-x-1/3", color: "accent", opacidad: 0.06 },
+    { opciones: ["anillos", "hexagono"], esquina: "tr", tamano: "grande", color: "primary", opacidad: 0.08 },
+    { opciones: ["estrella", "trapecio"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.055 },
   ],
   auth: [
-    { opciones: ["anillos", "rombo"], clase: "-left-20 -top-24 h-[26rem] w-[26rem]", color: "primary", opacidad: 0.08 },
-    { opciones: ["hexagono", "triangulo"], clase: "-bottom-28 -right-16 h-72 w-72 -rotate-6", color: "accent", opacidad: 0.075 },
-    { opciones: ["estrella", "medialuna"], clase: "left-1/2 bottom-10 h-40 w-40 -translate-x-1/2", color: "primary", opacidad: 0.05 },
+    { opciones: ["anillos", "rombo"], esquina: "tl", tamano: "media", color: "primary", opacidad: 0.075 },
+    { opciones: ["hexagono", "pentagono"], esquina: "br", tamano: "media", rotar: "-rotate-6", color: "accent", opacidad: 0.07 },
+    { opciones: ["cruz", "medialuna"], esquina: "bl", tamano: "pequeña", color: "primary", opacidad: 0.05 },
   ],
   dashboard: [
-    { opciones: ["anillos", "estrella"], clase: "-right-24 -top-24 h-[28rem] w-[28rem]", color: "primary", opacidad: 0.07 },
-    { opciones: ["cuadrado", "hexagono"], clase: "-bottom-28 -left-16 h-64 w-64 rotate-12", color: "accent", opacidad: 0.065 },
-    { opciones: ["medialuna", "rombo"], clase: "-left-10 top-1/4 h-40 w-40", color: "accent", opacidad: 0.05 },
+    { opciones: ["anillos", "estrella"], esquina: "tr", tamano: "media", color: "primary", opacidad: 0.07 },
+    { opciones: ["cuadrado", "medialuna"], esquina: "bl", tamano: "pequeña", rotar: "rotate-12", color: "accent", opacidad: 0.055 },
+    { opciones: ["zigzag", "arco"], esquina: "br", tamano: "pequeña", color: "accent", opacidad: 0.05 },
   ],
   usuarios: [
-    { opciones: ["rombo", "cuadrado"], clase: "-right-16 top-1/4 h-64 w-64", color: "accent", opacidad: 0.07 },
-    { opciones: ["lineas", "triangulo"], clase: "-bottom-24 -left-24 h-80 w-80 -rotate-6", color: "primary", opacidad: 0.06 },
-    { opciones: ["estrella", "anillos"], clase: "-top-10 left-1/3 h-40 w-40", color: "primary", opacidad: 0.05 },
+    { opciones: ["rombo", "cruz"], esquina: "tr", tamano: "pequeña", color: "accent", opacidad: 0.06 },
+    { opciones: ["lineas", "zigzag"], esquina: "bl", tamano: "pequeña", rotar: "-rotate-6", color: "primary", opacidad: 0.055 },
+    { opciones: ["pentagono", "trapecio"], esquina: "tl", tamano: "pequeña", color: "primary", opacidad: 0.05 },
   ],
   academico: [
-    { opciones: ["hexagono", "anillos"], clase: "-right-20 -top-16 h-[26rem] w-[26rem] rotate-12", color: "primary", opacidad: 0.07 },
-    { opciones: ["anillos", "rombo"], clase: "-bottom-28 -left-20 h-72 w-72", color: "accent", opacidad: 0.065 },
-    { opciones: ["medialuna", "lineas"], clase: "right-10 bottom-10 h-40 w-40", color: "accent", opacidad: 0.05 },
+    { opciones: ["hexagono", "octagono"], esquina: "tr", tamano: "grande", rotar: "rotate-12", color: "primary", opacidad: 0.075 },
+    { opciones: ["estrella", "cruz"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.05 },
   ],
   matriculas: [
-    { opciones: ["triangulo", "estrella"], clase: "-right-20 -bottom-20 h-[26rem] w-[26rem] -rotate-6", color: "accent", opacidad: 0.075 },
-    { opciones: ["lineas", "cuadrado"], clase: "-top-16 -left-16 h-72 w-72 rotate-6", color: "primary", opacidad: 0.06 },
-    { opciones: ["rombo", "hexagono"], clase: "left-1/2 top-10 h-36 w-36 -translate-x-1/2", color: "primary", opacidad: 0.045 },
+    { opciones: ["triangulo", "estrella"], esquina: "br", tamano: "media", rotar: "-rotate-6", color: "accent", opacidad: 0.075 },
+    { opciones: ["lineas", "trapecio"], esquina: "tl", tamano: "pequeña", color: "primary", opacidad: 0.05 },
+    { opciones: ["cuadrados-concentricos", "rombo"], esquina: "tr", tamano: "pequeña", color: "primary", opacidad: 0.045 },
   ],
   reportes: [
-    { opciones: ["cuadrado", "rombo"], clase: "-right-16 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.07 },
-    { opciones: ["hexagono", "anillos"], clase: "-bottom-24 -left-24 h-72 w-72 -rotate-12", color: "accent", opacidad: 0.065 },
-    { opciones: ["estrella", "triangulo"], clase: "right-1/4 bottom-6 h-36 w-36", color: "accent", opacidad: 0.05 },
+    { opciones: ["cuadrado", "paralelogramo"], esquina: "tr", tamano: "media", rotar: "rotate-6", color: "primary", opacidad: 0.07 },
+    { opciones: ["hexagono", "cuadrados-concentricos"], esquina: "bl", tamano: "media", rotar: "-rotate-12", color: "accent", opacidad: 0.065 },
+    { opciones: ["arco", "medialuna"], esquina: "tl", tamano: "pequeña", color: "accent", opacidad: 0.05 },
   ],
   configuracion: [
-    { opciones: ["rombo", "hexagono"], clase: "-right-20 -top-20 h-80 w-80 rotate-6", color: "primary", opacidad: 0.07 },
-    { opciones: ["anillos", "cuadrado"], clase: "-bottom-28 -left-16 h-64 w-64", color: "accent", opacidad: 0.06 },
-    { opciones: ["lineas", "medialuna"], clase: "-left-6 top-10 h-36 w-36", color: "primary", opacidad: 0.045 },
+    { opciones: ["rombo", "arco"], esquina: "tr", tamano: "pequeña", rotar: "rotate-6", color: "primary", opacidad: 0.06 },
+    { opciones: ["anillos", "cruz"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.055 },
+    { opciones: ["octagono", "zigzag"], esquina: "br", tamano: "pequeña", color: "primary", opacidad: 0.045 },
   ],
   seguridad: [
-    { opciones: ["hexagono", "estrella"], clase: "-right-16 -bottom-20 h-80 w-80", color: "accent", opacidad: 0.075 },
-    { opciones: ["lineas", "anillos"], clase: "-top-20 -left-20 h-72 w-72 rotate-12", color: "primary", opacidad: 0.06 },
-    { opciones: ["rombo", "triangulo"], clase: "right-10 top-1/3 h-36 w-36", color: "primary", opacidad: 0.045 },
+    { opciones: ["hexagono", "estrella"], esquina: "br", tamano: "grande", color: "accent", opacidad: 0.08 },
+    { opciones: ["cruz", "octagono"], esquina: "tl", tamano: "pequeña", color: "primary", opacidad: 0.05 },
   ],
   historial: [
-    { opciones: ["cuadrado", "lineas"], clase: "left-1/2 top-1/3 h-72 w-72 -translate-x-1/2", color: "primary", opacidad: 0.055 },
-    { opciones: ["triangulo", "hexagono"], clase: "-bottom-28 -right-20 h-80 w-80 rotate-12", color: "accent", opacidad: 0.07 },
-    { opciones: ["medialuna", "estrella"], clase: "-top-10 -left-10 h-36 w-36", color: "accent", opacidad: 0.05 },
+    { opciones: ["triangulo", "octagono"], esquina: "br", tamano: "media", rotar: "rotate-12", color: "accent", opacidad: 0.07 },
+    { opciones: ["cuadrado", "medialuna"], esquina: "tl", tamano: "pequeña", color: "primary", opacidad: 0.05 },
+    { opciones: ["pentagono", "lineas"], esquina: "tr", tamano: "pequeña", color: "accent", opacidad: 0.045 },
   ],
   default: [
-    { opciones: ["anillos", "hexagono"], clase: "-right-24 -top-24 h-[26rem] w-[26rem]", color: "primary", opacidad: 0.06 },
-    { opciones: ["rombo", "cuadrado"], clase: "-bottom-24 -left-20 h-64 w-64", color: "accent", opacidad: 0.06 },
-    { opciones: ["estrella", "triangulo"], clase: "right-10 top-10 h-32 w-32", color: "primary", opacidad: 0.045 },
+    { opciones: ["anillos", "pentagono"], esquina: "tr", tamano: "pequeña", color: "primary", opacidad: 0.05 },
+    { opciones: ["rombo", "zigzag"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.05 },
+    { opciones: ["trapecio", "arco"], esquina: "tl", tamano: "pequeña", color: "primary", opacidad: 0.045 },
   ],
 }
 
@@ -123,7 +156,7 @@ const CLASE_COLOR: Record<Slot["color"], string> = {
 
 function renderForma(slot: Slot, setIndex: 0 | 1) {
   const forma = slot.opciones[setIndex]
-  const claseBase = `absolute ${CLASE_COLOR[slot.color]} ${slot.clase}`
+  const claseBase = `absolute ${CLASE_COLOR[slot.color]} ${POSICION[slot.esquina][slot.tamano]} ${TAMANO_CLASES[slot.tamano]} ${slot.rotar ?? ""}`
   const style = { opacity: slot.opacidad }
   switch (forma) {
     case "anillos":
@@ -179,11 +212,61 @@ function renderForma(slot: Slot, setIndex: 0 | 1) {
     case "medialuna":
       return (
         <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
-          <path
-            d="M140 30 A70 70 0 1 0 140 170 A55 55 0 1 1 140 30 Z"
-            fill="currentColor"
-            stroke="none"
+          <path d="M140 30 A70 70 0 1 0 140 170 A55 55 0 1 1 140 30 Z" fill="currentColor" stroke="none" />
+        </svg>
+      )
+    case "pentagono":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon points="100,10 186,72 153,173 47,173 14,72" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case "octagono":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon points="45,10 155,10 190,45 190,155 155,190 45,190 10,155 10,45" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case "paralelogramo":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon points="50,40 190,40 150,160 10,160" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case "trapecio":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon points="60,30 140,30 180,170 20,170" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case "arco":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <path d="M20 150 A80 80 0 0 1 180 150" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case "cruz":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon
+            points="75,15 125,15 125,75 185,75 185,125 125,125 125,185 75,185 75,125 15,125 15,75 75,75"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
           />
+        </svg>
+      )
+    case "zigzag":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polyline points="10,70 55,140 100,70 145,140 190,70" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )
+    case "cuadrados-concentricos":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <rect x="10" y="10" width="180" height="180" rx="20" stroke="currentColor" strokeWidth="2" />
+          <rect x="50" y="50" width="100" height="100" rx="14" stroke="currentColor" strokeWidth="2" />
         </svg>
       )
   }
