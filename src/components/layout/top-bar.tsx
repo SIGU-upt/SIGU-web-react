@@ -27,9 +27,19 @@ import { routeLabels } from "./navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
 
-const USER_MANUAL_URL =
-  import.meta.env.VITE_USER_MANUAL_URL ||
-  "https://awnisvvpmfvffatxkcpc.supabase.co/storage/v1/object/public/manuales/manual-de-usuario.pdf"
+const MANUALES_BASE_URL = "https://github.com/SIGU-upt/sigu-app-releases/releases/download/v1.0.0"
+
+// Un manual en PDF por rol (ya existían como documento del proyecto, bajo
+// docs/manuales/) — VIGILANTE no tiene manual porque el rol todavía no tiene
+// funcionalidad propia (ADR-002), así que el botón de ayuda no lo ofrece.
+const MANUAL_URL_POR_ROL: Partial<Record<Role, string>> = {
+  [Role.SUPERADMIN]: `${MANUALES_BASE_URL}/MANUAL-1-SUPERADMINISTRADOR.pdf`,
+  [Role.RECTOR]: `${MANUALES_BASE_URL}/MANUAL-2-RECTOR.pdf`,
+  [Role.COORDINADOR]: `${MANUALES_BASE_URL}/MANUAL-3-COORDINADOR.pdf`,
+  [Role.AUDITOR]: `${MANUALES_BASE_URL}/MANUAL-4-AUDITOR.pdf`,
+  [Role.DOCENTE]: `${MANUALES_BASE_URL}/MANUAL-5-DOCENTE.pdf`,
+  [Role.ALUMNO]: `${MANUALES_BASE_URL}/MANUAL-6-ALUMNO.pdf`,
+}
 
 const roleLabels: Record<Role, string> = {
   [Role.SUPERADMIN]: "Super Administrador",
@@ -125,13 +135,17 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
               {hasViewTour && (
                 <DropdownMenuItem onClick={startViewTour}>Recorrido de esta pantalla</DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <a href={USER_MANUAL_URL} target="_blank" rel="noopener noreferrer">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Manual de usuario (PDF)
-                </a>
-              </DropdownMenuItem>
+              {user && MANUAL_URL_POR_ROL[user.role] && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href={MANUAL_URL_POR_ROL[user.role]} target="_blank" rel="noopener noreferrer">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Manual de usuario (PDF)
+                    </a>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
