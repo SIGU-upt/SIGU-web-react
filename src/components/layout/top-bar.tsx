@@ -1,6 +1,6 @@
 import { Fragment } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Bell, ChevronDown, HelpCircle, LogOut, User } from "lucide-react"
+import { Bell, ChevronDown, FileText, HelpCircle, LogOut, User } from "lucide-react"
 import { useOnboardingTour } from "@/components/onboarding/use-onboarding-tour"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -26,6 +26,10 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { routeLabels } from "./navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role } from "@/types"
+
+const USER_MANUAL_URL =
+  import.meta.env.VITE_USER_MANUAL_URL ||
+  "https://awnisvvpmfvffatxkcpc.supabase.co/storage/v1/object/public/manuales/manual-de-usuario.pdf"
 
 const roleLabels: Record<Role, string> = {
   [Role.SUPERADMIN]: "Super Administrador",
@@ -121,6 +125,13 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
               {hasViewTour && (
                 <DropdownMenuItem onClick={startViewTour}>Recorrido de esta pantalla</DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href={USER_MANUAL_URL} target="_blank" rel="noopener noreferrer">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Manual de usuario (PDF)
+                </a>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
