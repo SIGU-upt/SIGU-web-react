@@ -16,15 +16,26 @@ import { type SecurityLog } from "@/types"
 import api from "@/config/api"
 import { hoyLocal } from "@/lib/fecha"
 
+// Lista completa de valores reales de `accion` que el backend llega a
+// escribir (ver los `securityLogsService.log(...)` en auth, users,
+// attendance, clases y backup) — antes faltaban varios y el filtro no
+// dejaba acotar por ellos.
 const ACCIONES = [
   'LOGIN_CLIENTE_INVALIDO',
   'LOGIN_DISPOSITIVO_INVALIDO',
   'LOGIN_FALLIDO',
-  'PASSWORD_RESET',
-  'PASSWORD_CHANGED',
+  'DEVICE_BOUND',
   'DEVICE_RESET',
+  'PASSWORD_RESET',
+  'PASSWORD_RESET_ADMIN',
+  'PASSWORD_CHANGED',
   'REGISTRO_ASISTENCIA',
   'JUSTIFICAR_ASISTENCIA',
+  'ASISTENCIA_UBICACION_DISTINTA',
+  'CLASE_SUSPENDIDA',
+  'SUSPENSION_ANULADA',
+  'RESTORE_PASSWORD_INCORRECTA',
+  'DB_RESTORED',
   'ACCESO_NO_AUTORIZADO',
   'ERROR_INTERNO',
 ]
