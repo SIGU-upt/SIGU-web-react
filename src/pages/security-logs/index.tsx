@@ -21,6 +21,7 @@ import { hoyLocal } from "@/lib/fecha"
 // attendance, clases y backup) — antes faltaban varios y el filtro no
 // dejaba acotar por ellos.
 const ACCIONES = [
+  'LOGIN_EXITOSO',
   'LOGIN_CLIENTE_INVALIDO',
   'LOGIN_DISPOSITIVO_INVALIDO',
   'LOGIN_FALLIDO',
@@ -29,6 +30,9 @@ const ACCIONES = [
   'PASSWORD_RESET',
   'PASSWORD_RESET_ADMIN',
   'PASSWORD_CHANGED',
+  'CAMBIO_ROL',
+  'BORRADO_FORZADO',
+  'EXPORT_DATOS',
   'REGISTRO_ASISTENCIA',
   'JUSTIFICAR_ASISTENCIA',
   'ASISTENCIA_UBICACION_DISTINTA',
