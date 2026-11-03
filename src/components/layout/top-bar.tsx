@@ -26,6 +26,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { routeLabels } from "./navigation"
 import { useAuth } from "@/contexts/AuthContext"
+import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
 import { Role } from "@/types"
 
 const MANUALES_BASE_URL = "https://github.com/SIGU-upt/sigu-app-releases/releases/download/v1.0.0"
@@ -62,12 +63,16 @@ const roleLabels: Record<Role, string> = {
 const LISTADO_DE_ORIGEN: Record<string, string> = { "/sedes": "/configuracion", "/pnfs": "/configuracion" }
 
 function useBreadcrumbs(pathname: string) {
+  const { labels } = useBreadcrumbContext()
   const segments = pathname.split("/").filter(Boolean)
   if (segments.length === 0) return []
   const basePath = `/${segments[0]}`
   const crumbs = [{ label: routeLabels[basePath] ?? segments[0], path: LISTADO_DE_ORIGEN[basePath] ?? basePath }]
   if (segments.length > 1) {
-    crumbs.push({ label: "Detalle", path: pathname })
+    // El nombre real lo deja la propia pantalla de detalle (ver
+    // BreadcrumbContext) apenas termina de cargar la entidad; mientras tanto,
+    // o si esa pantalla no lo reporta, se mantiene el genérico "Detalle".
+    crumbs.push({ label: labels[pathname] ?? "Detalle", path: pathname })
   }
   return crumbs
 }

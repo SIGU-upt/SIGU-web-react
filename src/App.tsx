@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { BreadcrumbProvider } from '@/contexts/BreadcrumbContext'
 import { PrivateRoute } from '@/components/auth/PrivateRoute'
 import { LandingPage } from '@/pages/landing'
 import { LoginPage } from '@/pages/auth/login-page'
@@ -216,7 +217,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <BreadcrumbProvider>
+        <AppRoutes />
+      </BreadcrumbProvider>
     </AuthProvider>
   )
 }
