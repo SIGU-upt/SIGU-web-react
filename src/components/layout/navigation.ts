@@ -10,6 +10,7 @@ import {
   CalendarOff,
   AlertTriangle,
   Archive,
+  CalendarDays,
 } from "lucide-react"
 import { Role } from "@/types"
 
@@ -24,6 +25,7 @@ export interface NavItem {
 
 export const navigation: NavItem[] = [
   { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, path: "/dashboard", roles: Object.values(Role) },
+  { id: "mis-clases", name: "Mis Clases", icon: CalendarDays, path: "/mis-clases", roles: [Role.DOCENTE] },
   {
     id: "usuarios",
     name: "Usuarios",

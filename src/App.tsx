@@ -24,6 +24,7 @@ import { MatriculasPage } from '@/pages/matriculas'
 import { InconsistenciasPage } from '@/pages/inconsistencias'
 import { PerfilPage } from '@/pages/perfil'
 import { LegalPage } from '@/pages/legal'
+import { MisClasesPage } from '@/pages/mis-clases'
 import { Role } from '@/types'
 
 function AppRoutes() {
@@ -63,6 +64,14 @@ function AppRoutes() {
           element={
             <PrivateRoute>
               <DashboardPage />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/mis-clases"
+          element={
+            <PrivateRoute allowedRoles={[Role.DOCENTE]}>
+              <MisClasesPage />
             </PrivateRoute>
           }
         />
