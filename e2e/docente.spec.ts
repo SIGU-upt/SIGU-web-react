@@ -16,10 +16,15 @@ test.describe('DOCENTE', () => {
     await expect(page.getByText('Inasistencias por justificar')).toBeVisible()
     await expect(page.getByText('Total Usuarios')).toHaveCount(0)
 
-    await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible()
+    // El breadcrumb también dice "Dashboard" estando en esta página — se acota al <ul> del
+    // sidebar para no ambigüar con el link (no interactivo) del breadcrumb.
+    await expect(page.locator('ul').getByRole('link', { name: 'Dashboard' })).toBeVisible()
     // Fase 7 (3/11/2026): horario semanal propio + QR de asistencia por clase.
     await expect(page.getByRole('link', { name: 'Mis Clases' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Reportes' })).toBeVisible()
+    // El Dashboard tiene una tarjeta con un link "Ir a Reportes" — coincide por substring con
+    // "Reportes", así que se acota al <ul> del sidebar (mismo criterio que el link "Dashboard"
+    // arriba).
+    await expect(page.locator('ul').getByRole('link', { name: 'Reportes' })).toBeVisible()
     for (const nombre of ['Secciones', 'Cohortes', 'Configuración', 'Seguridad']) {
       await expect(page.getByRole('link', { name: nombre })).toHaveCount(0)
     }
