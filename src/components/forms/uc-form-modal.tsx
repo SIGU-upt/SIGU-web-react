@@ -39,11 +39,15 @@ interface UCFormModalProps {
   isEditing?: boolean
   // ADR-023: para avisar en cuántos trayectos se dicta la materia antes de renombrarla.
   ucCatalogoId?: string
+  // Al abrirse desde el detalle de un PNF (catálogo de materias de esa
+  // carrera), el PNF ya se conoce — se preselecciona y se oculta el select
+  // de Sede/PNF, igual que ya hace esta pantalla para un COORDINADOR.
+  pnfId?: string
 }
 
 const SIN_TRAMO = "__anual__"
 
-export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditing, ucCatalogoId }: UCFormModalProps) {
+export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditing, ucCatalogoId, pnfId }: UCFormModalProps) {
   const { user: currentUser } = useAuth()
   // Un coordinador solo gestiona un PNF propio: elegir sede y PNF no tiene
   // ninguna decisión real que tomar, solo sirve para llegar al trayecto
@@ -143,6 +147,13 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
     setSelectedSedeId(propia.sedeId)
     setSelectedPnfId(propia.pnfId)
   }, [open, esCoordinador, initialData?.trayectoId, sedePnfOptions])
+
+  // Abierto desde el catálogo de un PNF concreto: mismo criterio que arriba,
+  // pero con el PNF que ya trae la pantalla en vez del único de un coordinador.
+  useEffect(() => {
+    if (!open || !pnfId) return
+    setSelectedPnfId(pnfId)
+  }, [open, pnfId])
 
   useEffect(() => {
     if (!open || !isEditing || !ucCatalogoId) {
@@ -258,7 +269,7 @@ export function UCFormModal({ open, onOpenChange, onSubmit, initialData, isEditi
               </div>
             )}
           </div>
-          {!esCoordinador && (
+          {!esCoordinador && !pnfId && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="sedeId">Sede (opcional, para acotar el PNF)</Label>
