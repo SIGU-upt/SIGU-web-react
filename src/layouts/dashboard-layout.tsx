@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/top-bar"
 import { DecorativeBackground } from "@/components/layout/decorative-background"
+import { GlobalSearch } from "@/components/search/global-search"
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -18,6 +19,7 @@ export function DashboardLayout({
       <Sidebar />
       <SidebarInset>
         <DecorativeBackground />
+        <GlobalSearch />
         <TopBar onLogout={onLogout} />
         <main className="relative z-10">
           <div className="p-4 md:p-6 space-y-6">
