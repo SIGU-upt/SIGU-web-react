@@ -1,6 +1,7 @@
 import { Fragment } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Bell, ChevronDown, FileText, HelpCircle, LogOut, User } from "lucide-react"
+import { Bell, ChevronDown, FileText, HelpCircle, LogOut, Search, User } from "lucide-react"
+import { ROLES_CON_BUSCADOR } from "@/components/search/roles"
 import { useOnboardingTour } from "@/components/onboarding/use-onboarding-tour"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -124,6 +125,19 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
         </Breadcrumb>
 
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
+          {user && ROLES_CON_BUSCADOR.includes(user.role) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex text-muted-foreground font-normal gap-2"
+              onClick={() => window.dispatchEvent(new Event("sigu:abrir-buscador"))}
+            >
+              <Search className="h-4 w-4" />
+              Buscar...
+              <kbd className="ml-2 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-mono">Ctrl K</kbd>
+            </Button>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
