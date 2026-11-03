@@ -1,10 +1,10 @@
 import { Fragment } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { Bell, ChevronDown, FileText, HelpCircle, LogOut, Search, User } from "lucide-react"
+import { ChevronDown, FileText, HelpCircle, LogOut, Search, User } from "lucide-react"
 import { ROLES_CON_BUSCADOR } from "@/components/search/roles"
+import { NotificationsBell } from "@/components/layout/notifications-bell"
 import { useOnboardingTour } from "@/components/onboarding/use-onboarding-tour"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -91,12 +91,6 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
   const roleName = user ? (roleLabels[user.role] ?? user.role) : ''
 
-  // Sin sistema de notificaciones real todavía — se deja el contador en 0 a
-  // propósito (no hardcodeado en el badge) para que quede obvio que es un
-  // placeholder, y el badge desaparece en vez de mostrar un "0" permanente
-  // que entrena a ignorarlo.
-  const unreadCount = 0
-
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-border bg-card shadow-bar">
       <div className="flex h-full items-center gap-4 px-4 md:px-6">
@@ -175,25 +169,7 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
 
           <ThemeToggle />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-muted-foreground" aria-label="Notificaciones">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center bg-accent text-accent-foreground text-xs font-bold">
-                    {unreadCount}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-center text-muted-foreground">
-                No hay notificaciones nuevas
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationsBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
