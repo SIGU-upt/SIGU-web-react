@@ -15,10 +15,12 @@ import { PageHeader } from "@/components/ui/page-header"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { EntityFormModal, type EntityField, type FormValues } from "@/components/forms/entity-form-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { UCFormModal } from "@/components/forms/uc-form-modal"
+import { ReplicarUcModal } from "@/components/forms/replicar-uc-modal"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
-import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, type GenerarEstructuraResultado } from "@/types"
+import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, type UnidadCurricular, type GenerarEstructuraResultado } from "@/types"
 import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
@@ -45,6 +47,7 @@ export function PnfDetallePage() {
   const [trayectos, setTrayectos] = useState<Trayecto[]>([])
   const [tramosPorTrayecto, setTramosPorTrayecto] = useState<Record<string, Tramo[]>>({})
   const [secciones, setSecciones] = useState<Seccion[]>([])
+  const [unidades, setUnidades] = useState<UnidadCurricular[]>([])
   const [docentes, setDocentes] = useState<User[]>([])
   const [alumnos, setAlumnos] = useState<User[]>([])
   const [alumnosMeta, setAlumnosMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
@@ -63,6 +66,9 @@ export function PnfDetallePage() {
   const [genNumeroTrayectos, setGenNumeroTrayectos] = useState(4)
   const [genRequierePiu, setGenRequierePiu] = useState(true)
   const [generating, setGenerating] = useState(false)
+
+  const [ucModalOpen, setUcModalOpen] = useState(false)
+  const [replicatingUc, setReplicatingUc] = useState<UnidadCurricular | null>(null)
 
   useEffect(() => {
     if (id && pnf) setLabel(`/pnfs/${id}`, `${pnf.codigo} — ${pnf.nombre}`)
@@ -91,6 +97,19 @@ export function PnfDetallePage() {
     setTramosPorTrayecto(Object.fromEntries(entries))
   }, [])
 
+  // /unidades-curriculares solo filtra por trayectoId (no por pnfId) — se junta
+  // acá, una petición por trayecto, igual que ya hace fetchTramos arriba.
+  const fetchUnidades = useCallback(async (trayectosList: Trayecto[]) => {
+    const listas = await Promise.all(
+      trayectosList.map(async (t) => {
+        const res = await api.get('/unidades-curriculares', { params: { trayectoId: t.id, limit: 200 } })
+        const list = res.data.data ?? res.data
+        return Array.isArray(list) ? list : []
+      }),
+    )
+    setUnidades(listas.flat())
+  }, [])
+
   const fetchData = useCallback(async () => {
     if (!id) return
     setLoading(true)
@@ -106,13 +125,14 @@ export function PnfDetallePage() {
       setTrayectos(Array.isArray(trayectosList) ? trayectosList : [])
       setSecciones(seccionesRes.data.data ?? seccionesRes.data ?? [])
       setDocentes(docentesRes.data.data ?? docentesRes.data ?? [])
-      await fetchTramos(Array.isArray(trayectosList) ? trayectosList : [])
+      const trayectosArr = Array.isArray(trayectosList) ? trayectosList : []
+      await Promise.all([fetchTramos(trayectosArr), fetchUnidades(trayectosArr)])
     } catch {
       setPnf(null)
     } finally {
       setLoading(false)
     }
-  }, [id, fetchTramos])
+  }, [id, fetchTramos, fetchUnidades])
 
   useEffect(() => { fetchData() }, [fetchData])
 
@@ -166,6 +186,21 @@ export function PnfDetallePage() {
     if (!deletingTramo) return
     await api.delete(`/tramos/${deletingTramo.id}`)
     toast.success('Tramo deshabilitado.')
+    await fetchData()
+  }
+
+  const handleCreateUc = async (data: {
+    nombre: string
+    trayectoId: string
+    tramoInicioId?: string
+    tramoFinId?: string
+    tipo?: 'REGULAR' | 'PRACTICA_PROFESIONAL'
+    ucCatalogoIdSeleccionado?: string
+  }) => {
+    const { ucCatalogoIdSeleccionado, nombre, tipo, ...rest } = data
+    await api.post('/unidades-curriculares', ucCatalogoIdSeleccionado
+      ? { ...rest, ucCatalogoId: ucCatalogoIdSeleccionado }
+      : { ...rest, nombre, tipo })
     await fetchData()
   }
 
@@ -328,6 +363,51 @@ export function PnfDetallePage() {
       </Card>
 
       <Card className="shadow-md">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-lg"><BookOpen className="h-5 w-5" /> Catálogo de materias ({unidades.length})</CardTitle>
+          {canEdit && (
+            <Button size="sm" onClick={() => setUcModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> Nueva U.C
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          {unidades.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">Sin materias ofrecidas todavía en este PNF.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Materia</TableHead>
+                  <TableHead>Trayecto</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  {canEdit && <TableHead className="text-right">Acciones</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {unidades.map((uc) => (
+                  <TableRow key={uc.id}>
+                    <TableCell className="font-medium">{uc.nombre}</TableCell>
+                    <TableCell className="text-muted-foreground">{trayectos.find((t) => t.id === uc.trayectoId)?.nombre ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {uc.catalogo?.tipo === 'PRACTICA_PROFESIONAL' ? 'Práctica Profesional' : 'Regular'}
+                    </TableCell>
+                    {canEdit && (
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => setReplicatingUc(uc)}>
+                          Ofrecer en otros trayectos
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Docentes ({docentes.length})</CardTitle>
         </CardHeader>
@@ -424,6 +504,19 @@ export function PnfDetallePage() {
         onConfirm={handleDeleteTramo}
         title="Deshabilitar Tramo"
         description="¿Deshabilitar este tramo?"
+      />
+
+      <UCFormModal
+        open={ucModalOpen}
+        onOpenChange={setUcModalOpen}
+        onSubmit={handleCreateUc}
+        pnfId={id}
+      />
+      <ReplicarUcModal
+        open={!!replicatingUc}
+        onOpenChange={(v) => { if (!v) setReplicatingUc(null) }}
+        uc={replicatingUc}
+        onDone={fetchData}
       />
 
       <Dialog open={generatingEstructura} onOpenChange={setGeneratingEstructura}>
