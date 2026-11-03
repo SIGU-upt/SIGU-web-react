@@ -10,12 +10,14 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { Role, type Sede, type SedePnf, type Seccion, type User } from "@/types"
 import { VincularPnfModal } from "@/components/forms/vincular-pnf-modal"
 import { useAuth } from "@/contexts/AuthContext"
+import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
 
 export function SedeDetallePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { setLabel } = useBreadcrumbContext()
 
   const [sede, setSede] = useState<Sede | null>(null)
   const [sedePnfs, setSedePnfs] = useState<SedePnf[]>([])
@@ -30,6 +32,10 @@ export function SedeDetallePage() {
   const { user } = useAuth()
   // POST /sede-pnf solo lo permite el API a SUPERADMIN y RECTOR.
   const puedeVincular = user ? [Role.SUPERADMIN, Role.RECTOR].includes(user.role) : false
+
+  useEffect(() => {
+    if (id && sede) setLabel(`/sedes/${id}`, sede.nombre)
+  }, [id, sede, setLabel])
 
   const fetchData = useCallback(async () => {
     if (!id) return

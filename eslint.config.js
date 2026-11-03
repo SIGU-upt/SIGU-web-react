@@ -24,7 +24,7 @@ export default defineConfig([
   // el contexto de auth). Se permiten por nombre en vez de apagar la regla: cualquier
   // otro export que no sea un componente sigue marcándose.
   {
-    files: ['src/components/ui/**/*.tsx', 'src/contexts/AuthContext.tsx'],
+    files: ['src/components/ui/**/*.tsx', 'src/contexts/AuthContext.tsx', 'src/contexts/BreadcrumbContext.tsx'],
     rules: {
       'react-refresh/only-export-components': [
         'error',
@@ -39,6 +39,7 @@ export default defineConfig([
             'useFormField',
             'useSidebar',
             'useAuth',
+            'useBreadcrumbContext',
           ],
         },
       ],

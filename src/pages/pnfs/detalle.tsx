@@ -17,6 +17,7 @@ import { EntityFormModal, type EntityField, type FormValues } from "@/components
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
+import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
 import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, type GenerarEstructuraResultado } from "@/types"
 import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
@@ -38,6 +39,7 @@ export function PnfDetallePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { setLabel } = useBreadcrumbContext()
 
   const [pnf, setPnf] = useState<Pnf | null>(null)
   const [trayectos, setTrayectos] = useState<Trayecto[]>([])
@@ -61,6 +63,11 @@ export function PnfDetallePage() {
   const [genNumeroTrayectos, setGenNumeroTrayectos] = useState(4)
   const [genRequierePiu, setGenRequierePiu] = useState(true)
   const [generating, setGenerating] = useState(false)
+
+  useEffect(() => {
+    if (id && pnf) setLabel(`/pnfs/${id}`, `${pnf.codigo} — ${pnf.nombre}`)
+  }, [id, pnf, setLabel])
+
   const numeroTrayectosInvalido =
     !Number.isInteger(genNumeroTrayectos) || genNumeroTrayectos < 1 || genNumeroTrayectos > 6
 

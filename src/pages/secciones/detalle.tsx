@@ -19,6 +19,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { useAuth } from "@/contexts/AuthContext"
+import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
 import { getErrorMessage, getErrorStatus } from "@/lib/errors"
 import { Role, type Seccion, type Clase, type PeriodoAcademico, type AlumnoCohorte, type Inscripcion, type ClaseSuspendida } from "@/types"
 import api from "@/config/api"
@@ -41,8 +42,14 @@ export function SeccionDetallePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { setLabel } = useBreadcrumbContext()
 
   const [seccion, setSeccion] = useState<Seccion | null>(null)
+
+  useEffect(() => {
+    if (id && seccion) setLabel(`/secciones/${id}`, `Sección ${seccion.codigo}`)
+  }, [id, seccion, setLabel])
+
   const [clases, setClases] = useState<Clase[]>([])
   // Todas las clases del mismo trayecto+sede-PNF (no solo las de esta Sección) —
   // una materia puede tener sus grupos partidos entre Secciones hermanas (ej.
