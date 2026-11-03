@@ -17,10 +17,20 @@ test.describe('DOCENTE', () => {
     await expect(page.getByText('Total Usuarios')).toHaveCount(0)
 
     await expect(page.getByRole('link', { name: 'Dashboard' })).toBeVisible()
+    // Fase 7 (3/11/2026): horario semanal propio + QR de asistencia por clase.
+    await expect(page.getByRole('link', { name: 'Mis Clases' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Reportes' })).toBeVisible()
     for (const nombre of ['Secciones', 'Cohortes', 'Configuración', 'Seguridad']) {
       await expect(page.getByRole('link', { name: nombre })).toHaveCount(0)
     }
+
+    await page.getByRole('link', { name: 'Mis Clases' }).click()
+    await page.waitForURL('**/mis-clases')
+    // La grilla semanal (o el mensaje de "sin clases") debe terminar de cargar
+    // sin quedarse en "Cargando..." — confirma que GET /clases/mi-horario responde.
+    await expect(page.getByText('Cargando...')).toHaveCount(0, { timeout: 15_000 })
+    await setTema(page, 'dark')
+    expect(await scanContraste(page), 'Mis Clases DOCENTE, tema oscuro').toEqual([])
 
     await page.getByRole('link', { name: 'Reportes' }).click()
     await page.waitForURL('**/reportes')

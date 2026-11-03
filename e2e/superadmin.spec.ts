@@ -22,4 +22,20 @@ test.describe('SUPERADMIN', () => {
 
     expect(hallazgosPayload, 'payloads con campos sensibles').toEqual([])
   })
+
+  // Fase 6 (3/11/2026): catálogo de materias dentro del detalle de un PNF.
+  test('el detalle de un PNF muestra el catálogo de materias', async ({ page }) => {
+    await login(page, CREDENTIALS.superadmin)
+    await page.getByRole('link', { name: 'Configuración' }).click()
+    await page.waitForURL('**/configuracion')
+    await page.getByRole('tab', { name: 'PNFs' }).click()
+
+    const primeraFila = page.locator('tbody tr').first()
+    await expect(primeraFila).toBeVisible({ timeout: 15_000 })
+    await primeraFila.click()
+    await page.waitForURL('**/pnfs/*', { timeout: 15_000 })
+
+    await expect(page.getByText(/Catálogo de materias/)).toBeVisible({ timeout: 15_000 })
+    expect(await scanContraste(page), 'Detalle de PNF, tema claro').toEqual([])
+  })
 })
