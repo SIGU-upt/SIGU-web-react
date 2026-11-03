@@ -8,6 +8,7 @@ interface Credential {
 
 /** Login real por formulario (no inyectando el token) — así se prueba el flujo completo. */
 export async function login(page: Page, { ci, password }: Credential, destino = 'dashboard') {
+  await desactivarTourAutomatico(page)
   const [prefix, digits] = ci.split('-')
   await page.goto('/login')
   await page.getByRole('combobox', { name: 'Nacionalidad' }).click()
@@ -17,6 +18,39 @@ export async function login(page: Page, { ci, password }: Credential, destino = 
   await page.getByRole('button', { name: 'Iniciar Sesión' }).click()
   // `destino`: a dónde cae el rol al entrar (el DOCENTE no tiene Dashboard y aterriza en Reportes).
   await page.waitForURL(`**/${destino}`, { timeout: 90_000 }) // Render free tier: cold start
+}
+
+/**
+ * Cada browser context de Playwright arranca con localStorage vacío, así que el tour de
+ * onboarding (driver.js) se auto-inicia en el primer login y en la primera visita a cada
+ * pantalla (`useOnboardingTour`) — su overlay cubre todo el viewport e intercepta los clicks
+ * de los pasos siguientes del test. Escribir el flag "no mostrar automáticamente" recién
+ * DESPUÉS de que la navegación a destino resuelve llega tarde: ese `useState` ya se inicializó
+ * leyendo localStorage en el primer render del dashboard, antes de que la escritura llegara —
+ * una carrera que a veces se ganaba y a veces no (de ahí la falla intermitente). `addInitScript`
+ * corre antes que cualquier script de la página, en toda navegación de este contexto, así que
+ * parchea `localStorage.setItem` para que el flag quede puesto en el mismo tick síncrono en que
+ * la app real escribe `sigu_user` — antes de que el router navegue al destino y el dashboard
+ * monte por primera vez.
+ */
+async function desactivarTourAutomatico(page: Page) {
+  await page.addInitScript(() => {
+    // `.call(this, ...)`, no una versión pre-atada a `localStorage`: `Storage.prototype` es
+    // compartido con `sessionStorage`, y atarlo a una instancia fija mandaría sus escrituras al
+    // storage equivocado.
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = function (key: string, value: string) {
+      original.call(this, key, value)
+      if (key === 'sigu_user') {
+        try {
+          const { id } = JSON.parse(value) as { id: string }
+          original.call(this, `sigu_tours_desactivados_${id}`, '1')
+        } catch {
+          // sigu_user con forma inesperada: se deja seguir, el tour en el peor caso se muestra.
+        }
+      }
+    }
+  })
 }
 
 /** Intenta login esperando que lo RECHACE (para ALUMNO, que solo entra por la app — ADR-020). */
