@@ -1,11 +1,16 @@
 import { useState, useCallback, useEffect } from "react"
-import { Shield, Search } from "lucide-react"
+import { Shield, Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { PageHeader } from "@/components/ui/page-header"
 import { type SecurityLog } from "@/types"
 import api from "@/config/api"
@@ -20,39 +25,62 @@ const ACCIONES = [
   'DEVICE_RESET',
   'REGISTRO_ASISTENCIA',
   'JUSTIFICAR_ASISTENCIA',
+  'ACCESO_NO_AUTORIZADO',
+  'ERROR_INTERNO',
 ]
 
 export function SecurityLogsPage() {
   const [logs, setLogs] = useState<SecurityLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [accion, setAccion] = useState("")
-  const [fechaDesde, setFechaDesde] = useState("")
-  const [fechaHasta, setFechaHasta] = useState("")
+  const [acciones, setAcciones] = useState<string[]>([])
+  // Por defecto solo el día de hoy: esta tabla puede crecer enorme (un
+  // registro por cada intento de login, escaneo de QR, etc.) y "todo el
+  // historial" como vista inicial no es útil ni liviano. El usuario amplía
+  // el rango a mano cuando lo necesite; la paginación del servidor es lo
+  // que de verdad acota el costo, no el rango de fechas.
+  const [fechaDesde, setFechaDesde] = useState(hoyLocal())
+  const [fechaHasta, setFechaHasta] = useState(hoyLocal())
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
   const fetchData = useCallback(async (q: string) => {
     setLoading(true)
     try {
-      const params: Record<string, string> = { limit: '200' }
-      if (accion) params.accion = accion
+      const params: Record<string, string | string[]> = { page: String(page), limit: '20' }
+      if (acciones.length) params.accion = acciones
       if (fechaDesde) params.fechaDesde = fechaDesde
       if (fechaHasta) params.fechaHasta = fechaHasta
       if (q.trim()) params.q = q.trim()
       const res = await api.get('/security-logs', { params })
-      const list = res.data.data ?? res.data
-      setLogs(Array.isArray(list) ? list : [])
+      setLogs(res.data.data ?? [])
+      setTotalPages(res.data.meta?.totalPages ?? 1)
     } catch { setLogs([]) }
     finally { setLoading(false) }
-  }, [accion, fechaDesde, fechaHasta])
+  }, [acciones, fechaDesde, fechaHasta, page])
 
-  // La búsqueda va al servidor (antes filtraba en el navegador sobre un
-  // `.take(200)` fijo: un evento fuera de esas 200 filas más recientes parecía
-  // no existir aunque se buscara por su cédula exacta). Se debounce para no
-  // golpear la API en cada tecla.
+  // La búsqueda va al servidor y se debounce para no golpear la API en cada tecla.
   useEffect(() => {
     const timeout = setTimeout(() => fetchData(search), 300)
     return () => clearTimeout(timeout)
   }, [fetchData, search])
+
+  // Volver a la página 1 cada vez que cambia un filtro, no la paginación en sí.
+  useEffect(() => { setPage(1) }, [acciones, fechaDesde, fechaHasta, search])
+
+  const toggleAccion = (a: string) => {
+    setAcciones((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
+  }
+
+  const hayFiltrosNoPorDefecto =
+    acciones.length > 0 || fechaDesde !== hoyLocal() || fechaHasta !== hoyLocal() || search.trim() !== ""
+
+  const limpiar = () => {
+    setAcciones([])
+    setFechaDesde(hoyLocal())
+    setFechaHasta(hoyLocal())
+    setSearch("")
+  }
 
   return (
     <div className="space-y-6">
@@ -64,18 +92,34 @@ export function SecurityLogsPage() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar por usuario o detalle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
-            <Select value={accion || "__all__"} onValueChange={(v) => setAccion(v === "__all__" ? "" : v)}>
-              <SelectTrigger className="w-64"><SelectValue placeholder="Acción" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todas las acciones</SelectItem>
-                {ACCIONES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-56 justify-between font-normal">
+                  <span className="truncate">
+                    {acciones.length === 0 ? "Todas las acciones" : `${acciones.length} acción${acciones.length > 1 ? "es" : ""} seleccionada${acciones.length > 1 ? "s" : ""}`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 max-h-80 overflow-y-auto">
+                {ACCIONES.map((a) => (
+                  <DropdownMenuCheckboxItem
+                    key={a}
+                    checked={acciones.includes(a)}
+                    onCheckedChange={() => toggleAccion(a)}
+                    onSelect={(e) => e.preventDefault()}
+                    className="font-mono text-xs"
+                  >
+                    {a}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Input type="date" value={fechaDesde} max={hoyLocal()} onChange={(e) => setFechaDesde(e.target.value)} className="max-w-[160px]" />
             <span className="text-sm text-muted-foreground">a</span>
             <Input type="date" value={fechaHasta} max={hoyLocal()} onChange={(e) => setFechaHasta(e.target.value)} className="max-w-[160px]" />
-            {(accion || fechaDesde || fechaHasta) && (
-              <Button variant="ghost" size="sm" onClick={() => { setAccion(""); setFechaDesde(""); setFechaHasta("") }}>Limpiar</Button>
+            {hayFiltrosNoPorDefecto && (
+              <Button variant="ghost" size="sm" onClick={limpiar}>Limpiar</Button>
             )}
           </div>
         </CardHeader>
@@ -83,35 +127,48 @@ export function SecurityLogsPage() {
           {loading ? (
             <div className="text-center py-10 text-muted-foreground">Cargando...</div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted">
-                  <TableHead className="font-semibold">Fecha</TableHead>
-                  <TableHead className="font-semibold">Usuario</TableHead>
-                  <TableHead className="font-semibold">Acción</TableHead>
-                  <TableHead className="font-semibold">Detalle</TableHead>
-                  <TableHead className="font-semibold">IP</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No se encontraron registros.
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted">
+                    <TableHead className="font-semibold">Fecha</TableHead>
+                    <TableHead className="font-semibold">Usuario</TableHead>
+                    <TableHead className="font-semibold">Acción</TableHead>
+                    <TableHead className="font-semibold">Detalle</TableHead>
+                    <TableHead className="font-semibold">IP</TableHead>
                   </TableRow>
-                )}
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</TableCell>
-                    <TableCell className="text-sm">{log.user?.nombreCompleto ?? '—'}</TableCell>
-                    <TableCell><Badge variant="secondary" className="font-mono text-xs">{log.accion}</Badge></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{log.detalle ?? '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{log.ipAddress ?? '—'}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {logs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        No se encontraron registros.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm text-muted-foreground">{new Date(log.createdAt).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm">{log.user?.nombreCompleto ?? '—'}</TableCell>
+                      <TableCell><Badge variant="secondary" className="font-mono text-xs">{log.accion}</Badge></TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{log.detalle ?? '—'}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{log.ipAddress ?? '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-end gap-2 pt-4">
+                  <Button variant="outline" size="icon" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
+                  <Button variant="outline" size="icon" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
