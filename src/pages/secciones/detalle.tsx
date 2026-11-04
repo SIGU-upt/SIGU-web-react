@@ -610,6 +610,15 @@ export function SeccionDetallePage() {
                                       {(suspensionesPorClase[c.id] ?? []).length} suspendida(s)
                                     </Badge>
                                   )}
+                                  {(!c.diaSemana || !c.horaInicio || !c.horaFin) && (
+                                    <Badge
+                                      variant="outline"
+                                      className="ml-1 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                                      title="Sin día/hora asignados: no aparece en la grilla de horario ni en Mis Clases del docente"
+                                    >
+                                      Sin horario
+                                    </Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{c.docente?.nombreCompleto ?? '—'}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{c.diaSemana ? DIA_LABEL[c.diaSemana] ?? c.diaSemana : '—'}</TableCell>
