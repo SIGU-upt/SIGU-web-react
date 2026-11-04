@@ -13,13 +13,30 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
+function normalizarParaBuscar(texto: string) {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+}
+
+// cmdk filtra cada CommandItem contra lo escrito con su propio scoring, que no
+// ignora acentos — "Angel" sin tilde no encontraba "Ángel". Se reemplaza por un
+// filtro que normaliza ambos lados antes de comparar, para todo buscador que
+// use este componente.
+function filtroSinAcentos(value: string, search: string): number {
+  return normalizarParaBuscar(value).includes(normalizarParaBuscar(search)) ? 1 : 0
+}
+
 function Command({
   className,
+  filter = filtroSinAcentos,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
       data-slot="command"
+      filter={filter}
       className={cn(
         'bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md',
         className,
