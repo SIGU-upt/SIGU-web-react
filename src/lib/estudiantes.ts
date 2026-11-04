@@ -19,6 +19,10 @@ export async function crearEstudiante(data: UserFormData, sedePnfIdPorDefecto?: 
   const res = await api.post('/users', { ...userData, role: 'ALUMNO', trayectoActualId: trayectoId || undefined })
   avisarSiCorreoBienvenidaFallo(res.data)
   const sedePnfId = data.sedePnfId ?? sedePnfIdPorDefecto
+  // Se informa a quien llamó en vez de solo avisar por toast, para que pueda
+  // ofrecer crear el período ahí mismo (ver CrearPeriodoRapidoModal) en lugar de
+  // dejar al usuario a buscarlo por su cuenta en Configuración.
+  let periodoFaltanteSedePnfId: string | undefined
   if (trayectoId && sedePnfId) {
     try {
       const periodoRes = await api.get('/periodos/activo', { params: { sedePnfId } })
@@ -33,11 +37,12 @@ export async function crearEstudiante(data: UserFormData, sedePnfIdPorDefecto?: 
       if (getErrorStatus(err) === 404) {
         // El trayecto ya quedó asignado al alumno; lo que falta es la
         // matrícula en un período, que necesita un período activo.
-        toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período. Cree un período activo para matricularlo.')
+        toast.warning('El estudiante se creó con su trayecto asignado, pero no hay un período académico activo para esa sede-PNF, así que aún no quedó matriculado en un período.')
+        periodoFaltanteSedePnfId = sedePnfId
       } else {
         toast.warning('El estudiante se creó con su trayecto asignado, pero no fue posible matricularlo en el período. Puede hacerlo luego.')
       }
     }
   }
-  return res.data
+  return { ...res.data, periodoFaltanteSedePnfId }
 }

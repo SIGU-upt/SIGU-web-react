@@ -16,6 +16,7 @@ import { ClaseFormModal, type ClaseFormData } from "@/components/forms/clase-for
 import { InscripcionIndividualModal } from "@/components/forms/inscripcion-individual-modal"
 import { RepartoGrupoModal } from "@/components/forms/reparto-grupo-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
+import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { useAuth } from "@/contexts/AuthContext"
@@ -62,6 +63,7 @@ export function SeccionDetallePage() {
   const [inscripcionesPorClase, setInscripcionesPorClase] = useState<Record<string, Inscripcion[]>>({})
   const [suspensionesPorClase, setSuspensionesPorClase] = useState<Record<string, ClaseSuspendida[]>>({})
   const [periodoActivo, setPeriodoActivo] = useState<PeriodoAcademico | null>(null)
+  const [crearPeriodoOpen, setCrearPeriodoOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [individualModalOpen, setIndividualModalOpen] = useState(false)
@@ -439,8 +441,9 @@ export function SeccionDetallePage() {
       </p>
 
       {canEdit && !periodoActivo && (
-        <div className="rounded-md bg-muted border border-border p-3 text-sm text-muted-foreground">
-          No hay período académico activo para esta sede-PNF. Cree uno en Configuración antes de inscribir alumnos.
+        <div className="rounded-md bg-muted border border-border p-3 text-sm text-muted-foreground flex items-center justify-between gap-3">
+          <span>No hay período académico activo para esta sede-PNF.</span>
+          <Button size="sm" variant="outline" onClick={() => setCrearPeriodoOpen(true)}>Crear período</Button>
         </div>
       )}
 
@@ -777,6 +780,17 @@ export function SeccionDetallePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CrearPeriodoRapidoModal
+        open={crearPeriodoOpen}
+        sedePnfId={seccion?.sedePnfId ?? ''}
+        onOpenChange={setCrearPeriodoOpen}
+        onCreated={async () => {
+          setCrearPeriodoOpen(false)
+          toast.success('Período creado.')
+          await fetchData()
+        }}
+      />
     </div>
   )
 }

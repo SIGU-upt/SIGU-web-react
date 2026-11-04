@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Building2, GraduationCap, Layers, User as UserIcon } from "lucide-react"
 import {
@@ -8,14 +8,20 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandSeparator,
 } from "@/components/ui/command"
 import api from "@/config/api"
 import { useAuth } from "@/contexts/AuthContext"
+import { navigation } from "@/components/layout/navigation"
 import { type Pnf, type Sede, type Seccion, type User } from "@/types"
 import { ROLES_CON_BUSCADOR } from "./roles"
 
-// Buscador global (Cmd/Ctrl+K): busca en paralelo sobre los mismos endpoints
-// que ya aceptan `q=` (PNFs, Sedes, Secciones, Usuarios) — sin endpoint nuevo.
+// Buscador global (Cmd/Ctrl+K): dos tipos de resultado, en grupos separados —
+// "Páginas y acciones" (de dónde está cada cosa, lista estática derivada de
+// `navigation`, la misma que usa el sidebar) y los de datos (busca en paralelo
+// sobre los mismos endpoints que ya aceptan `q=`: PNFs, Sedes, Secciones,
+// Usuarios — sin endpoint nuevo). Un solo cuadro, un solo atajo, pero cada
+// grupo se nota qué es por su encabezado — no se mezclan en una sola lista.
 
 interface Resultado {
   id: string
@@ -47,6 +53,22 @@ export function GlobalSearch() {
   const [buscando, setBuscando] = useState(false)
 
   const habilitado = !!user && ROLES_CON_BUSCADOR.includes(user.role)
+
+  // Misma fuente que el sidebar (Sidebar.filteredNav): una sola lista de
+  // navegación, cada uno decide su propia visibilidad por rol una vez.
+  const paginas = useMemo(() => {
+    if (!user) return []
+    return navigation
+      .filter((item) => !item.roles || item.roles.includes(user.role))
+      .flatMap((item) => {
+        if (item.children) {
+          return item.children
+            .filter((child) => !child.roles || child.roles.includes(user.role))
+            .map((child) => ({ id: child.id, nombre: child.name, path: child.path, icono: item.icon }))
+        }
+        return item.path ? [{ id: item.id, nombre: item.name, path: item.path, icono: item.icon }] : []
+      })
+  }, [user])
 
   useEffect(() => {
     if (!habilitado) return
@@ -112,17 +134,37 @@ export function GlobalSearch() {
       description="Buscar un PNF, sede, sección, estudiante o docente"
     >
       <CommandInput
-        placeholder="Buscar PNF, sede, sección, estudiante o docente..."
+        placeholder="Buscar una página, un PNF, sede, sección, estudiante o docente..."
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
-        {query.trim().length < 2 ? (
-          <CommandEmpty>Escriba al menos 2 letras para buscar.</CommandEmpty>
-        ) : buscando ? (
+        {/* Siempre visible, sin esperar los 2 caracteres mínimos de la búsqueda de
+            datos — es una lista estática, no pide nada al servidor. Un encabezado
+            propio la distingue de los resultados de datos de abajo: esta responde
+            "¿dónde está X?", la otra "¿cuál es X?". */}
+        <CommandGroup heading="Páginas y acciones">
+          {paginas.map((p) => (
+            <CommandItem
+              key={p.id}
+              value={p.nombre}
+              onSelect={() => {
+                setOpen(false)
+                navigate(p.path)
+              }}
+            >
+              <p.icono className="h-4 w-4" />
+              <span>{p.nombre}</span>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        {query.trim().length >= 2 && <CommandSeparator />}
+
+        {query.trim().length < 2 ? null : buscando ? (
           <CommandEmpty>Buscando...</CommandEmpty>
         ) : resultados.length === 0 ? (
-          <CommandEmpty>Sin resultados.</CommandEmpty>
+          <CommandEmpty>Sin resultados de datos para "{query.trim()}".</CommandEmpty>
         ) : (
           grupos.map((grupo) => {
             const items = resultados.filter((r) => r.grupo === grupo)

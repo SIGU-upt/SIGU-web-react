@@ -9,6 +9,7 @@ import { opcionesDeSede } from "@/lib/opciones-sede"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { downloadExportedFile } from "@/lib/export"
 import { crearEstudiante } from "@/lib/estudiantes"
+import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
 import { getErrorStatus } from "@/lib/errors"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Trayecto, type SedePnf } from "@/types"
@@ -38,6 +39,7 @@ export function StudentsPage() {
   const [deletingUser, setDeletingUser] = useState<StudentRow | null>(null)
   const [resettingDeviceUser, setResettingDeviceUser] = useState<StudentRow | null>(null)
   const [resettingPasswordUser, setResettingPasswordUser] = useState<StudentRow | null>(null)
+  const [periodoFaltanteSedePnfId, setPeriodoFaltanteSedePnfId] = useState<string | null>(null)
   const [trayectoOptions, setTrayectoOptions] = useState<Trayecto[]>([])
   const [trayectoFilter, setTrayectoFilter] = useState("")
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
@@ -160,7 +162,8 @@ export function StudentsPage() {
   }
 
   const handleCreate = async (data: UserFormData) => {
-    await crearEstudiante(data, user?.sedePnfId)
+    const creado = await crearEstudiante(data, user?.sedePnfId)
+    if (creado.periodoFaltanteSedePnfId) setPeriodoFaltanteSedePnfId(creado.periodoFaltanteSedePnfId)
     await fetchData()
   }
 
@@ -196,7 +199,8 @@ export function StudentsPage() {
           })
         } catch (err) {
           if (getErrorStatus(err) === 404) {
-            toast.warning('Los demás datos se actualizaron, pero no hay un período académico activo para esa sede-PNF, así que el trayecto no cambió. Cree un período activo primero.')
+            toast.warning('Los demás datos se actualizaron, pero no hay un período académico activo para esa sede-PNF, así que el trayecto no cambió.')
+            setPeriodoFaltanteSedePnfId(sedePnfId)
           } else {
             toast.warning('Los demás datos se actualizaron, pero no fue posible cambiar el trayecto. Puede intentarlo de nuevo.')
           }
@@ -303,6 +307,16 @@ export function StudentsPage() {
       <ResetPasswordModal
         usuario={resettingPasswordUser ? { id: resettingPasswordUser.id, nombre: resettingPasswordUser.name } : null}
         onClose={() => setResettingPasswordUser(null)}
+      />
+
+      <CrearPeriodoRapidoModal
+        open={!!periodoFaltanteSedePnfId}
+        sedePnfId={periodoFaltanteSedePnfId ?? ''}
+        onOpenChange={(v) => { if (!v) setPeriodoFaltanteSedePnfId(null) }}
+        onCreated={() => {
+          setPeriodoFaltanteSedePnfId(null)
+          toast.success('Período creado. Edite al estudiante de nuevo para matricularlo.')
+        }}
       />
     </div>
   )

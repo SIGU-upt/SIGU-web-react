@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Users, LayoutDashboard, GraduationCap, Building2 } from "lucide-react"
+import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,6 +13,7 @@ import { DashboardDocente } from "@/pages/dashboard/docente"
 import { AttendanceTable } from "@/components/dashboard/attendance-table"
 import { GraficosDashboard } from "@/components/dashboard/graficos-dashboard"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
+import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
 import { Role } from "@/types"
 
 interface DashboardData {
@@ -34,6 +36,7 @@ function DashboardAdministrativo() {
   const [stats, setStats] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [newUserRole, setNewUserRole] = useState<Role.ALUMNO | Role.DOCENTE | null>(null)
+  const [periodoFaltanteSedePnfId, setPeriodoFaltanteSedePnfId] = useState<string | null>(null)
 
   useEffect(() => {
     api.get('/dashboard')
@@ -48,7 +51,8 @@ function DashboardAdministrativo() {
     // El estudiante se crea igual que en Estudiantes (trayecto y matrícula incluidos).
     // El docente no tiene campo de trayecto en el formulario.
     if (newUserRole === Role.ALUMNO) {
-      await crearEstudiante(data, user?.sedePnfId)
+      const creado = await crearEstudiante(data, user?.sedePnfId)
+      if (creado.periodoFaltanteSedePnfId) setPeriodoFaltanteSedePnfId(creado.periodoFaltanteSedePnfId)
     } else {
       const res = await api.post('/users', { ...data, role: newUserRole })
       avisarSiCorreoBienvenidaFallo(res.data)
@@ -204,6 +208,16 @@ function DashboardAdministrativo() {
           defaultRole={newUserRole}
         />
       )}
+
+      <CrearPeriodoRapidoModal
+        open={!!periodoFaltanteSedePnfId}
+        sedePnfId={periodoFaltanteSedePnfId ?? ''}
+        onOpenChange={(v) => { if (!v) setPeriodoFaltanteSedePnfId(null) }}
+        onCreated={() => {
+          setPeriodoFaltanteSedePnfId(null)
+          toast.success('Período creado. Edite al estudiante de nuevo para matricularlo.')
+        }}
+      />
     </div>
   )
 }
