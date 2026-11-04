@@ -16,12 +16,41 @@ export const requiredTextRule = {
 };
 
 /**
- * Nombres y apellidos de personas: solo letras de cualquier alfabeto, espacios, apóstrofes y guiones.
- * Es la misma regla que aplica el API (@Matches con \p{L}); así el error sale antes de enviar.
+ * Nombres y apellidos de personas: solo letras de cualquier alfabeto, espacios, apóstrofes y guiones,
+ * con al menos una letra (para no aceptar "---" o "''"). Es la misma regla que aplica el API
+ * (@Matches con \p{L}, en create-user.dto.ts); así el error sale antes de enviar.
  */
 export const nameRule = {
   ...requiredTextRule,
-  pattern: { value: /^[\p{L}'’\- ]+$/u, message: 'Solo letras, espacios, apóstrofes y guiones' },
+  pattern: {
+    value: /^(?=.*[\p{L}])[\p{L}'’\- ]+$/u,
+    message: 'Solo letras, espacios, apóstrofes y guiones',
+  },
+};
+
+/**
+ * Nombre de una entidad (sede, PNF, trayecto, grupo, materia, aula): letras, números, espacios,
+ * apóstrofes, puntos y guiones, con al menos una letra (para no aceptar "123" o "---"). Misma
+ * regla que REGLA_NOMBRE_ENTIDAD en text-patterns.constants.ts del API.
+ */
+export const entityNameRule = {
+  ...requiredTextRule,
+  pattern: {
+    value: /^(?=.*[\p{L}])[\p{L}\p{N}'’.\- ]+$/u,
+    message: 'Debe contener al menos una letra; no se admiten solo símbolos o números',
+  },
+};
+
+/**
+ * Código corto (PNF, sección, materia): alfanumérico y guiones/guion bajo, con al menos un
+ * carácter alfanumérico. Misma regla que REGLA_CODIGO en text-patterns.constants.ts del API.
+ */
+export const codeRule = {
+  ...requiredTextRule,
+  pattern: {
+    value: /^(?=.*[\p{L}\p{N}])[\p{L}\p{N}\-_]+$/u,
+    message: 'No se admiten solo símbolos',
+  },
 };
 
 /** Correo electrónico con formato válido. */

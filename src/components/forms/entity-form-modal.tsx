@@ -35,6 +35,8 @@ export interface EntityField {
   createOnly?: boolean
   // Valor inicial del campo al crear (ej. requierePiu por defecto en true).
   defaultValue?: unknown
+  // Regla de patrón adicional para campos de texto (ej. entityNameRule, codeRule de validators.ts).
+  pattern?: { value: RegExp; message: string }
 }
 
 interface EntityFormModalProps {
@@ -162,7 +164,7 @@ export function EntityFormModal({
                     f.type === 'number'
                       ? { ...nonNegativeNumberRule, required: f.required !== false ? 'Requerido' : false }
                       : f.type === 'text' && f.required !== false
-                        ? requiredTextRule
+                        ? { ...requiredTextRule, ...(f.pattern ? { pattern: f.pattern } : {}) }
                         : { required: f.required !== false ? 'Requerido' : false },
                   )}
                 />

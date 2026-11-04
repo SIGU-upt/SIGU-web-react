@@ -10,7 +10,7 @@ import { Role, type SedePnf, type Trayecto, type Turno } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import { opcionesDeSede } from "@/lib/opciones-sede"
-import { requiredTextRule } from "@/lib/validators"
+import { codeRule } from "@/lib/validators"
 import { getErrorMessage } from "@/lib/errors"
 
 const TURNO_LABELS: Record<Turno, string> = {
@@ -192,7 +192,7 @@ export function SeccionFormModal({
           </div>
           <div className="space-y-2">
             <Label htmlFor="codigo">Código</Label>
-            <Input id="codigo" placeholder="IN21" {...register('codigo', { ...requiredTextRule, maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
+            <Input id="codigo" placeholder="IN21" {...register('codigo', { ...codeRule, maxLength: { value: 20, message: 'Máximo 20 caracteres' } })} />
             {errors.codigo && <p className="text-xs text-destructive">{errors.codigo.message}</p>}
           </div>
           <div className="space-y-2">
