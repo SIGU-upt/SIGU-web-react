@@ -214,10 +214,21 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    /* Transición suave al cambiar entre tema claro/oscuro (antes era un salto
+       brusco — next-themes lo suprimía con disableTransitionOnChange, ver
+       main.tsx). Acotada a propiedades de color, no "all": un botón con su
+       propia transición de transform/scale no se ve afectado. */
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease, stroke 200ms ease;
   }
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
   }
 }
 
