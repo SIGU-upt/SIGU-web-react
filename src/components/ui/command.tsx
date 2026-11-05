@@ -5,6 +5,7 @@ import { Command as CommandPrimitive } from 'cmdk'
 import { SearchIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { coincideSinAcentos } from '@/lib/texto'
 import {
   Dialog,
   DialogContent,
@@ -13,19 +14,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-function normalizarParaBuscar(texto: string) {
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-}
-
 // cmdk filtra cada CommandItem contra lo escrito con su propio scoring, que no
 // ignora acentos — "Angel" sin tilde no encontraba "Ángel". Se reemplaza por un
 // filtro que normaliza ambos lados antes de comparar, para todo buscador que
 // use este componente.
 function filtroSinAcentos(value: string, search: string): number {
-  return normalizarParaBuscar(value).includes(normalizarParaBuscar(search)) ? 1 : 0
+  return coincideSinAcentos(value, search) ? 1 : 0
 }
 
 function Command({
