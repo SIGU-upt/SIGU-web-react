@@ -193,7 +193,7 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableSkeletonRows columns={5} />
+                <TableSkeletonRows columns={5} avatarColumn />
               ) : data.length > 0 ? (
                 data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/70">

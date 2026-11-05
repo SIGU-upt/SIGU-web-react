@@ -222,7 +222,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableSkeletonRows columns={6} />
+                <TableSkeletonRows columns={6} avatarColumn />
               ) : data.length > 0 ? (
                 data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/70">

@@ -15,7 +15,7 @@ import { GraficosDashboard } from "@/components/dashboard/graficos-dashboard"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StatCardsSkeleton } from "@/components/ui/table-skeleton"
+import { DashboardStatsSkeleton } from "@/components/ui/table-skeleton"
 import { Role } from "@/types"
 
 interface DashboardData {
@@ -108,7 +108,7 @@ function DashboardAdministrativo() {
       )}
 
       {loading ? (
-        <StatCardsSkeleton />
+        <DashboardStatsSkeleton />
       ) : (
         <div data-tour="dashboard-stats" className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="lg:col-span-2">
