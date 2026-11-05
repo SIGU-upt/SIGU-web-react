@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, Fragment } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { Layers, Search, Plus, MoreVertical, Building2, Eye, Pencil, Trash2 } from "lucide-react"
+import { Layers, Search, Plus, MoreVertical, Building2, Eye, Pencil, Trash2, TriangleAlert } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -153,6 +153,12 @@ export function SeccionesPage() {
     ? data.filter((s) => String(s.trayecto?.numero) === trayectoFilter)
     : data
   const displayTotal = trayectoFilter ? filteredData.length : total
+  // El límite fijo de 200 (ver comentario en fetchData) asume que el volumen
+  // real cabe en una sola pantalla — esto es la red de seguridad si esa
+  // asunción deja de cumplirse: si el servidor reporta más secciones de las
+  // que en verdad llegaron, se avisa en vez de mostrar una lista incompleta
+  // como si estuviera completa.
+  const truncado = !loading && total > data.length
 
   // Jerarquía Sede → PNF, en el mismo orden en que ya llegan (el backend
   // ordena por código, así que dentro de cada grupo el orden se conserva).
@@ -203,6 +209,13 @@ export function SeccionesPage() {
         <Badge variant="outline" className="gap-1.5 py-1.5"><Building2 className="h-3.5 w-3.5" />{sedesUnicas.size} sede{sedesUnicas.size === 1 ? '' : 's'}</Badge>
         <Badge variant="outline" className="py-1.5">{pnfsUnicos.size} programa{pnfsUnicos.size === 1 ? '' : 's'}</Badge>
       </div>
+
+      {truncado && (
+        <div className="flex items-start gap-2 rounded-md border border-amber-700 dark:border-amber-500 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-400">
+          <TriangleAlert className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Mostrando solo las primeras {data.length} de {total} secciones. Use el buscador o los filtros de sede/PNF para acotar el resultado.</span>
+        </div>
+      )}
 
       <Card className="shadow-md">
         <CardHeader className="pb-4 space-y-4">
