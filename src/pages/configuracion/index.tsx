@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Sede, type Pnf, type SedePnf, type PeriodoAcademico, type GenerarEstructuraResultado, type GenerarPeriodosResultado } from "@/types"
 import { avisarEstructuraGenerada, avisarPeriodosGenerados } from "@/lib/generacion"
 import api from "@/config/api"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 // Fila genérica de la tabla: la forma exacta depende de la pestaña (sede, PNF, período o sede-PNF).
 // Los períodos llegan con su relación sedePnf cargada.
@@ -280,7 +281,7 @@ function CrudTabWithModals({ config }: { config: EntityConfig }) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-6 text-muted-foreground">Cargando...</div>
+          <ListSkeleton />
         ) : (
           <Table>
             <TableHeader>

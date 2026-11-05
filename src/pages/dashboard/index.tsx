@@ -14,6 +14,8 @@ import { AttendanceTable } from "@/components/dashboard/attendance-table"
 import { GraficosDashboard } from "@/components/dashboard/graficos-dashboard"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
 import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatCardsSkeleton } from "@/components/ui/table-skeleton"
 import { Role } from "@/types"
 
 interface DashboardData {
@@ -78,7 +80,7 @@ function DashboardAdministrativo() {
     <div className="space-y-6">
       <PageHeader
         title="Panel de Control"
-        subtitle={user ? `Bienvenido, ${user.nombres} ${user.apellidos} (${roleName})` : 'Cargando...'}
+        subtitle={user ? `Bienvenido, ${user.nombres} ${user.apellidos} (${roleName})` : <Skeleton className="h-4 w-56" />}
         icon={<LayoutDashboard className="h-6 w-6" />}
         actions={canCreateUsers && (
           <>
@@ -106,7 +108,7 @@ function DashboardAdministrativo() {
       )}
 
       {loading ? (
-        <div className="text-center py-10 text-muted-foreground">Cargando estadísticas...</div>
+        <StatCardsSkeleton />
       ) : (
         <div data-tour="dashboard-stats" className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="lg:col-span-2">

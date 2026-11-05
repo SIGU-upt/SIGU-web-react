@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
 import { useAuth } from "@/contexts/AuthContext"
+import { TableSkeletonRows } from "@/components/ui/table-skeleton"
 
 interface Professor {
   id: string | number
@@ -192,11 +193,7 @@ export function ProfessorsTable<T extends Professor>({ data, loading, onImport, 
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                    Cargando...
-                  </TableCell>
-                </TableRow>
+                <TableSkeletonRows columns={5} />
               ) : data.length > 0 ? (
                 data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/70">

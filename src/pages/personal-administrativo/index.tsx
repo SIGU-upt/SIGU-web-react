@@ -21,6 +21,7 @@ import { normalizarCi } from "@/lib/validators"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 const ROLE_LABELS: Record<string, string> = {
   [Role.RECTOR]: 'Rector',
@@ -244,7 +245,7 @@ export function PersonalAdministrativoPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : (
             <>
               <Table>

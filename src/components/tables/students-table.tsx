@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { type Trayecto } from "@/types"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { TableSkeletonRows } from "@/components/ui/table-skeleton"
 import { useAuth } from "@/contexts/AuthContext"
 
 interface Student {
@@ -221,11 +222,7 @@ export function StudentsTable<T extends Student>({ data, loading, onImport, onEx
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    Cargando...
-                  </TableCell>
-                </TableRow>
+                <TableSkeletonRows columns={6} />
               ) : data.length > 0 ? (
                 data.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/70">

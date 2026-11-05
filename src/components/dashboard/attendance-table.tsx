@@ -25,6 +25,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { EvidenciaModal } from "@/components/dashboard/evidencia-modal"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 // Registro de asistencia tal como lo devuelve GET /attendance (con sus relaciones).
 interface AttendanceApiItem {
@@ -119,7 +120,7 @@ export function AttendanceTable() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center text-muted-foreground py-10">Cargando asistencia...</div>
+          <ListSkeleton />
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
             <Table>

@@ -26,6 +26,7 @@ import { PerfilPage } from '@/pages/perfil'
 import { LegalPage } from '@/pages/legal'
 import { MisClasesPage } from '@/pages/mis-clases'
 import { Role } from '@/types'
+import { Skeleton } from '@/components/ui/skeleton'
 
 function AppRoutes() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -33,7 +34,7 @@ function AppRoutes() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-muted-foreground text-lg">Cargando...</div>
+        <Skeleton className="h-12 w-12 rounded-full" />
       </div>
     )
   }

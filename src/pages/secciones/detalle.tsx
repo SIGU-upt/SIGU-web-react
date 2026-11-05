@@ -17,6 +17,7 @@ import { InscripcionIndividualModal } from "@/components/forms/inscripcion-indiv
 import { RepartoGrupoModal } from "@/components/forms/reparto-grupo-modal"
 import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import { CrearPeriodoRapidoModal } from "@/components/forms/crear-periodo-rapido-modal"
+import { DetailPageSkeleton } from "@/components/ui/detail-page-skeleton"
 import { ImportModal } from "@/components/dashboard/import-modal"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { useAuth } from "@/contexts/AuthContext"
@@ -382,7 +383,7 @@ export function SeccionDetallePage() {
   }
 
   if (loading) {
-    return <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+    return <DetailPageSkeleton />
   }
 
   if (!seccion) {

@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { type SecurityLog } from "@/types"
 import api from "@/config/api"
 import { hoyLocal } from "@/lib/fecha"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 // Lista completa de valores reales de `accion` que el backend llega a
 // escribir (ver los `securityLogsService.log(...)` en auth, users,
@@ -140,7 +141,7 @@ export function SecurityLogsPage() {
         </CardHeader>
         <CardContent data-tour="security-logs-tabla">
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : (
             <>
               <Table>
