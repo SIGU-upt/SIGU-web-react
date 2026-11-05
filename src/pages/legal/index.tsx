@@ -32,7 +32,7 @@ export function LegalPage() {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="mb-6 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+            <div className="mb-6 rounded-md border border-amber-700 dark:border-amber-500 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-400">
               Esta es una versión inicial, redactada en lenguaje simple, pensada para que el usuario sepa
               con claridad qué datos maneja el sistema. No sustituye una revisión legal formal de la
               institución, que puede ampliarla más adelante.

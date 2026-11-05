@@ -76,7 +76,7 @@ export function MisClasesPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!loading && sinHorario.length > 0 && (
-            <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700 dark:text-amber-400">
+            <div className="flex items-start gap-2 rounded-md border border-amber-700 dark:border-amber-500 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-400">
               <TriangleAlert className="h-4 w-4 shrink-0 mt-0.5" />
               <span>
                 {sinHorario.length === 1 ? 'Tiene una clase' : `Tiene ${sinHorario.length} clases`} sin día/hora asignados — no aparece{sinHorario.length === 1 ? '' : 'n'} en esta grilla. Vea la lista de abajo.
@@ -123,7 +123,7 @@ export function MisClasesPage() {
                       {c.horaInicio && c.horaFin ? (
                         `${c.horaInicio.slice(0, 5)}–${c.horaFin.slice(0, 5)}`
                       ) : (
-                        <Badge variant="outline" className="border-amber-500/30 text-amber-600 dark:text-amber-400">Sin horario</Badge>
+                        <Badge variant="outline" className="border-amber-700 dark:border-amber-500 text-amber-800 dark:text-amber-400">Sin horario</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

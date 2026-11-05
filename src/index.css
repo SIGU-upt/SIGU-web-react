@@ -59,7 +59,12 @@
   --sidebar-primary-foreground: #1A237E;
   --sidebar-accent: #303C8C;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #26316B;
+  /* #26316B (valor previo) medía ~1.1:1 contra --sidebar — invisible como
+     separador real (header/nav/footer en sidebar.tsx) y falla WCAG 1.4.11
+     (mínimo 3:1 no-textual), el mismo problema que ya se había corregido en
+     el --border general pero no en este, que es independiente. Este tono
+     aclara a ~3.6:1 sin salirse de la familia de azules del sidebar. */
+  --sidebar-border: #7380C8;
   --sidebar-ring: #FFC107;
   --success: #2B6E63;
   --success-foreground: #FFFFFF;
@@ -140,7 +145,7 @@
   --sidebar-primary-foreground: #1A237E;
   --sidebar-accent: #232B5C;
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #232B5C;
+  --sidebar-border: #6670B0;
   --sidebar-ring: #FFC107;
   --avatar-1-bg: #2B2F52;
   --avatar-1-fg: #B8C0EA;
