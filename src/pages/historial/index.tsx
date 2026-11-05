@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from "react"
-import { Archive, Download, ChevronLeft, ChevronRight } from "lucide-react"
+import { Archive, Download } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
+import { PaginationControls } from "@/components/ui/pagination-controls"
 import api from "@/config/api"
 import { hoyLocal } from "@/lib/fecha"
 import { downloadExportedFile } from "@/lib/export"
@@ -36,6 +37,8 @@ interface HistorialItem {
   deletedByNombre: string | null
 }
 
+const LIMIT = 20
+
 export function HistorialPage() {
   const [tipo, setTipo] = useState("CLASE")
   const [fechaDesde, setFechaDesde] = useState("")
@@ -43,18 +46,20 @@ export function HistorialPage() {
   const [items, setItems] = useState<HistorialItem[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [exportando, setExportando] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string> = { tipo, page: String(page), limit: '20' }
+      const params: Record<string, string> = { tipo, page: String(page), limit: String(LIMIT) }
       if (fechaDesde) params.fechaDesde = fechaDesde
       if (fechaHasta) params.fechaHasta = fechaHasta
       const res = await api.get('/historial-eliminados', { params })
       setItems(res.data.data ?? [])
       setTotalPages(res.data.meta?.totalPages ?? 1)
+      setTotal(res.data.meta?.total ?? 0)
     } catch { setItems([]) }
     finally { setLoading(false) }
   }, [tipo, page, fechaDesde, fechaHasta])
@@ -132,15 +137,15 @@ export function HistorialPage() {
                 </TableBody>
               </Table>
               {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-2 pt-4">
-                  <Button variant="outline" size="icon" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
-                  <Button variant="outline" size="icon" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={total}
+                  startIndex={(page - 1) * LIMIT}
+                  endIndex={(page - 1) * LIMIT + items.length}
+                  onPageChange={setPage}
+                  label="registros"
+                />
               )}
             </>
           )}
