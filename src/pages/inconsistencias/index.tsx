@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { AlertTriangle, CheckCircle2, Download, RefreshCw, Search } from "lucide-react"
+import { Link } from "react-router-dom"
+import { AlertTriangle, CheckCircle2, Download, RefreshCw, Search, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -168,12 +169,13 @@ export function InconsistenciasPage() {
                     <TableHead className="font-semibold">Alumno</TableHead>
                     <TableHead className="font-semibold min-w-44">Tipo</TableHead>
                     <TableHead className="font-semibold">Detalle</TableHead>
+                    <TableHead className="font-semibold text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pagina.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                         Ningún resultado coincide con los filtros.
                       </TableCell>
                     </TableRow>
@@ -188,6 +190,13 @@ export function InconsistenciasPage() {
                         <Badge variant="outline" className="whitespace-normal text-left">{TIPO_LABEL[i.tipo]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground whitespace-normal">{i.detalle}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" asChild>
+                          <Link to={`/matriculas?q=${encodeURIComponent(i.ci)}`}>
+                            Ver matrícula <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

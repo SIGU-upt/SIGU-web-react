@@ -1,10 +1,13 @@
 import { Fragment, useState, useCallback, useEffect, useMemo } from "react"
-import { GraduationCap, ChevronDown, ChevronRight, UserMinus, CalendarClock } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useSearchParams } from "react-router-dom"
+import { GraduationCap, ChevronDown, ChevronRight, UserMinus, CalendarClock, Search } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PageHeader } from "@/components/ui/page-header"
+import { coincideSinAcentos } from "@/lib/texto"
 import { RetirarMatriculaModal } from "@/components/forms/retirar-matricula-modal"
 import { AsistenteCierrePeriodoModal } from "@/components/forms/asistente-cierre-periodo-modal"
 import { useAuth } from "@/contexts/AuthContext"
@@ -36,9 +39,13 @@ interface Grupo {
 
 export function MatriculasPage() {
   const { user } = useAuth()
+  // Preselecciona la búsqueda cuando se llega desde "Inconsistencias" (acción
+  // directa por fila: Ver matrícula → /matriculas?q=<cédula>).
+  const [searchParams] = useSearchParams()
   const [matriculas, setMatriculas] = useState<AlumnoCohorte[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? "")
   const [retirando, setRetirando] = useState<AlumnoCohorte | null>(null)
   const [cerrandoPeriodo, setCerrandoPeriodo] = useState(false)
 
@@ -96,6 +103,24 @@ export function MatriculasPage() {
     return Array.from(porClave.values()).sort((a, b) => b.miembros.length - a.miembros.length)
   }, [matriculas])
 
+  // Client-side a propósito: todas las matrículas ya están cargadas en
+  // memoria (ver comentario de fetchData) — sin esto, la única forma de
+  // ubicar a un alumno era expandir cada grupo sede-PNF × trayecto × período
+  // a mano hasta encontrarlo. Al buscar, el grupo que tiene coincidencias se
+  // expande solo, sin que el usuario tenga que hacer clic.
+  const buscando = search.trim().length > 0
+  const gruposFiltrados = useMemo<Grupo[]>(() => {
+    if (!buscando) return grupos
+    return grupos
+      .map((g) => ({
+        ...g,
+        miembros: g.miembros.filter(
+          (m) => coincideSinAcentos(m.alumno?.nombreCompleto, search) || coincideSinAcentos(m.alumno?.ci, search),
+        ),
+      }))
+      .filter((g) => g.miembros.length > 0)
+  }, [grupos, search, buscando])
+
   const handleRetirar = async (retiroData: { motivo: string; fecha?: string }) => {
     if (!retirando) return
     await api.patch(`/matriculas/${retirando.id}/retirar`, retiroData)
@@ -117,6 +142,12 @@ export function MatriculasPage() {
         ) : undefined}
       />
       <Card className="shadow-md" data-tour="matriculas-tabla">
+        <CardHeader className="pb-2">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Buscar alumno por nombre o cédula..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
+        </CardHeader>
         <CardContent>
           {loading ? (
             <ListSkeleton />
@@ -132,25 +163,27 @@ export function MatriculasPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {grupos.length === 0 && (
+                {gruposFiltrados.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No hay matrículas registradas todavía.
+                      {buscando ? `Sin alumnos que coincidan con "${search.trim()}".` : 'No hay matrículas registradas todavía.'}
                     </TableCell>
                   </TableRow>
                 )}
-                {grupos.map((g) => (
+                {gruposFiltrados.map((g) => {
+                  const expandido = buscando || expandedKey === g.clave
+                  return (
                   <Fragment key={g.clave}>
                     <TableRow className="cursor-pointer" onClick={() => setExpandedKey(expandedKey === g.clave ? null : g.clave)}>
                       <TableCell>
-                        {expandedKey === g.clave ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        {expandido ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
                       </TableCell>
                       <TableCell className="font-medium">{g.sedeNombre} · {g.pnfNombre}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{g.trayectoNombre}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{g.periodoNombre}</TableCell>
                       <TableCell className="text-sm">{g.miembros.filter((m) => m.activa).length} activos / {g.miembros.length} totales</TableCell>
                     </TableRow>
-                    {expandedKey === g.clave && (
+                    {expandido && (
                       <TableRow key={`${g.clave}-detalle`}>
                         <TableCell colSpan={5} className="bg-muted/70 p-0">
                           <div className="p-4">
@@ -195,7 +228,8 @@ export function MatriculasPage() {
                       </TableRow>
                     )}
                   </Fragment>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           )}
