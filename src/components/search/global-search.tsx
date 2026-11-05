@@ -42,7 +42,7 @@ const ACCIONES_EXTRA = [
   { id: 'generar-estructura', nombre: 'Generar estructura (trayectos de un PNF)', path: '/pnfs', icono: Wand2, roles: [Role.SUPERADMIN, Role.RECTOR] },
   { id: 'generar-periodos', nombre: 'Generar períodos académicos', path: '/configuracion', icono: Calendar, roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
   { id: 'respaldo', nombre: 'Respaldo de la base de datos', path: '/configuracion', icono: DatabaseBackup, roles: [Role.SUPERADMIN] },
-] as const
+]
 
 async function buscarEnLista<T>(url: string, params: Record<string, string>): Promise<T[]> {
   try {
@@ -140,6 +140,15 @@ export function GlobalSearch() {
 
   const grupos = ['PNF', 'Sedes', 'Secciones', 'Estudiantes', 'Docentes'] as const
 
+  // Módulos con un buscador propio al que vale la pena mandar el término ya
+  // escrito ("ver todos los resultados") — PNF y Sedes no tienen una lista
+  // propia con buscador (se navega directo al PNF/sede desde el resultado).
+  const RUTA_VER_TODOS: Partial<Record<(typeof grupos)[number], string>> = {
+    Secciones: '/secciones',
+    Estudiantes: '/estudiantes',
+    Docentes: '/docentes',
+  }
+
   return (
     <CommandDialog
       open={open}
@@ -183,8 +192,22 @@ export function GlobalSearch() {
           grupos.map((grupo) => {
             const items = resultados.filter((r) => r.grupo === grupo)
             if (items.length === 0) return null
+            const rutaVerTodos = RUTA_VER_TODOS[grupo]
+            const heading = rutaVerTodos ? (
+              <button
+                type="button"
+                className="w-full text-left hover:text-foreground hover:underline"
+                onClick={() => {
+                  setOpen(false)
+                  navigate(`${rutaVerTodos}?q=${encodeURIComponent(query.trim())}`)
+                }}
+                title={`Ver todos los resultados de "${query.trim()}" en ${grupo}`}
+              >
+                {grupo}
+              </button>
+            ) : grupo
             return (
-              <CommandGroup key={grupo} heading={grupo}>
+              <CommandGroup key={grupo} heading={heading}>
                 {items.map((r) => {
                   const Icono = r.icono
                   return (

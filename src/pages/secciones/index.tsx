@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, Fragment } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Layers, Search, Plus, MoreVertical, Building2, Eye, Pencil, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -28,9 +28,11 @@ const TURNO_LABELS: Record<Turno, string> = {
 export function SeccionesPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  // Preselecciona la búsqueda cuando se llega desde el buscador global.
+  const [searchParams] = useSearchParams()
   const [data, setData] = useState<Seccion[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? "")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [total, setTotal] = useState(0)
   const [modalOpen, setModalOpen] = useState(false)
