@@ -24,6 +24,8 @@ import { Role, type Pnf, type Trayecto, type Tramo, type Seccion, type User, typ
 import { avisarEstructuraGenerada } from "@/lib/generacion"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
+import { DetailPageSkeleton } from "@/components/ui/detail-page-skeleton"
 
 const trayectoFields: EntityField[] = [
   { name: 'nombre', label: 'Nombre', required: true },
@@ -221,7 +223,7 @@ export function PnfDetallePage() {
   }
 
   if (loading) {
-    return <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+    return <DetailPageSkeleton />
   }
 
   if (!pnf) {
@@ -439,7 +441,7 @@ export function PnfDetallePage() {
         </CardHeader>
         <CardContent>
           {alumnosLoading ? (
-            <p className="text-center py-4 text-sm text-muted-foreground">Cargando...</p>
+            <ListSkeleton rows={3} />
           ) : alumnos.length === 0 ? (
             <p className="text-center py-4 text-sm text-muted-foreground">Sin alumnos en este PNF.</p>
           ) : (

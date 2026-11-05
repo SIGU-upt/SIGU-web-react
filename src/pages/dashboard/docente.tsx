@@ -9,6 +9,8 @@ import { GraficosDocente, type DiaConClases } from "@/components/dashboard/grafi
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
 import type { Clase } from "@/types"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ListSkeleton, StatCardsSkeleton } from "@/components/ui/table-skeleton"
 
 // Respuesta de GET /dashboard para DOCENTE: solo lo propio, sin cifras institucionales.
 interface DashboardDocenteData {
@@ -90,12 +92,12 @@ export function DashboardDocente() {
     <div className="space-y-6">
       <PageHeader
         title="Panel de Control"
-        subtitle={user ? `Bienvenido, ${user.nombres} ${user.apellidos} (Docente)` : "Cargando..."}
+        subtitle={user ? `Bienvenido, ${user.nombres} ${user.apellidos} (Docente)` : <Skeleton className="h-4 w-56" />}
         icon={<LayoutDashboard className="h-6 w-6" />}
       />
 
       {loading ? (
-        <div className="text-center py-10 text-muted-foreground">Cargando su resumen...</div>
+        <StatCardsSkeleton />
       ) : stats === null ? (
         <p className="py-6 text-center text-sm text-muted-foreground">No se pudo cargar su resumen. Intente recargar la página.</p>
       ) : (
@@ -139,7 +141,7 @@ export function DashboardDocente() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center text-muted-foreground py-6">Cargando horario...</div>
+            <ListSkeleton rows={4} />
           ) : horario === null ? (
             <p className="py-6 text-center text-sm text-muted-foreground">No se pudo cargar su horario.</p>
           ) : totalClases === 0 ? (

@@ -8,6 +8,7 @@ import { FormError } from "@/components/ui/form-error"
 import type { ReplicarUcResultado, Trayecto, UnidadCurricular } from "@/types"
 import { getErrorMessage } from "@/lib/errors"
 import api from "@/config/api"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 interface ReplicarUcModalProps {
   open: boolean
@@ -151,7 +152,7 @@ export function ReplicarUcModal({ open, onOpenChange, uc, onDone }: ReplicarUcMo
             )}
           </div>
         ) : loadingDatos ? (
-          <div className="py-8 text-center text-muted-foreground">Cargando trayectos...</div>
+          <ListSkeleton rows={3} />
         ) : (
           <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
             {grupos.length === 0 && !error && (

@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Role } from '@/types'
 import { DashboardLayout } from '@/layouts/dashboard-layout'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface PrivateRouteProps {
   children: React.ReactNode
@@ -15,7 +16,7 @@ export function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <div className="text-muted-foreground">Cargando...</div>
+        <Skeleton className="h-12 w-12 rounded-full" />
       </div>
     )
   }

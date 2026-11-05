@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Bell, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,7 +95,10 @@ export function NotificationsBell() {
         </div>
         <DropdownMenuSeparator />
         {loading ? (
-          <DropdownMenuItem disabled className="text-center text-muted-foreground">Cargando...</DropdownMenuItem>
+          <div className="space-y-2 p-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
         ) : items.length === 0 ? (
           <DropdownMenuItem disabled className="text-center text-muted-foreground">
             No hay notificaciones

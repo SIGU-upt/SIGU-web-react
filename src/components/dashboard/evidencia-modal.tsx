@@ -3,6 +3,7 @@ import { Download } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { FormError } from "@/components/ui/form-error"
+import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/config/api"
 
 const EXTENSIONES: Record<string, string> = {
@@ -58,7 +59,7 @@ export function EvidenciaModal({ asistenciaId, descripcion, onClose }: Evidencia
         {error ? (
           <FormError>No se pudo cargar la evidencia.</FormError>
         ) : !archivo ? (
-          <div className="py-12 text-center text-muted-foreground">Cargando evidencia...</div>
+          <Skeleton className="h-[70vh] w-full rounded-md" />
         ) : esPdf ? (
           <iframe src={archivo.url} title="Evidencia de la justificación" className="h-[70vh] w-full rounded-md border border-border" />
         ) : (

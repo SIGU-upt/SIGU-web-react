@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type Seccion, type SedePnf, type Trayecto, type Turno } from "@/types"
 import api from "@/config/api"
 import { opcionesDeSede } from "@/lib/opciones-sede"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 const TURNO_LABELS: Record<Turno, string> = {
   ENTRESEMANA: "Entre semana",
@@ -248,7 +249,7 @@ export function SeccionesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : data.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">No se encontraron secciones.</div>
           ) : (

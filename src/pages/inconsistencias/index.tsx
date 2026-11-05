@@ -12,6 +12,7 @@ import { downloadCsv } from "@/lib/export-csv"
 import type { InscripcionInconsistencia, TipoInconsistencia } from "@/types"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 const PAGE_SIZE = 20
 
@@ -148,7 +149,7 @@ export function InconsistenciasPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : error ? (
             <div className="text-center py-10 text-destructive">
               No se pudo cargar el listado. Intente actualizar.

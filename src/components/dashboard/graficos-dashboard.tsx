@@ -4,6 +4,7 @@ import { BarChart3, ChevronDown, PieChart as PieChartIcon, TriangleAlert } from 
 import { Card, CardContent } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { Skeleton } from "@/components/ui/skeleton"
 import api from "@/config/api"
 import { cn } from "@/lib/utils"
 
@@ -139,7 +140,7 @@ function GraficoAsistencia() {
   }, [])
 
   if (error) return <Mensaje>No se pudo cargar la asistencia.</Mensaje>
-  if (!conteo) return <Mensaje>Cargando gráfico…</Mensaje>
+  if (!conteo) return <Skeleton className="h-64 w-full rounded-lg" />
 
   const datos = ESTADOS.map((e) => ({ estado: e, total: conteo[e], fill: `var(--color-${e})` }))
   const suma = datos.reduce((acc, d) => acc + d.total, 0)
@@ -199,7 +200,7 @@ function GraficoRiesgo() {
   }, [])
 
   if (error) return <Mensaje>No se pudo cargar el reporte de riesgo.</Mensaje>
-  if (!alumnos) return <Mensaje>Cargando gráfico…</Mensaje>
+  if (!alumnos) return <Skeleton className="h-64 w-full rounded-lg" />
   if (alumnos.length === 0) return <Mensaje>Ningún alumno está por debajo del umbral en este ámbito.</Mensaje>
 
   // En pantallas angostas el eje de nombres se acorta para dejar espacio a las barras.

@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type ClaseSuspendida, type User, type Seccion } from "@/types"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 export function ClasesSuspendidasPage() {
   const { user } = useAuth()
@@ -114,7 +115,7 @@ export function ClasesSuspendidasPage() {
         </CardHeader>
         <CardContent data-tour="clases-suspendidas-tabla">
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : (
             <>
               <Table>

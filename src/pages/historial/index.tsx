@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import api from "@/config/api"
 import { hoyLocal } from "@/lib/fecha"
 import { downloadExportedFile } from "@/lib/export"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 const TIPOS: { value: string; label: string }[] = [
   { value: "SEDE", label: "Sedes" },
@@ -102,7 +103,7 @@ export function HistorialPage() {
         </CardHeader>
         <CardContent data-tour="historial-tabla">
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : (
             <>
               <Table>

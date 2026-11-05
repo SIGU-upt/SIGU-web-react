@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getErrorMessage } from "@/lib/errors"
 import type { Pnf } from "@/types"
 import api from "@/config/api"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface VincularPnfModalProps {
   open: boolean
@@ -79,7 +80,7 @@ export function VincularPnfModal({ open, onOpenChange, sedeId, sedeNombre, pnfId
         <div className="space-y-2">
           <Label htmlFor="vincular-pnf">PNF</Label>
           {loadingLista ? (
-            <p className="text-sm text-muted-foreground">Cargando PNF...</p>
+            <Skeleton className="h-9 w-full" />
           ) : disponibles.length === 0 ? (
             <p className="text-sm text-muted-foreground">Esta sede ya ofrece todos los PNF existentes.</p>
           ) : (

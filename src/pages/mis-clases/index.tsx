@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { WeeklyScheduleGrid, type ScheduleGridEntry } from "@/components/schedule/weekly-schedule-grid"
 import { QrAsistenciaModal } from "@/components/attendance/qr-asistencia-modal"
@@ -83,7 +84,7 @@ export function MisClasesPage() {
             </div>
           )}
           {loading ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Cargando...</p>
+            <ListSkeleton rows={4} />
           ) : (
             <WeeklyScheduleGrid entries={entries} />
           )}
@@ -96,7 +97,7 @@ export function MisClasesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Cargando...</p>
+            <ListSkeleton />
           ) : clases.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No tiene clases asignadas.</p>
           ) : (

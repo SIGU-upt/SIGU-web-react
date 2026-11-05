@@ -6,6 +6,7 @@ import { ConfirmDeleteModal } from "@/components/forms/confirm-delete-modal"
 import api from "@/config/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { Role, type UnidadCurricular } from "@/types"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 // Fila de la tabla; `_raw` conserva la UC original para editar y eliminar.
 interface UcRow {
@@ -95,7 +96,7 @@ export function CurriculumUnitsPage() {
   return (
     <div className="space-y-6">
       {loading ? (
-        <div className="text-center text-muted-foreground py-10">Cargando...</div>
+        <ListSkeleton />
       ) : (
         <CurriculumUnitsTable
           data={data}

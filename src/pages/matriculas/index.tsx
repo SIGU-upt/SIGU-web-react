@@ -12,6 +12,7 @@ import { Role, type AlumnoCohorte } from "@/types"
 import api from "@/config/api"
 import { toast } from "sonner"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
+import { ListSkeleton } from "@/components/ui/table-skeleton"
 
 // 28/10/2026: esta pantalla mostraba "cohortes" como grupos con nombre y
 // cupo propios (entidad `Cohorte`, aparte de la matrícula). Se quitó esa
@@ -118,7 +119,7 @@ export function MatriculasPage() {
       <Card className="shadow-md" data-tour="matriculas-tabla">
         <CardContent>
           {loading ? (
-            <div className="text-center py-10 text-muted-foreground">Cargando...</div>
+            <ListSkeleton />
           ) : (
             <Table>
               <TableHeader>

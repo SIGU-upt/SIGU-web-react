@@ -29,6 +29,7 @@ import { routeLabels } from "./navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { useBreadcrumbContext } from "@/contexts/BreadcrumbContext"
 import { Role } from "@/types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const MANUALES_BASE_URL = "https://github.com/SIGU-upt/sigu-app-releases/releases/download/v1.0.0"
 
@@ -180,10 +181,19 @@ export function TopBar({ onLogout }: { onLogout?: () => void }) {
                   </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-foreground group-hover:text-accent-foreground">
-                    {user ? `${user.nombres} ${user.apellidos}` : 'Cargando...'}
-                  </p>
-                  <p className="text-xs text-muted-foreground group-hover:text-accent-foreground">{roleName}</p>
+                  {user ? (
+                    <>
+                      <p className="text-sm font-medium text-foreground group-hover:text-accent-foreground">
+                        {user.nombres} {user.apellidos}
+                      </p>
+                      <p className="text-xs text-muted-foreground group-hover:text-accent-foreground">{roleName}</p>
+                    </>
+                  ) : (
+                    <>
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="mt-1 h-3 w-16" />
+                    </>
+                  )}
                 </div>
                 <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
               </Button>
