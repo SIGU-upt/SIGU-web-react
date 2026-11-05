@@ -23,7 +23,7 @@ function defaultRenderResult(result: ImportResult) {
   return (
     <div className="text-sm space-y-1 ml-7">
       {sinFilas && (
-        <p className="text-amber-600 dark:text-amber-400">
+        <p className="text-amber-800 dark:text-amber-400">
           El archivo no tenía filas para importar. Revise que sea un Excel con datos en la primera hoja.
         </p>
       )}

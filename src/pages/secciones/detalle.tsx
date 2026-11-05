@@ -544,7 +544,7 @@ export function SeccionDetallePage() {
                 <div className="text-sm space-y-1 ml-7">
                   <p>Clases creadas: {result.creadas}</p>
                   {result.creadas === 0 && result.errores.length === 0 && (
-                    <p className="text-amber-600 dark:text-amber-400">El archivo no tenía filas para importar. Revise que los datos estén en la primera hoja.</p>
+                    <p className="text-amber-800 dark:text-amber-400">El archivo no tenía filas para importar. Revise que los datos estén en la primera hoja.</p>
                   )}
                   {result.errores.length > 0 && (
                     <div className="text-destructive">
@@ -614,7 +614,7 @@ export function SeccionDetallePage() {
                                   {(!c.diaSemana || !c.horaInicio || !c.horaFin) && (
                                     <Badge
                                       variant="outline"
-                                      className="ml-1 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                                      className="ml-1 border-amber-700 dark:border-amber-500 text-amber-800 dark:text-amber-400"
                                       title="Sin día/hora asignados: no aparece en la grilla de horario ni en Mis Clases del docente"
                                     >
                                       Sin horario
