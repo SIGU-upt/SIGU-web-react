@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react"
-import { Shield, Search, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { Shield, Search, ChevronDown } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { PageHeader } from "@/components/ui/page-header"
+import { PaginationControls } from "@/components/ui/pagination-controls"
 import { type SecurityLog } from "@/types"
 import api from "@/config/api"
 import { hoyLocal } from "@/lib/fecha"
@@ -45,6 +46,8 @@ const ACCIONES = [
   'ERROR_INTERNO',
 ]
 
+const LIMIT = 20
+
 export function SecurityLogsPage() {
   const [logs, setLogs] = useState<SecurityLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -59,11 +62,12 @@ export function SecurityLogsPage() {
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
   const fetchData = useCallback(async (q: string) => {
     setLoading(true)
     try {
-      const params: Record<string, string | string[]> = { page: String(page), limit: '20' }
+      const params: Record<string, string | string[]> = { page: String(page), limit: String(LIMIT) }
       if (acciones.length) params.accion = acciones
       if (fechaDesde) params.fechaDesde = fechaDesde
       if (fechaHasta) params.fechaHasta = fechaHasta
@@ -71,6 +75,7 @@ export function SecurityLogsPage() {
       const res = await api.get('/security-logs', { params })
       setLogs(res.data.data ?? [])
       setTotalPages(res.data.meta?.totalPages ?? 1)
+      setTotal(res.data.meta?.total ?? 0)
     } catch { setLogs([]) }
     finally { setLoading(false) }
   }, [acciones, fechaDesde, fechaHasta, page])
@@ -174,15 +179,15 @@ export function SecurityLogsPage() {
                 </TableBody>
               </Table>
               {totalPages > 1 && (
-                <div className="flex items-center justify-end gap-2 pt-4">
-                  <Button variant="outline" size="icon" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">Página {page} de {totalPages}</span>
-                  <Button variant="outline" size="icon" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
+                <PaginationControls
+                  currentPage={page}
+                  totalPages={totalPages}
+                  totalItems={total}
+                  startIndex={(page - 1) * LIMIT}
+                  endIndex={(page - 1) * LIMIT + logs.length}
+                  onPageChange={setPage}
+                  label="registros"
+                />
               )}
             </>
           )}
