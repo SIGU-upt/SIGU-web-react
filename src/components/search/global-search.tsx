@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Building2, GraduationCap, Layers, User as UserIcon } from "lucide-react"
+import { Building2, Download, GraduationCap, Layers, Upload, DatabaseBackup, Wand2, Calendar, User as UserIcon } from "lucide-react"
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,7 +13,7 @@ import {
 import api from "@/config/api"
 import { useAuth } from "@/contexts/AuthContext"
 import { navigation } from "@/components/layout/navigation"
-import { type Pnf, type Sede, type Seccion, type User } from "@/types"
+import { Role, type Pnf, type Sede, type Seccion, type User } from "@/types"
 import { ROLES_CON_BUSCADOR } from "./roles"
 
 // Buscador global (Cmd/Ctrl+K): dos tipos de resultado, en grupos separados —
@@ -31,6 +31,18 @@ interface Resultado {
   path: string
   icono: typeof Building2
 }
+
+// Acciones puntuales que viven DENTRO de una pantalla de lista o de detalle
+// (no tienen su propia ruta) — sin esto, buscar "exportar" o "generar" no
+// encontraba nada, aunque la acción sí existe. Llevan al listado desde donde
+// se entra a hacerlas (una sección, un PNF puntual), no directo a la acción.
+const ACCIONES_EXTRA = [
+  { id: 'exportar-horario', nombre: 'Exportar horario', path: '/secciones', icono: Download, roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: 'importar-horario', nombre: 'Importar horario', path: '/secciones', icono: Upload, roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: 'generar-estructura', nombre: 'Generar estructura (trayectos de un PNF)', path: '/pnfs', icono: Wand2, roles: [Role.SUPERADMIN, Role.RECTOR] },
+  { id: 'generar-periodos', nombre: 'Generar períodos académicos', path: '/configuracion', icono: Calendar, roles: [Role.SUPERADMIN, Role.RECTOR, Role.COORDINADOR, Role.AUDITOR] },
+  { id: 'respaldo', nombre: 'Respaldo de la base de datos', path: '/configuracion', icono: DatabaseBackup, roles: [Role.SUPERADMIN] },
+] as const
 
 async function buscarEnLista<T>(url: string, params: Record<string, string>): Promise<T[]> {
   try {
@@ -58,7 +70,7 @@ export function GlobalSearch() {
   // navegación, cada uno decide su propia visibilidad por rol una vez.
   const paginas = useMemo(() => {
     if (!user) return []
-    return navigation
+    const deNavegacion = navigation
       .filter((item) => !item.roles || item.roles.includes(user.role))
       .flatMap((item) => {
         if (item.children) {
@@ -68,6 +80,8 @@ export function GlobalSearch() {
         }
         return item.path ? [{ id: item.id, nombre: item.name, path: item.path, icono: item.icon }] : []
       })
+    const acciones = ACCIONES_EXTRA.filter((a) => a.roles.includes(user.role))
+    return [...deNavegacion, ...acciones]
   }, [user])
 
   useEffect(() => {
