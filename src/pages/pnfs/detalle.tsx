@@ -51,6 +51,9 @@ export function PnfDetallePage() {
   const [secciones, setSecciones] = useState<Seccion[]>([])
   const [unidades, setUnidades] = useState<UnidadCurricular[]>([])
   const [docentes, setDocentes] = useState<User[]>([])
+  const [docentesMeta, setDocentesMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
+  const [docentesPage, setDocentesPage] = useState(1)
+  const [docentesLoading, setDocentesLoading] = useState(true)
   const [alumnos, setAlumnos] = useState<User[]>([])
   const [alumnosMeta, setAlumnosMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
   const [alumnosPage, setAlumnosPage] = useState(1)
@@ -116,17 +119,15 @@ export function PnfDetallePage() {
     if (!id) return
     setLoading(true)
     try {
-      const [pnfRes, trayectosRes, seccionesRes, docentesRes] = await Promise.all([
+      const [pnfRes, trayectosRes, seccionesRes] = await Promise.all([
         api.get(`/pnfs/${id}`),
         api.get('/trayectos', { params: { pnfId: id } }),
         api.get('/secciones', { params: { pnfId: id } }),
-        api.get('/users', { params: { role: 'DOCENTE', pnfId: id, limit: 200 } }),
       ])
       setPnf(pnfRes.data)
       const trayectosList = trayectosRes.data.data ?? trayectosRes.data
       setTrayectos(Array.isArray(trayectosList) ? trayectosList : [])
       setSecciones(seccionesRes.data.data ?? seccionesRes.data ?? [])
-      setDocentes(docentesRes.data.data ?? docentesRes.data ?? [])
       const trayectosArr = Array.isArray(trayectosList) ? trayectosList : []
       await Promise.all([fetchTramos(trayectosArr), fetchUnidades(trayectosArr)])
     } catch {
@@ -137,6 +138,26 @@ export function PnfDetallePage() {
   }, [id, fetchTramos, fetchUnidades])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  // Separado de fetchData a propósito (mismo motivo que fetchAlumnos): antes
+  // pedía los docentes con un límite fijo de 200 sin paginar — si un PNF
+  // llegaba a tener más, los que sobraban no aparecían en ningún lado, sin
+  // aviso. Ahora pagina igual que Alumnos.
+  const fetchDocentes = useCallback(async () => {
+    if (!id) return
+    setDocentesLoading(true)
+    try {
+      const docentesRes = await api.get('/users', { params: { role: 'DOCENTE', pnfId: id, page: docentesPage, limit: 20 } })
+      setDocentes(docentesRes.data.data ?? [])
+      if (docentesRes.data.meta) setDocentesMeta(docentesRes.data.meta)
+    } catch {
+      setDocentes([])
+    } finally {
+      setDocentesLoading(false)
+    }
+  }, [id, docentesPage])
+
+  useEffect(() => { fetchDocentes() }, [fetchDocentes])
 
   // Separado de fetchData a propósito: antes paginar Alumnos volvía a pedir
   // trayectos/tramos/secciones/docentes y desmontaba toda la pantalla mientras
@@ -411,26 +432,39 @@ export function PnfDetallePage() {
 
       <Card className="shadow-md">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Docentes ({docentes.length})</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Docentes ({docentesMeta.total})</CardTitle>
         </CardHeader>
         <CardContent>
-          {docentes.length === 0 ? (
+          {docentesLoading ? (
+            <ListSkeleton rows={3} />
+          ) : docentes.length === 0 ? (
             <p className="text-center py-4 text-sm text-muted-foreground">Sin docentes en este PNF.</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow><TableHead>Nombre</TableHead><TableHead>Cédula</TableHead><TableHead>Email</TableHead></TableRow>
-              </TableHeader>
-              <TableBody>
-                {docentes.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell><TextoTruncado texto={d.nombreCompleto} /></TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{d.ci}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow><TableHead>Nombre</TableHead><TableHead>Cédula</TableHead><TableHead>Email</TableHead></TableRow>
+                </TableHeader>
+                <TableBody>
+                  {docentes.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell><TextoTruncado texto={d.nombreCompleto} /></TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.ci}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{d.email}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <PaginationControls
+                currentPage={docentesMeta.page}
+                totalPages={docentesMeta.totalPages}
+                totalItems={docentesMeta.total}
+                startIndex={(docentesMeta.page - 1) * docentesMeta.limit}
+                endIndex={(docentesMeta.page - 1) * docentesMeta.limit + docentes.length}
+                onPageChange={setDocentesPage}
+                label="docentes"
+              />
+            </>
           )}
         </CardContent>
       </Card>
