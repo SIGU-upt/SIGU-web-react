@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { StudentsTable } from "@/components/tables/students-table"
 import { UserFormModal, type UserFormData } from "@/components/forms/user-form-modal"
@@ -32,6 +33,9 @@ interface StudentRow {
 
 export function StudentsPage() {
   const { user } = useAuth()
+  // Preselecciona la búsqueda cuando se llega desde el buscador global
+  // (ej. "Estudiantes" del buscador → /estudiantes?q=angel).
+  const [searchParams] = useSearchParams()
   const [users, setUsers] = useState<StudentRow[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -45,7 +49,7 @@ export function StudentsPage() {
   const [sedePnfOptions, setSedePnfOptions] = useState<SedePnf[]>([])
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? "")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [page, setPage] = useState(1)
   const [meta, setMeta] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 })
