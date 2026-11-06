@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PageHeader } from "@/components/ui/page-header"
@@ -74,6 +75,8 @@ export function PnfDetallePage() {
 
   const [ucModalOpen, setUcModalOpen] = useState(false)
   const [replicatingUc, setReplicatingUc] = useState<UnidadCurricular | null>(null)
+
+  const [tab, setTab] = useState("malla")
 
   useEffect(() => {
     if (id && pnf) setLabel(`/pnfs/${id}`, `${pnf.codigo} — ${pnf.nombre}`)
@@ -289,6 +292,12 @@ export function PnfDetallePage() {
         )}
       />
 
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="malla">Malla curricular</TabsTrigger>
+          <TabsTrigger value="personal">Personal y alumnos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="malla" className="space-y-6 mt-4">
       <Card className="shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg"><Layers className="h-5 w-5" /> Trayectos y tramos</CardTitle>
@@ -429,7 +438,8 @@ export function PnfDetallePage() {
           )}
         </CardContent>
       </Card>
-
+        </TabsContent>
+        <TabsContent value="personal" className="space-y-6 mt-4">
       <Card className="shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Docentes ({docentesMeta.total})</CardTitle>
@@ -507,6 +517,8 @@ export function PnfDetallePage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
 
       <EntityFormModal
         open={trayectoModalOpen}
