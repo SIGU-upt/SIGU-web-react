@@ -10,10 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/ui/page-header"
 import { JustificarAsistenciaModal } from "@/components/forms/justificar-asistencia-modal"
+import { SedePnfCascadeFilter } from "@/components/filters/sede-pnf-cascade-filter"
 import { Role, type Trayecto, type Clase, type User, type SedePnf } from "@/types"
 import { useAuth } from "@/contexts/AuthContext"
 import api from "@/config/api"
-import { opcionesDeSede } from "@/lib/opciones-sede"
 import { getErrorMessage } from "@/lib/errors"
 import { downloadExportedFile } from "@/lib/export"
 import { hoyLocal, dentroDelPlazoDeJustificacion, DIAS_PLAZO_JUSTIFICACION } from "@/lib/fecha"
@@ -158,12 +158,6 @@ export function ReportesPage() {
 
   // Cascada sede → PNF → trayecto para el reporte por trayecto, de modo que el
   // superadmin pueda acotar por sede/PNF (antes agregaba todas las sedes del PNF).
-  const reportSedeOptions = opcionesDeSede(sedePnfOptions)
-  const reportPnfOptions = sedePnfOptions
-    .filter((sp) => !sedeReportFilter || sp.sedeId === sedeReportFilter)
-    // Esta lista solo se muestra una vez elegida la sede (el select está
-    // disabled hasta entonces): repetirla en cada opción era ruido.
-    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
   const reportSelectedPnfId = sedePnfOptions.find((sp) => sp.id === sedePnfReportFilter)?.pnfId
   const reportTrayectoOptions = reportSelectedPnfId
     ? trayectoOptions.filter((t) => t.pnfId === reportSelectedPnfId)
@@ -313,10 +307,6 @@ export function ReportesPage() {
       setLoading(false)
     }
   }
-
-  const riesgoPnfOptions = sedePnfOptions
-    .filter((sp) => !riesgoSedeFilter || sp.sedeId === riesgoSedeFilter)
-    .map((sp) => ({ id: sp.id, label: sp.pnf?.nombre ?? sp.id }))
 
   const exportRiesgoReport = async () => {
     if (!riesgoReport?.length) return
@@ -558,26 +548,14 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Reporte de Asistencia por Trayecto</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                {!esCoordinador && (
-                  <>
-                    <Select value={sedeReportFilter} onValueChange={(v) => { setSedeReportFilter(v); setSedePnfReportFilter(""); setTrayectoId("") }}>
-                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Seleccione una sede" /></SelectTrigger>
-                      <SelectContent>
-                        {reportSedeOptions.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={sedePnfReportFilter} onValueChange={(v) => { setSedePnfReportFilter(v); setTrayectoId("") }} disabled={!sedeReportFilter}>
-                      <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedeReportFilter ? "Seleccione un PNF" : "Elija primero una sede"} /></SelectTrigger>
-                      <SelectContent>
-                        {reportPnfOptions.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
+                <SedePnfCascadeFilter
+                  sedePnfOptions={sedePnfOptions}
+                  esCoordinador={esCoordinador}
+                  sedeId={sedeReportFilter}
+                  pnfId={sedePnfReportFilter}
+                  onSedeChange={(v) => { setSedeReportFilter(v); setSedePnfReportFilter(""); setTrayectoId("") }}
+                  onPnfChange={(v) => { setSedePnfReportFilter(v); setTrayectoId("") }}
+                />
                 <Select value={trayectoId} onValueChange={setTrayectoId} disabled={!sedePnfReportFilter}>
                   <SelectTrigger className="max-w-xs"><SelectValue placeholder={sedePnfReportFilter ? "Seleccione un trayecto" : "Elija primero un PNF"} /></SelectTrigger>
                   <SelectContent>
@@ -630,26 +608,16 @@ export function ReportesPage() {
             <CardHeader><CardTitle>Alumnos por Debajo del Umbral de Asistencia</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-3">
-                {!esCoordinador && (
-                  <>
-                    <Select value={riesgoSedeFilter} onValueChange={(v) => { setRiesgoSedeFilter(v); setRiesgoSedePnfFilter("") }}>
-                      <SelectTrigger className="max-w-xs"><SelectValue placeholder="Todas las sedes" /></SelectTrigger>
-                      <SelectContent>
-                        {reportSedeOptions.map((s) => (
-                          <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={riesgoSedePnfFilter} onValueChange={setRiesgoSedePnfFilter} disabled={!riesgoSedeFilter}>
-                      <SelectTrigger className="max-w-xs"><SelectValue placeholder={riesgoSedeFilter ? "Todos los PNF" : "Elija primero una sede"} /></SelectTrigger>
-                      <SelectContent>
-                        {riesgoPnfOptions.map((p) => (
-                          <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
+                <SedePnfCascadeFilter
+                  sedePnfOptions={sedePnfOptions}
+                  esCoordinador={esCoordinador}
+                  sedeId={riesgoSedeFilter}
+                  pnfId={riesgoSedePnfFilter}
+                  onSedeChange={(v) => { setRiesgoSedeFilter(v); setRiesgoSedePnfFilter("") }}
+                  onPnfChange={setRiesgoSedePnfFilter}
+                  sedePlaceholder="Todas las sedes"
+                  pnfPlaceholderConSede="Todos los PNF"
+                />
                 <Button onClick={fetchRiesgoReport} disabled={loading}>
                   <AlertTriangle className="mr-2 h-4 w-4" />Consultar
                 </Button>
