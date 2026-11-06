@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { Shield, Search, Plus, SmartphoneNfc, KeyRound, MoreVertical, Pencil, Trash2 } from "lucide-react"
+import { Shield, Search, Plus, SmartphoneNfc, KeyRound, MoreVertical, Pencil, Trash2, Download } from "lucide-react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Role, type User, type Sede, type SedePnf } from "@/types"
 import api from "@/config/api"
 import { normalizarCi } from "@/lib/validators"
+import { downloadExportedFile } from "@/lib/export"
 import { ResetPasswordModal } from "@/components/forms/reset-password-modal"
 import { avisarSiCorreoBienvenidaFallo } from "@/lib/avisos-correo"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
@@ -45,6 +46,7 @@ export function PersonalAdministrativoPage() {
   const [resettingPassword, setResettingPassword] = useState<User | null>(null)
   const [sedeFilter, setSedeFilter] = useState("")
   const [pnfFilter, setPnfFilter] = useState("") // guarda un pnfId (global, no una fila sede-PNF)
+  const [exportando, setExportando] = useState(false)
 
   const allowedRoles: Role[] = user?.role === Role.SUPERADMIN
     ? [Role.RECTOR, Role.COORDINADOR, Role.AUDITOR]
@@ -163,6 +165,24 @@ export function PersonalAdministrativoPage() {
     await fetchData()
   }
 
+  // Mismo endpoint que Estudiantes/Docentes (/export/usuarios) — a diferencia
+  // de esas pantallas, acá se combinan varios roles a la vez (rector +
+  // coordinador + auditor), así que `role` se manda repetido en vez de uno
+  // solo (el backend ya lo admite: ver PR de "Personal Administrativo sin
+  // exportar", hallazgo §11.4).
+  const handleExport = async () => {
+    setExportando(true)
+    try {
+      const params: Record<string, string | string[]> = { role: allowedRoles }
+      if (debouncedSearch) params.q = debouncedSearch
+      if (isSuperadmin && sedeFilter) params.sedeId = sedeFilter
+      if (pnfFilter) params.pnfId = pnfFilter
+      await downloadExportedFile('/export/usuarios', params, 'personal-administrativo.xlsx')
+    } finally {
+      setExportando(false)
+    }
+  }
+
   const handleResetDevice = async () => {
     if (!resettingDevice) return
     await api.patch(`/users/${resettingDevice.id}/reset-device`)
@@ -236,11 +256,17 @@ export function PersonalAdministrativoPage() {
                 </Select>
               )}
             </div>
-            {canEdit && (
-              <Button className="bg-primary" data-tour="personal-nuevo" onClick={() => { setEditing(null); setModalOpen(true) }}>
-                <Plus className="mr-2 h-4 w-4" /> Nuevo
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleExport} disabled={exportando || data.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                {exportando ? 'Exportando...' : 'Exportar'}
               </Button>
-            )}
+              {canEdit && (
+                <Button className="bg-primary" data-tour="personal-nuevo" onClick={() => { setEditing(null); setModalOpen(true) }}>
+                  <Plus className="mr-2 h-4 w-4" /> Nuevo
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
