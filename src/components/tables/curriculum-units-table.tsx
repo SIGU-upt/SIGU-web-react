@@ -32,7 +32,7 @@ import { PaginationControls } from "@/components/ui/pagination-controls"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { SortableTableHead } from "@/components/ui/sortable-table-head"
 import { useSortableData } from "@/hooks/use-sortable-data"
-import { downloadCsv } from "@/lib/export-csv"
+import { downloadXlsx } from "@/lib/export-xlsx"
 
 interface CurriculumUnit {
   id: string | number
@@ -81,8 +81,8 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
 
   const exportPensum = () => {
     if (filteredData.length === 0) return
-    downloadCsv(
-      'pensum.csv',
+    downloadXlsx(
+      'pensum.xlsx',
       filteredData.map((item) => ({
         Código: item.code,
         'Unidad Curricular': item.name,
@@ -110,7 +110,7 @@ export function CurriculumUnitsTable<T extends CurriculumUnit>({ data, onCreate,
           <div data-tour="unidades-acciones" className="flex flex-wrap items-center gap-3">
             <Button variant="outline" className="border-primary/60 text-primary hover:bg-primary/5 dark:hover:bg-primary/15 shadow-sm" onClick={exportPensum}>
               <Download className="mr-2 h-4 w-4" />
-              Exportar Pensum
+              Exportar Pensum a Excel
             </Button>
             {canEdit && (
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90" onClick={onCreate}>

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PaginationControls } from "@/components/ui/pagination-controls"
 import { PageHeader } from "@/components/ui/page-header"
-import { downloadCsv } from "@/lib/export-csv"
+import { downloadXlsx } from "@/lib/export-xlsx"
 import type { InscripcionInconsistencia, TipoInconsistencia } from "@/types"
 import api from "@/config/api"
 import { TextoTruncado } from "@/components/ui/texto-truncado"
@@ -70,7 +70,7 @@ export function InconsistenciasPage() {
   const pagina = filtradas.slice(startIndex, startIndex + PAGE_SIZE)
 
   const handleExport = () => {
-    downloadCsv("inconsistencias-matricula.csv", filtradas.map((i) => ({
+    downloadXlsx("inconsistencias-matricula.xlsx", filtradas.map((i) => ({
       Alumno: i.nombreCompleto,
       Cédula: i.ci,
       Tipo: TIPO_LABEL[i.tipo],
@@ -94,7 +94,7 @@ export function InconsistenciasPage() {
             </Button>
             <Button variant="outline" onClick={handleExport} disabled={filtradas.length === 0}>
               <Download className="mr-2 h-4 w-4" />
-              Exportar CSV
+              Exportar a Excel
             </Button>
           </>
         }
