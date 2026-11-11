@@ -93,6 +93,13 @@
   --avatar-4-fg: #7A2E1A;
   --avatar-5-bg: #E7DFF3;
   --avatar-5-fg: #4B2C7A;
+  /* El ámbar puro (--accent) diluido a la opacidad baja de DecorativeBackground
+     (0.045-0.08) queda casi invisible contra --background casi blanco — mismo
+     fallo de contraste que el ámbar ya tuvo con borde/anillo de foco más arriba.
+     Reusa el mismo ámbar oscuro ya medido para --avatar-2-fg en vez de inventar
+     un tono nuevo. En oscuro el ámbar puro sí se ve bien (ver nota en .dark), así
+     que ahí este token queda igual a --accent. */
+  --decor-accent: #7A5200;
 }
 
 .dark {
@@ -157,6 +164,7 @@
   --avatar-4-fg: #F0A487;
   --avatar-5-bg: #3A2F52;
   --avatar-5-fg: #CDBBEF;
+  --decor-accent: #FFC107;
 }
 
 @theme inline {
@@ -214,6 +222,7 @@
   --color-avatar-4-fg: var(--avatar-4-fg);
   --color-avatar-5-bg: var(--avatar-5-bg);
   --color-avatar-5-fg: var(--avatar-5-fg);
+  --color-decor-accent: var(--decor-accent);
 }
 
 @layer base {
