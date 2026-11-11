@@ -149,9 +149,13 @@ function obtenerSetIndex(): 0 | 1 {
   }
 }
 
+// "accent" usa un token dedicado (--decor-accent), no --accent directo: el
+// ámbar institucional es idéntico en claro/oscuro, y a esta opacidad tan baja
+// quedaba invisible contra el fondo casi blanco del modo claro. Ver comentario
+// de --decor-accent en index.css.
 const CLASE_COLOR: Record<Slot["color"], string> = {
   primary: "text-primary",
-  accent: "text-accent",
+  accent: "text-decor-accent",
 }
 
 function renderForma(slot: Slot, setIndex: 0 | 1) {
