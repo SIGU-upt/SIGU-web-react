@@ -198,14 +198,18 @@ export function LandingPage() {
         </section>
       </main>
 
-      <footer className="relative border-t border-border/50 py-8 text-center text-sm text-muted-foreground space-y-1">
-        <EscudoUpt className="mx-auto mb-3 h-14 w-14 rounded-xl opacity-90" />
-        <p>© 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria</p>
-        <p className="text-xs">
-          <Link to="/privacidad" className="hover:underline">Privacidad</Link>
-          {' · '}
-          <Link to="/terminos" className="hover:underline">Términos de uso</Link>
-        </p>
+      <footer className="relative border-t border-border/50 px-4 py-8 text-muted-foreground">
+        <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 text-left">
+          <EscudoUpt className="h-12 w-12 rounded-xl opacity-90" />
+          <div>
+            <p className="text-sm">© 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria</p>
+            <p className="mt-1 text-xs">
+              <Link to="/privacidad" className="hover:underline">Privacidad</Link>
+              {' · '}
+              <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   )

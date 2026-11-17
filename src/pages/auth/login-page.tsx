@@ -146,15 +146,19 @@ export function LoginPage() {
         </CardContent>
       </Card>
 
-      <EscudoUpt className="relative z-10 mt-8 h-14 w-14 rounded-xl opacity-90" />
-      <p className="relative z-10 mt-3 text-center text-sm text-muted-foreground">
-        © 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria
-      </p>
-      <p className="relative z-10 mt-1 text-xs text-muted-foreground">
-        <Link to="/privacidad" className="hover:underline">Privacidad</Link>
-        {' · '}
-        <Link to="/terminos" className="hover:underline">Términos de uso</Link>
-      </p>
+      <div className="relative z-10 mt-8 flex items-center gap-3 text-left text-muted-foreground">
+        <EscudoUpt className="h-12 w-12 rounded-xl opacity-90" />
+        <div>
+          <p className="text-sm">
+            © 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria
+          </p>
+          <p className="mt-1 text-xs">
+            <Link to="/privacidad" className="hover:underline">Privacidad</Link>
+            {' · '}
+            <Link to="/terminos" className="hover:underline">Términos de uso</Link>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
