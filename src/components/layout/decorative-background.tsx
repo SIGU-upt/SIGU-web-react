@@ -35,6 +35,13 @@ type Forma =
   | "cruz"
   | "zigzag"
   | "cuadrados-concentricos"
+  // Inspiradas en el escudo de la UPT José Félix Ribas (el "sol" radiante
+  // central, la pirámide escalonada, el corte de sus cintas) — siluetas
+  // lineales abstractas, no una reproducción del escudo real, para que
+  // encajen con el resto de formas geométricas del fondo.
+  | "rayos-sol"
+  | "piramide"
+  | "cuadrado-cortado"
 
 type Tamano = "grande" | "media" | "pequeña"
 type Esquina = "tr" | "br" | "bl" | "tl"
@@ -65,8 +72,8 @@ const POSICION: Record<Esquina, Record<Tamano, string>> = {
 
 const VARIANTES: Record<string, Slot[]> = {
   landing: [
-    { opciones: ["anillos", "hexagono"], esquina: "tr", tamano: "grande", color: "primary", opacidad: 0.08 },
-    { opciones: ["estrella", "trapecio"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.055 },
+    { opciones: ["rayos-sol", "anillos"], esquina: "tr", tamano: "grande", color: "primary", opacidad: 0.08 },
+    { opciones: ["piramide", "cuadrado-cortado"], esquina: "bl", tamano: "pequeña", color: "accent", opacidad: 0.055 },
   ],
   auth: [
     { opciones: ["anillos", "rombo"], esquina: "tl", tamano: "media", color: "primary", opacidad: 0.075 },
@@ -271,6 +278,39 @@ function renderForma(slot: Slot, setIndex: 0 | 1) {
         <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
           <rect x="10" y="10" width="180" height="180" rx="20" stroke="currentColor" strokeWidth="2" />
           <rect x="50" y="50" width="100" height="100" rx="14" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      )
+    case "rayos-sol":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon
+            points="100,5 112,62 156,23 132,76 190,71 140,100 190,129 132,124 156,177 112,138 100,195 88,138 44,177 68,124 10,129 60,100 10,71 68,76 44,23 88,62"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case "piramide":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon
+            points="10,180 10,148 26,148 26,116 44,116 44,84 62,84 62,52 80,52 80,20 120,20 120,52 138,52 138,84 156,84 156,116 174,116 174,148 190,148 190,180"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
+    case "cuadrado-cortado":
+      return (
+        <svg className={claseBase} style={style} viewBox="0 0 200 200" fill="none">
+          <polygon
+            points="10,10 150,10 190,50 190,190 50,190 10,150"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
         </svg>
       )
   }
