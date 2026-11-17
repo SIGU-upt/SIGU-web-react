@@ -228,11 +228,6 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    /* Transición suave al cambiar entre tema claro/oscuro (antes era un salto
-       brusco — next-themes lo suprimía con disableTransitionOnChange, ver
-       main.tsx). Acotada a propiedades de color, no "all": un botón con su
-       propia transición de transform/scale no se ve afectado. */
-    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, fill 200ms ease, stroke 200ms ease;
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -240,9 +235,27 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
+/* Transición al cambiar entre tema claro/oscuro. ThemeToggle pone la clase
+   `theme-transition` en <html> justo antes de cambiar el tema y la quita a los
+   600 ms. Antes la transición era una regla `*` permanente, pero los
+   componentes de shadcn traen su propio `transition-[color,box-shadow]` (input,
+   select) o `transition-colors` (filas de tabla), que ganan por especificidad:
+   el fondo y el borde de esos controles saltaban de golpe mientras el resto se
+   desvanecía, o lo hacían con otra duración. Con `!important` y limitada a la
+   ventana del cambio, todos los elementos usan la misma curva y duración. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition:
+      background-color 250ms ease,
+      border-color 250ms ease,
+      color 250ms ease,
+      fill 250ms ease,
+      stroke 250ms ease,
+      box-shadow 250ms ease,
+      outline-color 250ms ease !important;
   }
 }
 
