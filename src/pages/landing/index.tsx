@@ -63,8 +63,6 @@ export function LandingPage() {
           <div className="flex items-center gap-3">
             <Logo className="h-10 w-10 drop-shadow-lg" />
             <span className="text-xl font-bold text-primary tracking-tight">SIGU</span>
-            <span className="mx-1 hidden h-8 w-px bg-border sm:block" aria-hidden="true" />
-            <EscudoUpt className="hidden h-12 w-12 rounded-xl sm:block" />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -201,7 +199,8 @@ export function LandingPage() {
       </main>
 
       <footer className="relative border-t border-border/50 py-8 text-center text-sm text-muted-foreground space-y-1">
-        <p>© 2026 Universidad • Sistema de Gestión Universitaria</p>
+        <EscudoUpt className="mx-auto mb-3 h-14 w-14 rounded-xl opacity-90" />
+        <p>© 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria</p>
         <p className="text-xs">
           <Link to="/privacidad" className="hover:underline">Privacidad</Link>
           {' · '}
