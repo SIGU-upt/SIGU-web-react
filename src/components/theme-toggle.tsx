@@ -18,7 +18,15 @@ export function ThemeToggle() {
       size="icon"
       className="text-muted-foreground"
       aria-label={isDark ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => {
+        const root = document.documentElement
+        root.classList.add("theme-transition")
+        // Fuerza el cálculo de estilos con la clase ya puesta, para que el
+        // cambio de tema que sigue se anime en vez de saltar.
+        void root.offsetWidth
+        setTheme(isDark ? "light" : "dark")
+        window.setTimeout(() => root.classList.remove("theme-transition"), 600)
+      }}
     >
       {mounted && isDark ? (
         <Sun className="h-5 w-5" />
