@@ -61,7 +61,6 @@ export function LoginPage() {
       <div className="fixed top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      <EscudoUpt className="relative z-10 h-24 w-24 mb-5 shadow-lg" />
       <Link to="/" className="relative z-10 flex items-center gap-3 mb-8">
         <Logo className="h-12 w-12 drop-shadow-lg" />
         <div>
@@ -147,8 +146,9 @@ export function LoginPage() {
         </CardContent>
       </Card>
 
-      <p className="relative z-10 mt-8 text-sm text-muted-foreground">
-        © 2026 Universidad • Sistema de Gestión Universitaria
+      <EscudoUpt className="relative z-10 mt-8 h-14 w-14 rounded-xl opacity-90" />
+      <p className="relative z-10 mt-3 text-center text-sm text-muted-foreground">
+        © 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria
       </p>
       <p className="relative z-10 mt-1 text-xs text-muted-foreground">
         <Link to="/privacidad" className="hover:underline">Privacidad</Link>
