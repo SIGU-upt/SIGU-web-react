@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import {
-  GraduationCap,
   QrCode,
   BarChart3,
   ShieldCheck,
@@ -11,6 +10,7 @@ import {
 } from "lucide-react"
 import { SiGithub, SiFlutter, SiDart } from "react-icons/si"
 import { Button } from "@/components/ui/button"
+import { Logo } from "@/components/brand/logo"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DecorativeBackground } from "@/components/layout/decorative-background"
@@ -60,9 +60,7 @@ export function LandingPage() {
       <header className="relative sticky top-0 z-10 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-              <GraduationCap className="h-6 w-6" />
-            </div>
+            <Logo className="h-10 w-10 drop-shadow-lg" />
             <span className="text-xl font-bold text-primary tracking-tight">SIGU</span>
           </div>
           <div className="flex items-center gap-2">

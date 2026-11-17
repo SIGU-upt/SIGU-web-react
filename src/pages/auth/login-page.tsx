@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { GraduationCap, Lock, Fingerprint, Eye, EyeOff } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
+import { Lock, Fingerprint, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -60,9 +61,7 @@ export function LoginPage() {
         <ThemeToggle />
       </div>
       <Link to="/" className="relative z-10 flex items-center gap-3 mb-8">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg">
-          <GraduationCap className="h-8 w-8" />
-        </div>
+        <Logo className="h-12 w-12 drop-shadow-lg" />
         <div>
           <h1 className="text-3xl font-bold text-primary tracking-tight">SIGU</h1>
           <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Control de Estudios</p>
