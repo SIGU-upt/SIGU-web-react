@@ -11,6 +11,7 @@ import {
 import { SiGithub, SiFlutter, SiDart } from "react-icons/si"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/brand/logo"
+import { EscudoUpt } from "@/components/brand/escudo-upt"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DecorativeBackground } from "@/components/layout/decorative-background"
@@ -62,6 +63,8 @@ export function LandingPage() {
           <div className="flex items-center gap-3">
             <Logo className="h-10 w-10 drop-shadow-lg" />
             <span className="text-xl font-bold text-primary tracking-tight">SIGU</span>
+            <span className="mx-1 hidden h-8 w-px bg-border sm:block" aria-hidden="true" />
+            <EscudoUpt className="hidden h-12 w-12 rounded-xl sm:block" />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
