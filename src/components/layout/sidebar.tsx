@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { GraduationCap, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
+import { Logo } from "@/components/brand/logo"
 import {
   Sidebar as SidebarPrimitive,
   SidebarContent,
@@ -60,7 +61,7 @@ export function Sidebar() {
           no empujar el ícono mientras se desvanece. */}
       <SidebarHeader className="relative h-16 flex-row items-center gap-3 border-b border-sidebar-border px-4 transition-[padding] duration-200 ease-in-out group-data-[collapsible=icon]:px-1">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-          <GraduationCap className="h-7 w-7 text-accent" />
+          <Logo className="h-9 w-9" />
         </div>
         <div className="whitespace-nowrap transition-opacity duration-150 delay-100 ease-in-out group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:left-17 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:delay-0 group-data-[collapsible=icon]:duration-100">
           <h1 className="text-lg font-bold text-sidebar-foreground leading-none">SIGU</h1>
