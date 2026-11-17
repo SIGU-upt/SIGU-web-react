@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { Logo } from "@/components/brand/logo"
+import { EscudoUpt } from "@/components/brand/escudo-upt"
 import { Lock, Fingerprint, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,6 +61,7 @@ export function LoginPage() {
       <div className="fixed top-4 right-4 z-10">
         <ThemeToggle />
       </div>
+      <EscudoUpt className="relative z-10 h-24 w-24 mb-5 shadow-lg" />
       <Link to="/" className="relative z-10 flex items-center gap-3 mb-8">
         <Logo className="h-12 w-12 drop-shadow-lg" />
         <div>
