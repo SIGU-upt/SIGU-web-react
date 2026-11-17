@@ -200,7 +200,7 @@ export function LandingPage() {
 
       <footer className="relative border-t border-border/50 px-4 py-8 text-muted-foreground">
         <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 text-left">
-          <EscudoUpt className="h-12 w-12 rounded-xl opacity-90" />
+          <EscudoUpt className="h-14 w-14 rounded-xl" />
           <div>
             <p className="text-sm">© 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria</p>
             <p className="mt-1 text-xs">

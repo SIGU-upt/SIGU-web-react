@@ -147,7 +147,7 @@ export function LoginPage() {
       </Card>
 
       <div className="relative z-10 mt-8 flex items-center gap-3 text-left text-muted-foreground">
-        <EscudoUpt className="h-12 w-12 rounded-xl opacity-90" />
+        <EscudoUpt className="h-14 w-14 rounded-xl" />
         <div>
           <p className="text-sm">
             © 2026 Universidad Politécnica Territorial "José Félix Ribas" • Sistema de Gestión Universitaria
