@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, scanContraste, setTema, vigilarPayloads } from './helpers'
+import { API_URL, login, scanContraste, setTema, vigilarPayloads } from './helpers'
 import { CREDENTIALS } from './credentials'
 
 test.describe('RECTOR', () => {
@@ -26,7 +26,7 @@ test.describe('RECTOR', () => {
     // Un id que no existe/no es el suyo — el backend debe responder 403/404,
     // nunca 200 con datos reales (JurisdictionService.assertJurisdiccionSobreSede).
     const res = await page.request.get(
-      'https://sigu-api-prod.onrender.com/api/v1/sedes/00000000-0000-0000-0000-000000000000',
+      `${API_URL}/sedes/00000000-0000-0000-0000-000000000000`,
       { headers: { Authorization: `Bearer ${token}` }, failOnStatusCode: false },
     )
     expect([403, 404]).toContain(res.status())
