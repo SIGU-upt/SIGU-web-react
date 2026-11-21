@@ -1,6 +1,12 @@
 import { type Page, type APIResponse, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
+/**
+ * Backend contra el que corren las pruebas: el API local (base `SIGU DB (dev)`)
+ * salvo que E2E_API_URL diga otra cosa. playwright.config.ts rechaza producción.
+ */
+export const API_URL = process.env.E2E_API_URL ?? 'http://localhost:3003/api/v1'
+
 interface Credential {
   ci: string
   password: string

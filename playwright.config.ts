@@ -1,11 +1,17 @@
 import { defineConfig, devices } from '@playwright/test'
+import { API_URL } from './e2e/helpers'
 
-// Corre contra el frontend servido localmente (npm run dev), apuntando al
-// backend REAL de la rama dev en Render (ver e2e/credentials.ts). No se usa
-// el preview de Vercel porque tiene Deployment Protection (SSO) activo y
-// generar un bypass automatizado debilita esa protección — correr el mismo
-// código localmente, contra el mismo backend real, prueba exactamente lo
-// mismo sin tocar esa configuración.
+// Corre contra el frontend servido localmente (npm run dev). El backend por
+// defecto es el API local (puerto 3003), que usa la base `SIGU DB (dev)`; se
+// puede apuntar a otro con E2E_API_URL (p. ej. el servicio `sigu-api-dev` de
+// Render). Antes apuntaba a `sigu-api-prod` aunque este comentario decía
+// "rama dev": las pruebas crean y modifican datos, así que nunca deben correr
+// contra producción. No se usa el preview de Vercel porque tiene Deployment
+// Protection (SSO) activo y generar un bypass automatizado debilita esa
+// protección.
+if (API_URL.includes('sigu-api-prod')) {
+  throw new Error('Las pruebas e2e no deben correr contra el backend de producción.')
+}
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
@@ -28,7 +34,7 @@ export default defineConfig({
     reuseExistingServer: true,
     timeout: 30_000,
     env: {
-      VITE_API_URL: 'https://sigu-api-prod.onrender.com/api/v1',
+      VITE_API_URL: API_URL,
     },
   },
 })
